@@ -17,14 +17,29 @@
 package com.hmsoft.pentaxgallery;
 
 import android.app.Application;
+import android.os.Environment;
 
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
+
+import java.io.File;
 
 public class MyApplication extends Application {
 
     public static MyApplication ApplicationContext = null;
 
-    
+    private File mLocalDownloadsPath;
+
+    public File getLocalDownloadsPath() {
+        if(mLocalDownloadsPath == null) {
+            mLocalDownloadsPath = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), this.getString(R.string.app_name));
+            if (!mLocalDownloadsPath.exists()) {
+                mLocalDownloadsPath.mkdirs();
+            }
+        }
+        return mLocalDownloadsPath;
+    }
+
+
     @Override
     public void onCreate() {
         ApplicationContext = this;

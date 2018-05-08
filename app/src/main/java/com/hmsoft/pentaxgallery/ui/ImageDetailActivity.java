@@ -196,7 +196,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
             cancelDownloadItem.setVisible(isInDownloadQueue);
             downloadNowItem.setVisible(isInDownloadQueue && !isDownloading);
 
-            boolean isDownloaded = DownloadQueue.getDownloadLocation(imageData).exists();
+            boolean isDownloaded = imageData.existsOnLocalStorage();
             shareItem.setVisible(isDownloaded);
             downloadItem.setVisible(!isDownloaded && !isInDownloadQueue);
             downloadAgainItem.setVisible(isDownloaded && !isInDownloadQueue);
@@ -252,7 +252,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
         ImageData imageData = Images.getImageList().getImage(i);
         Intent shareIntent = new Intent();
         shareIntent.setAction(Intent.ACTION_SEND);
-        shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(DownloadQueue.getDownloadLocation(imageData)));
+        shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(imageData.getLocalPath()));
         shareIntent.setType("image/*");
         startActivity(Intent.createChooser(shareIntent, getString(R.string.share_in)));
     }
@@ -337,7 +337,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
     @Override
     public boolean onDoubleTap(MotionEvent e) {
         ImageData imageData = Images.getImageList().getImage(mPager.getCurrentItem());
-        if(!DownloadQueue.getDownloadLocation(imageData).exists()) {
+        if(!imageData.existsOnLocalStorage()) {
             download();
         }
         return false;
@@ -407,7 +407,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
                         subtitle = getString(R.string.downloading);
                     }
                 } else {
-                    if (DownloadQueue.getDownloadLocation(imageData).exists()) {
+                    if (imageData.existsOnLocalStorage()) {
                         subtitle = getString(R.string.downloaded);
                     }
                 }

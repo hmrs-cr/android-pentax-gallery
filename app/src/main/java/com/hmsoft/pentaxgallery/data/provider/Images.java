@@ -29,6 +29,15 @@ public class Images {
     private static boolean sShowDownloadQueueOnly = false;
     private static FilteredImageList sFilteredImageList = null;
 
+
+    public static void filterNotDownloaded() {
+        setFilter(FilteredImageList.FILTER_DOWNLOADED);
+    }
+
+    public static void clearFilter() {
+        setFilter(null);
+    }
+
     public static void setFilter(String filter) {
         if(filter != null && filter.length() > 0) {
             sFilteredImageList = new FilteredImageList(getCurrentStorage().getImageList(), filter);

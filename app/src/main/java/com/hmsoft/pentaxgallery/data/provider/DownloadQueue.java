@@ -111,12 +111,13 @@ public class DownloadQueue {
         CacheUtils.saveString(CACHE_KEY, jsonArray.toString());
     }
 
-    public static File getDownloadLocation(ImageData imageData) {
-        File picturesDirectory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), MyApplication.ApplicationContext.getString(R.string.app_name));
-        if(!picturesDirectory.exists()) {
-            picturesDirectory.mkdirs();
-        }
-        return new File(picturesDirectory, imageData.uniqueFileName);
+    public static ImageList getDownloadedFilesImageList() {
+         File localDownloadsPath = MyApplication.ApplicationContext.getLocalDownloadsPath();
+         File[] files = localDownloadsPath.listFiles();
+         for (File file : files) {
+
+         }
+        return null;
     }
 
     public static void setOnDowloadFinishedListener(OnDowloadFinishedListener onDowloadFinishedListener) {
@@ -235,7 +236,7 @@ public class DownloadQueue {
                 .setTitle(imageData.fileName)
                 .setAllowedOverMetered(false)
                 .setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI)
-                .setDestinationUri(Uri.fromFile(getDownloadLocation(imageData)));
+                .setDestinationUri(Uri.fromFile(imageData.getLocalPath()));
 
         if (sDownloadFinishedReceiver == null) {
             sDownloadFinishedReceiver = new DownloadFinishedReceiver();

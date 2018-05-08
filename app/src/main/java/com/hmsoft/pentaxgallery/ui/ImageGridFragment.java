@@ -350,7 +350,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 syncPictureList(newStorageIndex, currentStorageIndex == newStorageIndex, true);
                 return true;
             case R.id.clear_search:
-                Images.setFilter(null);
+                Images.clearFilter();
                 updateMenuItems();
                 mAdapter.notifyDataSetChanged();
                 return true;

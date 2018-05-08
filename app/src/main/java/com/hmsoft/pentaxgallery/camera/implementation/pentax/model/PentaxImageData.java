@@ -16,10 +16,15 @@
 
 package com.hmsoft.pentaxgallery.camera.implementation.pentax.model;
 
+import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.camera.implementation.pentax.UrlHelper;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 
+import java.io.File;
+
 public class PentaxImageData extends ImageData {
+
+    private File mLocalPath;
 
     public PentaxImageData(String directory, String fileName) {
         super(directory, fileName);
@@ -43,4 +48,11 @@ public class PentaxImageData extends ImageData {
         return downloadUrl;
     }
 
+    @Override
+    public File getLocalPath() {
+        if(mLocalPath == null) {
+            mLocalPath = new File(MyApplication.ApplicationContext.getLocalDownloadsPath(), uniqueFileName);
+        }
+        return mLocalPath;
+    }
 }

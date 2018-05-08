@@ -19,6 +19,8 @@ package com.hmsoft.pentaxgallery.camera.model;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 
+import java.io.File;
+
 public abstract class ImageData {
 
     public final String directory;
@@ -54,6 +56,13 @@ public abstract class ImageData {
     public abstract String getThumbUrl();
 
     public abstract String getDownloadUrl();
+
+    public abstract File getLocalPath();
+
+    public boolean existsOnLocalStorage() {
+        File localPath = getLocalPath();
+        return localPath != null && localPath.exists() && localPath.isFile();
+    }
 
     public ImageMetaData getMetaData() {
       return mMetaData;

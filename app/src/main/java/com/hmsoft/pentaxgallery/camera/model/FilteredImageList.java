@@ -18,6 +18,8 @@ package com.hmsoft.pentaxgallery.camera.model;
 
 public class FilteredImageList extends ImageList {
 
+    public static final String FILTER_DOWNLOADED = "____FILTER_DOWNLOADED";
+
     private final ImageList mOriginalImageList;
 
     public FilteredImageList(ImageList imageList) {
@@ -34,9 +36,10 @@ public class FilteredImageList extends ImageList {
         if(filter == null || filter.length() == 0) {
             mImageList.addAll(mOriginalImageList.mImageList);
         } else {
+            boolean downloadedOnly = FILTER_DOWNLOADED.equals(filter);
             for (int c = 0; c < mOriginalImageList.length(); c++) {
                 ImageData imageData = mOriginalImageList.getImage(c);
-                if (imageData.match(filter)) {
+                if ((downloadedOnly && imageData.existsOnLocalStorage()) || imageData.match(filter)) {
                     mImageList.add(imageData);
                 }
             }
