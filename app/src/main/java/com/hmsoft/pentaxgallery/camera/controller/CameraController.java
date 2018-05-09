@@ -47,7 +47,7 @@ public interface CameraController {
         }
     }
 
-    CameraData getDeviceInfo();
+    CameraData getDeviceInfo(boolean ignoreCache);
 
     ImageListData getImageList();
     ImageListData getImageList(StorageData storage, boolean ignoreCache);

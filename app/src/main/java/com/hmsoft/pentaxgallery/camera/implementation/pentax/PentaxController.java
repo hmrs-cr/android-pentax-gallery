@@ -56,16 +56,28 @@ public class PentaxController implements CameraController {
     }
 
 
-    public  CameraData getDeviceInfo() {
+    public  CameraData getDeviceInfo(boolean ignoreCache) {
+
+
+        String cacheKey = "camera.data";
+
+        String cachedResponse = null;
+        String response = ignoreCache || (cachedResponse = CacheUtils.getString(cacheKey)) == null
+                ? getDeviceInfoJson() : cachedResponse;
+
         CameraData cameraData = null;
-        String deviceInfo = getDeviceInfoJson();
-        if(deviceInfo != null) {
+
+        if(response != null) {
+            if(response != cachedResponse) {
+                CacheUtils.saveString(cacheKey, response);
+            }
             try {
-                cameraData = new CameraData(deviceInfo);
+                return new CameraData(response);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
+        
         return cameraData;
     }
 

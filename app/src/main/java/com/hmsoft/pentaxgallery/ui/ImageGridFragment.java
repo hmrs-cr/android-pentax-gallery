@@ -660,7 +660,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
             CameraData cameraData = Images.getCameraData();
             if(cameraData == null || ignoreCache) {
-                cameraData = ControllerFactory.DefaultController.getDeviceInfo();
+                cameraData = ControllerFactory.DefaultController.getDeviceInfo(ignoreCache);
             }
 
             Images.setCameraData(cameraData);
