@@ -260,9 +260,13 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+
         inflater.inflate(R.menu.main_menu, menu);
-        MenuItem viewDownloadsItem = menu.findItem(R.id.view_downloads_only);
-        viewDownloadsItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+
+
+        MenuItem downloadFilter = menu.findItem(R.id.downloadFilter);
+        downloadFilter.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+
         MenuItem syncItem = menu.findItem(R.id.sync_images_1);
         syncItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         syncItem = menu.findItem(R.id.sync_images_2);
@@ -300,10 +304,17 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
             boolean isFilterd = Images.isFiltered();
             boolean isShowDownloadQueueOnly = Images.isShowDownloadQueueOnly();
+            boolean isShowDownloadedOnly = Images.isShowDownloadedOnly();
+
+
+            MenuItem downloadFilterItem = mMenu.findItem(R.id.downloadFilter);
+            downloadFilterItem.setVisible(!isFilterd);
 
             MenuItem downloadsOnlyItem = mMenu.findItem(R.id.view_downloads_only);
-            downloadsOnlyItem.setVisible(!isFilterd);
             downloadsOnlyItem.setChecked(isShowDownloadQueueOnly);
+
+            MenuItem dowloadedOnlyItem = mMenu.findItem(R.id.view_downloaded_only);
+            dowloadedOnlyItem.setChecked(isShowDownloadedOnly);
 
             MenuItem clearSearchItem = mMenu.findItem(R.id.clear_search);
             clearSearchItem.setVisible(isFilterd && !isShowDownloadQueueOnly);
@@ -315,14 +326,14 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             CameraData cameraData = Images.getCameraData();
             boolean multyStorage =  cameraData != null && cameraData.storages.size() > 1;
 
+
             String syncText = getString(R.string.sync_images);
             MenuItem syncItem = mMenu.findItem(R.id.sync_images_1);
-            syncItem.setVisible(!isShowDownloadQueueOnly);
             syncItem.setTitle(multyStorage ? cameraData.storages.get(0).displayName :  syncText);
             if(multyStorage) syncItem.setIcon(null);
 
             syncItem = mMenu.findItem(R.id.sync_images_2);
-            syncItem.setVisible(!isShowDownloadQueueOnly && multyStorage);
+            syncItem.setVisible(multyStorage);
             syncItem.setTitle(multyStorage ? cameraData.storages.get(1).displayName :  syncText);
             if(multyStorage) syncItem.setIcon(null);
 
@@ -331,20 +342,31 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         }
     }
 
+    private void removeFilters() {
+        mSearchView.setQuery("", false);
+        mSearchView.setIconified(true);
+        Images.setShowDownloadQueueOnly(false);
+        Images.setShowDownloadedOnly(false);
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int itemId = item.getItemId();
         switch (itemId) {
+            case R.id.view_downloaded_only:
             case R.id.view_downloads_only:
                 mSearchView.setQuery("", false);
                 mSearchView.setIconified(true);
                 item.setChecked(!item.isChecked());
-                Images.setShowDownloadQueueOnly(item.isChecked());
+                Images.setShowDownloadQueueOnly(item.isChecked() && itemId == R.id.view_downloads_only);
+                Images.setShowDownloadedOnly(item.isChecked() && itemId == R.id.view_downloaded_only);
                 mAdapter.notifyDataSetChanged();
                 updateMenuItems();
+                updateActionBarTitle();
                 return true;
             case R.id.sync_images_1:
             case R.id.sync_images_2:
+                removeFilters();
                 int currentStorageIndex = Images.getCurrentStorageIndex();
                 int newStorageIndex = itemId == R.id.sync_images_1 ? 0 : 1;
                 syncPictureList(newStorageIndex, currentStorageIndex == newStorageIndex, true);
@@ -615,7 +637,14 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 ActionBar actionBar = getActivity().getActionBar();
                 actionBar.setTitle(cameraData.getDisplayName());
                 StorageData storageData = Images.getCurrentStorage();
-                actionBar.setSubtitle(String.format("%s (%d/%s)", storageData.name, Images.imageCount(), storageData.format).toUpperCase());
+
+                if(Images.isShowDownloadQueueOnly()) {
+                    actionBar.setSubtitle("DOWNLOAD QUEUE");
+                } else if(Images.isShowDownloadedOnly()) {
+                    actionBar.setSubtitle(String.format("%s (%d/%s) - Downloaded", storageData.name, Images.imageCount(), storageData.format).toUpperCase());
+                } else {
+                    actionBar.setSubtitle(String.format("%s (%d/%s)", storageData.name, Images.imageCount(), storageData.format).toUpperCase());
+                }
             }
         }
     }
@@ -641,6 +670,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
             if(imageListResponse != null) {
                 DownloadQueue.loadFromCache(imageListResponse.dirList, ignoreCache);
+                DownloadQueue.loadDownloadedFilesList();
             }
 
             return imageListResponse;

@@ -23,14 +23,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Environment;
 
+import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.R;
-import com.hmsoft.pentaxgallery.data.model.DownloadEntry;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageList;
+import com.hmsoft.pentaxgallery.camera.model.StorageData;
+import com.hmsoft.pentaxgallery.data.model.DownloadEntry;
 import com.hmsoft.pentaxgallery.util.cache.CacheUtils;
-import com.hmsoft.pentaxgallery.MyApplication;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -38,6 +38,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class DownloadQueue {
@@ -47,11 +48,35 @@ public class DownloadQueue {
     private static List<DownloadEntry> sDownloadQueue;
     private static DownloadFinishedReceiver sDownloadFinishedReceiver = null;
     private final static ImageList sIageList = new DownloadQueueImageList();
+    private final static DownloadedFilteredImageList sFinishedDownloadImageList = new DownloadedFilteredImageList();
+
+    private static final List<String> sDownloadedFilesHash = new LinkedList<>();
 
     private static OnDowloadFinishedListener onDowloadFinishedListener;
 
     public interface OnDowloadFinishedListener {
         void onDownloadFinished(ImageData imageData, long donloadId, int remainingDownloads, boolean wasCanceled);
+    }
+
+    public static void loadDownloadedFilesList() {
+        File localDownloadsPath = MyApplication.ApplicationContext.getLocalDownloadsPath();
+        File[] files = localDownloadsPath.listFiles();
+        for (File file : files) {
+            addToDownloadedFilesList(file.getName());
+        }
+    }
+
+    public static void addToDownloadedFilesList(String fileName) {
+        sDownloadedFilesHash.add(fileName);
+    }
+
+    public static boolean isInDownloadedFilesList(String fileName) {
+        for (String downloadedFileName : sDownloadedFilesHash) {
+            if(downloadedFileName.equals(fileName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static void loadFromCache(ImageList sourceImageList, boolean forceLoad) {
@@ -111,20 +136,17 @@ public class DownloadQueue {
         CacheUtils.saveString(CACHE_KEY, jsonArray.toString());
     }
 
-    public static ImageList getDownloadedFilesImageList() {
-         File localDownloadsPath = MyApplication.ApplicationContext.getLocalDownloadsPath();
-         File[] files = localDownloadsPath.listFiles();
-         for (File file : files) {
-
-         }
-        return null;
-    }
-
     public static void setOnDowloadFinishedListener(OnDowloadFinishedListener onDowloadFinishedListener) {
         DownloadQueue.onDowloadFinishedListener = onDowloadFinishedListener;
     }
 
     private static void doDowloadFinished(ImageData imageData, long donloadId, boolean wasCanceled) {
+        if(!wasCanceled) {
+            File file = imageData.getLocalPath();
+            if(file.exists()) {
+                addToDownloadedFilesList(file.getName());
+            }
+        }
         if(onDowloadFinishedListener != null) {
             onDowloadFinishedListener.onDownloadFinished(imageData, donloadId, sDownloadQueue.size(), wasCanceled);
         }
@@ -257,6 +279,15 @@ public class DownloadQueue {
         return sIageList;
     }
 
+    public static ImageList getFinishedDownloadImageList() {
+        return sFinishedDownloadImageList;
+    }
+
+    public static void updateFinishedDownloadImageList(StorageData storageData) {
+        sFinishedDownloadImageList.setStorageData(storageData);
+        sFinishedDownloadImageList.filter(storageData.getImageList());
+    }
+
     private static class DownloadFinishedReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -288,6 +319,19 @@ public class DownloadQueue {
                 return 0;
             }
             return sDownloadQueue.size();
+        }
+    }
+
+    private static class DownloadedFilteredImageList extends ImageList {
+
+        public void filter(ImageList origianlImageList) {
+            mImageList.clear();
+            for (int c = 0; c < origianlImageList.length(); c++) {
+                ImageData imageData = origianlImageList.getImage(c);
+                if(isInDownloadedFilesList(imageData.uniqueFileName)) {
+                    mImageList.add(imageData);
+                }
+            }
         }
     }
 }

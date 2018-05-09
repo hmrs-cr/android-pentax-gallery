@@ -28,11 +28,8 @@ public class Images {
 
     private static boolean sShowDownloadQueueOnly = false;
     private static FilteredImageList sFilteredImageList = null;
+    private static boolean sShowDownloadedOnly;
 
-
-    public static void filterNotDownloaded() {
-        setFilter(FilteredImageList.FILTER_DOWNLOADED);
-    }
 
     public static void clearFilter() {
         setFilter(null);
@@ -40,7 +37,9 @@ public class Images {
 
     public static void setFilter(String filter) {
         if(filter != null && filter.length() > 0) {
-            sFilteredImageList = new FilteredImageList(getCurrentStorage().getImageList(), filter);
+            StorageData storageData = getCurrentStorage();
+            sFilteredImageList = new FilteredImageList(storageData.getImageList(), filter);
+            sFilteredImageList.setStorageData(storageData);
         } else {
             sFilteredImageList = null;
         }
@@ -53,6 +52,9 @@ public class Images {
     public synchronized static ImageList getImageList() {
         if(sShowDownloadQueueOnly) {
             return DownloadQueue.getImageList();
+        }
+        if(sShowDownloadedOnly) {
+            return DownloadQueue.getFinishedDownloadImageList();
         }
         if(sFilteredImageList != null) {
             return sFilteredImageList;
@@ -90,7 +92,25 @@ public class Images {
     }
 
     public static void setShowDownloadQueueOnly(boolean showDownloadQueueOnly) {
+        if(showDownloadQueueOnly) {
+            sShowDownloadedOnly = false;
+        }
         sShowDownloadQueueOnly = showDownloadQueueOnly;
+    }
+
+    public static boolean isShowDownloadedOnly() {
+        return sShowDownloadedOnly;
+    }
+
+    public static void setShowDownloadedOnly(boolean showDownloadedOnly) {
+        if(showDownloadedOnly) {
+            sShowDownloadQueueOnly = false;
+            DownloadQueue.updateFinishedDownloadImageList(getCurrentStorage());
+
+        } else {
+            sFilteredImageList = null;
+        }
+        sShowDownloadedOnly = showDownloadedOnly;
     }
 
     public static StorageData getCurrentStorage() {
