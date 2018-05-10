@@ -267,6 +267,11 @@ public class DownloadQueue {
     private static class DownloadQueueImageList extends ImageList {
 
         @Override
+        protected ImageData createImageData(String dirName, String fileName) {
+            return null;
+        }
+
+        @Override
         public ImageData getImage(int index) {
             if (sDownloadQueue == null) {
                 return null;

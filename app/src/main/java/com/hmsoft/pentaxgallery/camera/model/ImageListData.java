@@ -16,6 +16,8 @@
 
 package com.hmsoft.pentaxgallery.camera.model;
 
+import com.hmsoft.pentaxgallery.camera.implementation.pentax.model.PentaxImageList;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -34,6 +36,6 @@ public class ImageListData extends BaseResponse {
 
     public ImageListData(JSONObject jsonObject) throws JSONException {
         super(jsonObject);
-        dirList = new ImageList(jsonObject.optJSONArray("dirs"));
+        dirList = new PentaxImageList(jsonObject.optJSONArray("dirs"));
     }
 }

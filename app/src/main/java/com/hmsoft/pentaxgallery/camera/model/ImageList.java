@@ -28,7 +28,7 @@ import org.json.JSONTokener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ImageList {
+public abstract class ImageList {
 
     protected final List<ImageData> mImageList = new ArrayList<>();
     private StorageData mStorage;
@@ -58,8 +58,11 @@ public class ImageList {
     }
 
     private boolean addImage(String dirName, String fileName) {
-        return mImageList.add(new PentaxImageData(dirName, fileName));
+        ImageData imageData = createImageData(dirName, fileName);
+        return mImageList.add(imageData);
     }
+
+    protected abstract ImageData createImageData(String dirName, String fileName);
 
     public int getFirstMatchIntex(String match) {
         for (int c = 0; c < mImageList.size(); c++) {

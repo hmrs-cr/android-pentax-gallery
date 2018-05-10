@@ -45,4 +45,9 @@ public class FilteredImageList extends ImageList {
             }
         }
     }
+
+    @Override
+    protected ImageData createImageData(String dirName, String fileName) {
+        return null;
+    }
 }
