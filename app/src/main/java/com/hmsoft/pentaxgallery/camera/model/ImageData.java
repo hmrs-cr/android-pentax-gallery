@@ -29,8 +29,10 @@ public abstract class ImageData {
     public final String fullPath;
     public final String uniqueFileName;
   
-    private ImageMetaData mMetaData;
-    private StorageData mStorageData;
+    protected ImageMetaData mMetaData;
+    protected StorageData mStorageData;
+
+    protected Boolean mExistsOnLocalStorage;
 
     public ImageData(String directory, String fileName) {
         this.directory = directory;
@@ -60,8 +62,15 @@ public abstract class ImageData {
     public abstract File getLocalPath();
 
     public boolean existsOnLocalStorage() {
+        if(mExistsOnLocalStorage == null) {
+            updateExistsOnLocasStorage();
+        }
+        return mExistsOnLocalStorage.booleanValue();
+    }
+
+    public void updateExistsOnLocasStorage() {
         File localPath = getLocalPath();
-        return localPath != null && localPath.exists() && localPath.isFile();
+        mExistsOnLocalStorage  = Boolean.valueOf(localPath != null && localPath.exists() && localPath.isFile());
     }
 
     public ImageMetaData getMetaData() {

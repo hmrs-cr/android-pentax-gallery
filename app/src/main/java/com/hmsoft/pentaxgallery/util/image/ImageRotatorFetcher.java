@@ -44,7 +44,6 @@ public class ImageRotatorFetcher extends ImageFetcher {
         Bitmap bitmap = super.processBitmap(url, imageData);
 
         if(bitmap != null && imageData != null) {
-            imageData.existsOnLocalStorage(); // <-- To force the cache access to the local file system...
             ImageMetaData metaData = ControllerFactory.DefaultController.getImageInfo(imageData);
             if(metaData != null) {
                 bitmap = rotateBitmap(bitmap, metaData.orientation);

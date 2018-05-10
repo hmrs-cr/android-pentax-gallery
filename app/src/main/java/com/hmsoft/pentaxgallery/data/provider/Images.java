@@ -45,16 +45,13 @@ public class Images {
         }
     }
 
-    public static boolean isFiltered() {
-        return sFilteredImageList != null;
+    public static boolean hasArbitraryFiltered() {
+        return sFilteredImageList != null && !sShowDownloadedOnly;
     }
 
     public synchronized static ImageList getImageList() {
         if(sShowDownloadQueueOnly) {
             return DownloadQueue.getImageList();
-        }
-        if(sShowDownloadedOnly) {
-            return DownloadQueue.getFinishedDownloadImageList();
         }
         if(sFilteredImageList != null) {
             return sFilteredImageList;
@@ -105,7 +102,7 @@ public class Images {
     public static void setShowDownloadedOnly(boolean showDownloadedOnly) {
         if(showDownloadedOnly) {
             sShowDownloadQueueOnly = false;
-            DownloadQueue.updateFinishedDownloadImageList(getCurrentStorage());
+            setFilter(FilteredImageList.FILTER_DOWNLOADED);
 
         } else {
             sFilteredImageList = null;

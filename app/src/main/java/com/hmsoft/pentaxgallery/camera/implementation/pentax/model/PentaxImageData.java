@@ -28,6 +28,7 @@ public class PentaxImageData extends ImageData {
 
     public PentaxImageData(String directory, String fileName) {
         super(directory, fileName);
+        updateExistsOnLocasStorage();
     }
 
     @Override

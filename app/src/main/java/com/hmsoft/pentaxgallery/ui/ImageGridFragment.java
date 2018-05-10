@@ -302,7 +302,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     private void updateMenuItems() {
         if(mMenu != null) {
 
-            boolean isFilterd = Images.isFiltered();
+            boolean isFilterd = Images.hasArbitraryFiltered();
             boolean isShowDownloadQueueOnly = Images.isShowDownloadQueueOnly();
             boolean isShowDownloadedOnly = Images.isShowDownloadedOnly();
 
@@ -670,7 +670,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
             if(imageListResponse != null) {
                 DownloadQueue.loadFromCache(imageListResponse.dirList, ignoreCache);
-                DownloadQueue.loadDownloadedFilesList();
             }
 
             return imageListResponse;
