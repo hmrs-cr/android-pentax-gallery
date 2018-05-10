@@ -37,10 +37,22 @@
             android:title="@string/process_downloads" />
 
         <item
-            android:id="@+id/view_downloads_only"
-            android:checkable="true"
+            android:id="@+id/downloadFilter"
             android:icon="@drawable/ic_filter_list_white_24dp"
-            android:title="@string/donwloads_only" />
+            android:title="@string/downloads_filter">
+            <menu>
+                <item
+                    android:id="@+id/view_downloads_only"
+                    android:checkable="true"
+                    android:icon="@drawable/ic_filter_list_white_24dp"
+                    android:title="@string/in_queue"/>
+                <item
+                    android:id="@+id/view_downloaded_only"
+                    android:checkable="true"
+                    android:icon="@drawable/ic_filter_list_white_24dp"
+                    android:title="@string/downloaded"/>
+            </menu>
+        </item>
 
     </group>
 

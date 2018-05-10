@@ -14,9 +14,8 @@
     <string name="download_now">Download now</string>
     <string name="view_all">View All</string>
     <string name="donwloads_only">View Downloads Only</string>
-    <string name="in_download_queue">In download queue...</string>
-    <string name="downloading">Downloading...</string>
-    <string name="downloaded">Downloaded</string>
+    <string name="in_download_queue">In download queue…</string>
+    <string name="downloading">Downloading…</string>
     <string name="share">Share</string>
     <string name="share_in">Share in...</string>
     <string name="download_again">Download again</string>
@@ -26,4 +25,9 @@
     <string name="not_found">%s not found.</string>
     <string name="process_downloads">Process Downloads</string>
     <string name="info">Info</string>
+    <string name="downloaded_only">Downloaded only</string>
+    <string name="downloads_filter">Downloads filter</string>
+    <string name="downloaded">Downloaded</string>
+    <string name="all">All</string>
+    <string name="in_queue">In Queue</string>
 </resources>
