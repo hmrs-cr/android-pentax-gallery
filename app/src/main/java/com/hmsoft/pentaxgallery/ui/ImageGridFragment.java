@@ -651,6 +651,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     private class ImageListTask extends AsyncTask<Object, Void, ImageListData> {
 
+        private boolean mCameraConnected;
 
         @Override
         protected ImageListData doInBackground(Object... params) {
@@ -659,14 +660,21 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
 
             CameraData cameraData = Images.getCameraData();
-            if(cameraData == null || ignoreCache) {
-                cameraData = ControllerFactory.DefaultController.getDeviceInfo(ignoreCache);
+            mCameraConnected = cameraData != null;
+
+            if(!mCameraConnected) {
+                cameraData = ControllerFactory.DefaultController.getDeviceInfo(true);
+                mCameraConnected = cameraData != null;
+            }
+
+            if(!mCameraConnected) {
+                cameraData = ControllerFactory.DefaultController.getDeviceInfo(false);
             }
 
             Images.setCameraData(cameraData);
             Images.setCurrentStorageIndex(storageIndex);
 
-            ImageListData imageListResponse = ControllerFactory.DefaultController.getImageList(Images.getCurrentStorage(), ignoreCache);
+            ImageListData imageListResponse = ControllerFactory.DefaultController.getImageList(Images.getCurrentStorage(), mCameraConnected || ignoreCache);
 
             if(imageListResponse != null) {
                 DownloadQueue.loadFromCache(imageListResponse.dirList, ignoreCache);
@@ -687,7 +695,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             String from = "cache";
             String cameraDisplayName = null;
             CameraData cameraData = Images.getCameraData();
-            if(cameraData != null && cameraData.model != null) {
+            if(cameraData != null && cameraData.model != null && mCameraConnected) {
                 cameraDisplayName = cameraData.getDisplayName();
                 from = cameraDisplayName + " " + Images.getCurrentStorage().displayName;
             }
