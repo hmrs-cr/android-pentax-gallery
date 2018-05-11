@@ -63,6 +63,7 @@ import com.hmsoft.pentaxgallery.camera.model.ImageListData;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
 import com.hmsoft.pentaxgallery.data.provider.DownloadQueue;
 import com.hmsoft.pentaxgallery.data.provider.Images;
+import com.hmsoft.pentaxgallery.util.DefaultSettings;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 import com.hmsoft.pentaxgallery.util.Utils;
 import com.hmsoft.pentaxgallery.util.cache.CacheUtils;
@@ -657,6 +658,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         protected ImageListData doInBackground(Object... params) {
             boolean ignoreCache = params.length > 0 ? (Boolean)params[0] : false;
             int storageIndex = params.length > 1 ? (int)params[1] : 0;
+
+
+            DefaultSettings.getsInstance().load();
 
 
             CameraData cameraData = Images.getCameraData();

@@ -19,6 +19,7 @@ package com.hmsoft.pentaxgallery.camera.implementation.pentax.model;
 import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.camera.implementation.pentax.UrlHelper;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
+import com.hmsoft.pentaxgallery.util.DefaultSettings;
 
 import java.io.File;
 
@@ -52,7 +53,8 @@ public class PentaxImageData extends ImageData {
     @Override
     public File getLocalPath() {
         if(mLocalPath == null) {
-            mLocalPath = new File(MyApplication.ApplicationContext.getLocalDownloadsPath(), uniqueFileName);
+            String location = DefaultSettings.getsInstance().getStringValue(DefaultSettings.DOWNLOAD_LOCATION);
+            mLocalPath = new File(location, uniqueFileName);
         }
         return mLocalPath;
     }

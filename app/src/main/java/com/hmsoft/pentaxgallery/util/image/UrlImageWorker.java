@@ -35,6 +35,7 @@ import android.widget.ImageView;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.R;
+import com.hmsoft.pentaxgallery.util.DefaultSettings;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.Executor;
@@ -106,7 +107,8 @@ public abstract class UrlImageWorker {
                     new AsyncDrawable(mResources, mLoadingBitmap, task);
             imageView.setImageDrawable(asyncDrawable);
 
-            task.executeOnExecutor(mExecutor != null ?  mExecutor : Executors.newFixedThreadPool(2));
+            int numThreads = DefaultSettings.getsInstance().getIntValue(DefaultSettings.THUMB_THREAD_NUMBER);
+            task.executeOnExecutor(mExecutor != null ?  mExecutor : Executors.newFixedThreadPool(numThreads));
             //END_INCLUDE(execute_background_task)
         }
     }
@@ -264,7 +266,7 @@ public abstract class UrlImageWorker {
     }
 
     public void setExecutor(Executor mExecutor) {
-        this.mExecutor = mExecutor;
+        //this.mExecutor = mExecutor;
     }
 
 

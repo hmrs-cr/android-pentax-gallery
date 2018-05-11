@@ -27,6 +27,7 @@ import com.hmsoft.pentaxgallery.camera.model.ImageListData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
 import com.hmsoft.pentaxgallery.camera.util.HttpHelper;
+import com.hmsoft.pentaxgallery.util.DefaultSettings;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 import com.hmsoft.pentaxgallery.util.cache.CacheUtils;
 
@@ -36,22 +37,31 @@ import java.net.HttpURLConnection;
 
 public class PentaxController implements CameraController {
 
-    final String METADATA_CACHE_KEY = ".metadata";
-    final String IMAGELIST_CACHE_KEY = "image_list_";
+    private final static String METADATA_CACHE_KEY = ".metadata";
+    private final static String IMAGELIST_CACHE_KEY = "image_list_";
 
-    protected static String getDeviceInfoJson() {
-        return HttpHelper.getStringResponse(UrlHelper.URL_DEVICE_INFO,3,30);
+    private final int connectTimeOut;
+    private final int readTimeOut;
+
+    public PentaxController() {
+        DefaultSettings settings = DefaultSettings.getsInstance();
+        connectTimeOut = settings.getIntValue(DefaultSettings.DEFAULT_CONNECT_TIME_OUT);
+        readTimeOut = settings.getIntValue(DefaultSettings.DEFAULT_READ_TIME_OUT);
     }
 
-    protected static String getImageListJson(StorageData storage) {
-        return HttpHelper.getStringResponse(UrlHelper.getImageListUrl(storage),3, 60);
+    protected String getDeviceInfoJson() {
+        return HttpHelper.getStringResponse(UrlHelper.URL_DEVICE_INFO, connectTimeOut, readTimeOut);
     }
 
-    protected static String getImageInfoJson(ImageData imageData) {
-        return HttpHelper.getStringResponse(UrlHelper.getInfoUrl(imageData), 5,  30);
+    protected String getImageListJson(StorageData storage) {
+        return HttpHelper.getStringResponse(UrlHelper.getImageListUrl(storage), connectTimeOut, readTimeOut);
     }
 
-    protected static String powerOffJson() {
+    protected String getImageInfoJson(ImageData imageData) {
+        return HttpHelper.getStringResponse(UrlHelper.getInfoUrl(imageData), connectTimeOut,  readTimeOut);
+    }
+
+    protected String powerOffJson() {
         return HttpHelper.getStringResponse(UrlHelper.URL_POWEROFF, HttpHelper.RequestMethod.POST);
     }
 

@@ -236,7 +236,7 @@ public class DownloadQueue {
         if (sDownloadFinishedReceiver == null) {
             sDownloadFinishedReceiver = new DownloadFinishedReceiver();
             IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
-            MyApplication.ApplicationContext.registerReceiver(sDownloadFinishedReceiver, filter);
+            context.registerReceiver(sDownloadFinishedReceiver, filter);
         }
 
         long id = downloadManager.enqueue(request);

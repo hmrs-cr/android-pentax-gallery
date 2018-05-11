@@ -26,6 +26,7 @@ import android.util.Log;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
+import com.hmsoft.pentaxgallery.util.DefaultSettings;
 import com.hmsoft.pentaxgallery.util.cache.CacheUtils;
 import com.hmsoft.pentaxgallery.util.cache.DiskLruCache;
 
@@ -261,10 +262,13 @@ public class ImageFetcher extends ImageResizer {
         BufferedInputStream in = null;
 
         try {
+
+            DefaultSettings settings = DefaultSettings.getsInstance();
+
             final URL url = new URL(urlString);
             urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setConnectTimeout(3000);
-            urlConnection.setReadTimeout(30000);
+            urlConnection.setConnectTimeout(settings.getIntValue(DefaultSettings.DEFAULT_CONNECT_TIME_OUT) * 1000);
+            urlConnection.setReadTimeout(settings.getIntValue(DefaultSettings.DEFAULT_READ_TIME_OUT) * 1000);
             in = new BufferedInputStream(urlConnection.getInputStream(), IO_BUFFER_SIZE);
             out = new BufferedOutputStream(outputStream, IO_BUFFER_SIZE);
 
