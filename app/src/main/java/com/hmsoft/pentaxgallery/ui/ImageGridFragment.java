@@ -71,6 +71,9 @@ import com.hmsoft.pentaxgallery.util.image.ImageFetcher;
 import com.hmsoft.pentaxgallery.util.image.ImageCache;
 import com.hmsoft.pentaxgallery.util.image.ImageRotatorFetcher;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * The main fragment that powers the ImageGridActivity screen. Fairly straight forward GridView
  * implementation with the key addition being the UrlImageWorker class w/ImageCache to load children
@@ -79,6 +82,7 @@ import com.hmsoft.pentaxgallery.util.image.ImageRotatorFetcher;
  * quickly if, for example, the user rotates the device.
  */
 public class ImageGridFragment extends Fragment implements AdapterView.OnItemClickListener,
+        AdapterView.OnItemLongClickListener,
         DownloadQueue.OnDowloadFinishedListener,
         SearchView.OnQueryTextListener,
         ActionBar.OnNavigationListener,
@@ -150,6 +154,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
         mGridView.setAdapter(mAdapter);
         mGridView.setOnItemClickListener(this);
+        mGridView.setOnItemLongClickListener(this);
         mGridView.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(AbsListView absListView, int scrollState) {
@@ -239,7 +244,21 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     @Override
     public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
-        startDetailActivity(v, (int) id);
+        if(mAdapter.isInSelectMode()) {
+            mAdapter.toggleItemSelection(position);
+        } else {
+            startDetailActivity(v, (int) id);
+        }
+    }
+
+    @Override
+    public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+        if(Images.isShowDownloadQueueOnly() || Images.isShowDownloadedOnly()) {
+            return true;
+        }
+
+        mAdapter.toggleItemSelection(position);
+        return true;
     }
 
     private void startDetailActivity(View v, int id) {
@@ -277,8 +296,13 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         searchItem.setActionView(R.layout.search_view);
         MenuItem clearSearchItem = menu.findItem(R.id.clear_search);
         clearSearchItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
-        MenuItem proccessDownloadQueueItem = menu.findItem(R.id.proccessDownloadQueue);
+        MenuItem proccessDownloadQueueItem = menu.findItem(R.id.proccess_download_queue);
         proccessDownloadQueueItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+
+        MenuItem downloadItem = menu.findItem(R.id.download_selected);
+        downloadItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        MenuItem clearSelectionItem = menu.findItem(R.id.clear_selection);
+        clearSelectionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
 
 
         SearchManager searchManager =
@@ -302,6 +326,24 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     private void updateMenuItems() {
         if(mMenu != null) {
+
+
+            if(mAdapter.isInSelectMode()) {
+                int s = mMenu.size();
+                for(int i = 0; i < s; i++) {
+                   MenuItem item = mMenu.getItem(i);
+                   int grpId = item.getGroupId();
+                   boolean visibleOnSelectMode = grpId == R.id.selection_menu_group || grpId == R.id.misc_menu_group;
+                   item.setVisible(visibleOnSelectMode);
+                }
+                return;
+            }
+
+            MenuItem downloadItem = mMenu.findItem(R.id.download_selected);
+            downloadItem.setVisible(false);
+            MenuItem clearSelectionItem = mMenu.findItem(R.id.clear_selection);
+            clearSelectionItem.setVisible(false);
+
 
             boolean isFilterd = Images.hasArbitraryFiltered();
             boolean isShowDownloadQueueOnly = Images.isShowDownloadQueueOnly();
@@ -331,6 +373,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             String syncText = getString(R.string.sync_images);
             MenuItem syncItem = mMenu.findItem(R.id.sync_images_1);
             syncItem.setTitle(multyStorage ? cameraData.storages.get(0).displayName :  syncText);
+            syncItem.setVisible(true);
             if(multyStorage) syncItem.setIcon(null);
 
             syncItem = mMenu.findItem(R.id.sync_images_2);
@@ -338,7 +381,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             syncItem.setTitle(multyStorage ? cameraData.storages.get(1).displayName :  syncText);
             if(multyStorage) syncItem.setIcon(null);
 
-            MenuItem proccessDownloadQueueItem = mMenu.findItem(R.id.proccessDownloadQueue);
+            MenuItem proccessDownloadQueueItem = mMenu.findItem(R.id.proccess_download_queue);
             proccessDownloadQueueItem.setVisible(isShowDownloadQueueOnly);
         }
     }
@@ -377,15 +420,31 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 updateMenuItems();
                 mAdapter.notifyDataSetChanged();
                 return true;
-            case R.id.proccessDownloadQueue:
+            case R.id.proccess_download_queue:
                 DownloadQueue.processDownloadQueue();
                 return true;
             case R.id.about:
                 showAboutDialog();
                 return true;
+            case R.id.download_selected:
+                downloadSelected();
+                return true;
+            case R.id.clear_selection:
+                mAdapter.clearSelection();
+                return true;
 
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void downloadSelected() {
+        List<ImageData> selectedImages = mAdapter.getSelectedItems();
+        for(ImageData imageData : selectedImages) {
+            DownloadQueue.addDownloadQueue(imageData);
+        }
+
+        Toast.makeText (getActivity(), String.format(getString(R.string.added_to_download_queue), selectedImages.size()), Toast.LENGTH_LONG).show();
+        mAdapter.clearSelection();
     }
 
     private void showAboutDialog() {
@@ -485,6 +544,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         syncPictureList(Images.getCurrentStorageIndex(), true, false);
     }
 
+
+
     /**
      * The main adapter that backs the GridView. This is fairly standard except the number of
      * columns in the GridView is used to create a fake top row of empty views as we use a
@@ -497,6 +558,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         private int mNumColumns = 0;
         private int mActionBarHeight = 0;
         private GridView.LayoutParams mImageViewLayoutParams;
+
+        private ArrayList<ImageData> mSelectionList = new ArrayList<>();
 
         public ImageAdapter(Context context) {
             super();
@@ -523,6 +586,50 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             }
         }
 
+        public void selectItem(int position) {
+            mSelectionList.add(getImageDataItem(position));
+            updateMenuItems();
+            notifyDataSetChanged();
+        }
+
+        public boolean isItemSelected(int position) {
+            ImageData imageData = getImageDataItem(position);
+            return mSelectionList.contains(imageData);
+        }
+
+        public void toggleItemSelection(int position) {
+            if(isItemSelected(position)) {
+                removeItemFromSelection(position);
+            } else {
+                selectItem(position);
+            }
+        }
+
+        public void removeItemFromSelection(int position) {
+            mSelectionList.remove(getImageDataItem(position));
+            updateMenuItems();
+            notifyDataSetChanged();
+        }
+
+        public void clearSelection() {
+            mSelectionList.clear();
+            updateMenuItems();
+            notifyDataSetChanged();
+        }
+
+        public boolean isInSelectMode() {
+            return  mSelectionList.size() > 0;
+        }
+
+        public List<ImageData> getSelectedItems() {
+            return mSelectionList;
+        }
+
+        public ImageData getImageDataItem(int position) {
+            return position < mNumColumns ?
+                    null :  Images.getImageList().getImage(position - mNumColumns);
+        }
+
         @Override
         public int getCount() {
             // If columns have yet to be determined, return no items
@@ -536,8 +643,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
         @Override
         public Object getItem(int position) {
-            return position < mNumColumns ?
-                    null : Images.getImageList().getImage(position - mNumColumns).getThumbUrl();
+            ImageData imageData = getImageDataItem(position);
+            return imageData != null ? imageData.getThumbUrl() : null;
         }
 
         @Override
@@ -577,13 +684,13 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             }
 
             // Now handle the main ImageView thumbnails
-            final ImageView imageView;
+            final RecyclingImageView imageView;
             if (convertView == null) { // if it's not recycled, instantiate and initialize
                 imageView = new RecyclingImageView(mContext);
                 imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
                 imageView.setLayoutParams(mImageViewLayoutParams);
             } else { // Otherwise re-use the converted view
-                imageView = (ImageView) convertView;
+                imageView = (RecyclingImageView) convertView;
             }
 
             // Check the height matches our calculated column width
