@@ -107,8 +107,12 @@ public abstract class UrlImageWorker {
                     new AsyncDrawable(mResources, mLoadingBitmap, task);
             imageView.setImageDrawable(asyncDrawable);
 
-            int numThreads = DefaultSettings.getsInstance().getIntValue(DefaultSettings.THUMB_THREAD_NUMBER);
-            task.executeOnExecutor(mExecutor != null ?  mExecutor : Executors.newFixedThreadPool(numThreads));
+            if(mExecutor == null) {
+                int numThreads = DefaultSettings.getsInstance().getIntValue(DefaultSettings.THUMB_THREAD_NUMBER);
+                mExecutor = Executors.newFixedThreadPool(numThreads);
+            }
+
+            task.executeOnExecutor(mExecutor);
             //END_INCLUDE(execute_background_task)
         }
     }
@@ -265,8 +269,8 @@ public abstract class UrlImageWorker {
         return mExecutor;
     }
 
-    public void setExecutor(Executor mExecutor) {
-        //this.mExecutor = mExecutor;
+    public void setExecutor(Executor executor) {
+        mExecutor = executor;
     }
 
 
