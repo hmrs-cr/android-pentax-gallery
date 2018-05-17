@@ -304,6 +304,11 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         MenuItem clearSelectionItem = menu.findItem(R.id.clear_selection);
         clearSelectionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
 
+        MenuItem selectionItem = menu.findItem(R.id.select_all);
+        selectionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        selectionItem = menu.findItem(R.id.select_no_downloaded);
+        selectionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+
 
         SearchManager searchManager =
                 (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
@@ -343,12 +348,14 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             downloadItem.setVisible(false);
             MenuItem clearSelectionItem = mMenu.findItem(R.id.clear_selection);
             clearSelectionItem.setVisible(false);
-
+            MenuItem selectAllItem = mMenu.findItem(R.id.select_all);
+            selectAllItem.setVisible(false);
+            MenuItem selectNonDownloadedItem = mMenu.findItem(R.id.select_no_downloaded);
+            selectNonDownloadedItem.setVisible(false);
 
             boolean isFilterd = Images.hasArbitraryFiltered();
             boolean isShowDownloadQueueOnly = Images.isShowDownloadQueueOnly();
             boolean isShowDownloadedOnly = Images.isShowDownloadedOnly();
-
 
             MenuItem downloadFilterItem = mMenu.findItem(R.id.downloadFilter);
             downloadFilterItem.setVisible(!isFilterd);
@@ -432,9 +439,26 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             case R.id.clear_selection:
                 mAdapter.clearSelection();
                 return true;
+            case R.id.select_all:
+            case R.id.select_no_downloaded:
+                selectAllImages(itemId == R.id.select_no_downloaded);
+                return true;
 
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void selectAllImages(boolean ignoreAlreadyDownloaded) {
+        ImageList imageList = Images.getImageList();
+        mAdapter.startBulkOperatio();
+        mAdapter.clearSelection();
+        for(int c = 0; c < imageList.length(); c++) {
+            ImageData imageData = imageList.getImage(c);
+            if(!ignoreAlreadyDownloaded || !imageData.existsOnLocalStorage()) {
+                mAdapter.selectItem(imageData);
+            }
+        }
+        mAdapter.finishBulkOperation();
     }
 
     private void downloadSelected() {
@@ -561,6 +585,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
         private ArrayList<ImageData> mSelectionList = new ArrayList<>();
 
+        private volatile int mBulkCount;
+
         public ImageAdapter(Context context) {
             super();
             mContext = context;
@@ -586,15 +612,50 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             }
         }
 
+        public void startBulkOperatio() {
+            mBulkCount++;
+        }
+
+        public boolean isInBulkOperation() {
+            return mBulkCount > 0;
+        }
+
+        public void finishBulkOperation() {
+            if(mBulkCount > 0) {
+                if(--mBulkCount == 0) {
+                    updateMenuItems();
+                    notifyDataSetChanged();
+                    updateActionBarTitle();
+                }
+            }
+        }
+
+        public void selectItem(ImageData imageData) {
+            mSelectionList.add(imageData);
+            if(!isInBulkOperation()) {
+                updateMenuItems();
+                notifyDataSetChanged();
+                updateActionBarTitle();
+            }
+        }
         public void selectItem(int position) {
-            mSelectionList.add(getImageDataItem(position));
-            updateMenuItems();
-            notifyDataSetChanged();
+            selectItem(getImageDataItem(position));
+        }
+
+        public boolean isItemSelected(ImageData imageData) {
+            return mSelectionList.contains(imageData);
         }
 
         public boolean isItemSelected(int position) {
-            ImageData imageData = getImageDataItem(position);
-            return mSelectionList.contains(imageData);
+            return isItemSelected(getImageDataItem(position));
+        }
+
+        public void toggleItemSelection(ImageData imageData) {
+            if(isItemSelected(imageData)) {
+                removeItemFromSelection(imageData);
+            } else {
+                selectItem(imageData);
+            }
         }
 
         public void toggleItemSelection(int position) {
@@ -605,16 +666,26 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             }
         }
 
+        public void removeItemFromSelection(ImageData imageData) {
+            mSelectionList.remove(imageData);
+            if(!isInBulkOperation()) {
+                updateMenuItems();
+                notifyDataSetChanged();
+                updateActionBarTitle();
+            }
+        }
+
         public void removeItemFromSelection(int position) {
-            mSelectionList.remove(getImageDataItem(position));
-            updateMenuItems();
-            notifyDataSetChanged();
+            removeItemFromSelection(getImageDataItem(position));
         }
 
         public void clearSelection() {
             mSelectionList.clear();
-            updateMenuItems();
-            notifyDataSetChanged();
+            if(!isInBulkOperation()) {
+                updateMenuItems();
+                notifyDataSetChanged();
+                updateActionBarTitle();
+            }
         }
 
         public boolean isInSelectMode() {
@@ -684,14 +755,15 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             }
 
             // Now handle the main ImageView thumbnails
-            final RecyclingImageView imageView;
+            final ImageThumbWidget imageThumb;
             if (convertView == null) { // if it's not recycled, instantiate and initialize
-                imageView = new RecyclingImageView(mContext);
-                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                imageView.setLayoutParams(mImageViewLayoutParams);
+                imageThumb = new ImageThumbWidget(mContext);
+                imageThumb.init(mImageViewLayoutParams);
             } else { // Otherwise re-use the converted view
-                imageView = (RecyclingImageView) convertView;
+                imageThumb = (ImageThumbWidget) convertView;
             }
+
+            ImageView imageView = imageThumb.getmImageView();
 
             // Check the height matches our calculated column width
             if (imageView.getLayoutParams().height != mItemHeight) {
@@ -706,8 +778,14 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             mImageFetcher.loadImage(imageData.getThumbUrl(), imageData, imageView);
             //mImageFetcher.loadImageThumb(imageData, imageView);
 
+            if(isItemSelected(imageData)) {
+                imageThumb.showAsSelected();
+            } else {
+                imageThumb.hideBatch();
+            }
+
           
-            return imageView;
+            return imageThumb;
             //END_INCLUDE(load_gridview_item)
         }
 
@@ -746,7 +824,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 actionBar.setTitle(cameraData.getDisplayName());
                 StorageData storageData = Images.getCurrentStorage();
 
-                if(Images.isShowDownloadQueueOnly()) {
+                if(mAdapter.isInSelectMode()) {
+                    actionBar.setSubtitle(String.format("%d SELECTED", mAdapter.getSelectedItems().size()));
+                } else if(Images.isShowDownloadQueueOnly()) {
                     actionBar.setSubtitle("DOWNLOAD QUEUE");
                 } else if(Images.isShowDownloadedOnly()) {
                     actionBar.setSubtitle(String.format("%s (%d/%s) - Downloaded", storageData.name, Images.imageCount(), storageData.format).toUpperCase());

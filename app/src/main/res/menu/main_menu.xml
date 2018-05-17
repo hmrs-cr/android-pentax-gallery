@@ -78,6 +78,16 @@
             android:title="@string/download" />
 
         <item
+            android:id="@+id/select_all"
+            android:icon="@drawable/ic_done_all_white_24dp"
+            android:title="@string/select_all" />
+
+        <item
+            android:id="@+id/select_no_downloaded"
+            android:icon="@drawable/ic_done_white_24dp"
+            android:title="@string/select_non_downloaded" />
+
+        <item
             android:id="@+id/clear_selection"
             android:icon="@drawable/ic_clear_white_24dp"
             android:title="@string/clear_selection" />

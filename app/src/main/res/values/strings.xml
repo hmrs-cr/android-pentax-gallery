@@ -32,4 +32,6 @@
     <string name="in_queue">In Queue</string>
     <string name="clear_selection">Clear selection</string>
     <string name="added_to_download_queue">%d images added to download queue</string>
+    <string name="select_all">Select All</string>
+    <string name="select_non_downloaded">Select non-downloaded</string>
 </resources>
