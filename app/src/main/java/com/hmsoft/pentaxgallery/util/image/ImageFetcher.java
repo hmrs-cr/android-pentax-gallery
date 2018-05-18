@@ -310,6 +310,7 @@ public class ImageFetcher extends ImageResizer {
         return false;
     }
 
+
     /**
      * Workaround for bug pre-Froyo, see here for more info:
      * http://android-developers.blogspot.com/2011/09/androids-http-clients.html

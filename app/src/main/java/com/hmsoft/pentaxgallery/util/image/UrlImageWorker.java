@@ -340,7 +340,7 @@ public abstract class UrlImageWorker {
                     mImageCache.addBitmapToCache(mUrl, drawable);
                 }
             } else {
-                bitmap = BitmapFactory.decodeResource(mResources, R.drawable.ic_filter_list_white_24dp);
+                bitmap = BitmapFactory.decodeResource(mResources, R.drawable.error_photo);
                 drawable = new BitmapDrawable(mResources, bitmap);
             }
 

@@ -608,7 +608,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
                mSwipeRefreshLayout.setProgressViewEndTarget(false, mActionBarHeight + 16);
                mSwipeRefreshLayout.setProgressViewOffset(false, statusBarHeight + 8, mActionBarHeight + 8);
-               mSwipeRefreshLayout.setSize(SwipeRefreshLayout.LARGE);
             }
         }
 
