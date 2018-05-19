@@ -64,6 +64,7 @@ import com.hmsoft.pentaxgallery.camera.model.StorageData;
 import com.hmsoft.pentaxgallery.data.provider.DownloadQueue;
 import com.hmsoft.pentaxgallery.data.provider.Images;
 import com.hmsoft.pentaxgallery.util.DefaultSettings;
+import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 import com.hmsoft.pentaxgallery.util.Utils;
 import com.hmsoft.pentaxgallery.util.cache.CacheUtils;
@@ -187,7 +188,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                                 mAdapter.setNumColumns(numColumns);
                                 mAdapter.setItemHeight(columnWidth);
                                 if (BuildConfig.DEBUG) {
-                                    Log.d(TAG, "onCreateView - numColumns set to " + numColumns);
+                                    Logger.debug(TAG, "onCreateView - numColumns set to " + numColumns);
                                 }
                                 mGridView.getViewTreeObserver()
                                         .removeOnGlobalLayoutListener(this);

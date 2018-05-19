@@ -36,6 +36,7 @@ import android.widget.ImageView;
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.util.DefaultSettings;
+import com.hmsoft.pentaxgallery.util.Logger;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.Executor;
@@ -218,7 +219,7 @@ public abstract class UrlImageWorker {
             bitmapWorkerTask.cancel(true);
             if (BuildConfig.DEBUG) {
                 final Object bitmapData = bitmapWorkerTask.mUrl;
-                Log.d(TAG, "cancelWork - cancelled work for " + bitmapData);
+                Logger.debug(TAG, "cancelWork - cancelled work for " + bitmapData);
             }
         }
     }
@@ -238,7 +239,7 @@ public abstract class UrlImageWorker {
             if (bitmapData == null || !bitmapData.equals(url)) {
                 bitmapWorkerTask.cancel(true);
                 if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "cancelPotentialWork - cancelled work for " + url);
+                    Logger.debug(TAG, "cancelPotentialWork - cancelled work for " + url);
                 }
             } else {
                 // The same work is already in progress.
@@ -297,7 +298,7 @@ public abstract class UrlImageWorker {
         protected BitmapDrawable doInBackground(Void... params) {
             //BEGIN_INCLUDE(load_bitmap_in_background)
             if (BuildConfig.DEBUG) {
-                Log.d(TAG, "doInBackground - start work " + mParam);
+                Logger.debug(TAG, "doInBackground - start work " + mParam);
             }
 
             Bitmap bitmap = null;
@@ -345,7 +346,7 @@ public abstract class UrlImageWorker {
             }
 
             if (BuildConfig.DEBUG) {
-                Log.d(TAG, "doInBackground - finished work " + mParam);
+                Logger.debug(TAG, "doInBackground - finished work " + mParam);
             }
 
             return drawable;
@@ -367,7 +368,7 @@ public abstract class UrlImageWorker {
             final ImageView imageView = getAttachedImageView();
             if (value != null && imageView != null) {
                 if (BuildConfig.DEBUG) {
-                    Log.d(TAG, "onPostExecute - setting bitmap");
+                    Logger.debug(TAG, "onPostExecute - setting bitmap");
                 }
                 success = true;
                 setImageDrawable(imageView, value);

@@ -18,15 +18,14 @@ package com.hmsoft.pentaxgallery.util.cache;
 
 import android.content.Context;
 import android.os.Environment;
-import android.util.Log;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
+import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.logging.Logger;
 
 public class CacheUtils {
 
@@ -76,7 +75,7 @@ public class CacheUtils {
                             sMiscDiskCache = DiskLruCache.open(sMiscCacheDir, 1, 1, MISC_CACHE_SIZE);
                             //CacheUtils.setDiskCache(sMiscDiskCache);
                             if (BuildConfig.DEBUG) {
-                                Log.d(TAG, "Misc cache initialized");
+                                Logger.debug(TAG, "Misc cache initialized");
                             }
                         } catch (IOException e) {
                             sMiscDiskCache = null;
@@ -98,10 +97,10 @@ public class CacheUtils {
                         try {
                             sMiscDiskCache.flush();
                             if (BuildConfig.DEBUG) {
-                                Log.d(TAG, "Misc cache flushed");
+                                Logger.debug(TAG, "Misc cache flushed");
                             }
                         } catch (IOException e) {
-                            Log.e(TAG, "flush - " + e);
+                            Logger.error(TAG, "flush - " + e);
                         }
                     }
                 }
@@ -120,11 +119,11 @@ public class CacheUtils {
                                 sMiscDiskCache.close();
                                 sMiscDiskCache = null;
                                 if (BuildConfig.DEBUG) {
-                                    Log.d(TAG, "Misc cache closed");
+                                    Logger.debug(TAG, "Misc cache closed");
                                 }
                             }
                         } catch (IOException e) {
-                            Log.e(TAG, "closeCacheInternal - " + e);
+                            Logger.error(TAG, "closeCacheInternal - " + e);
                         }
                     }
                 }
@@ -194,7 +193,7 @@ public class CacheUtils {
             DiskLruCache.Editor editor = lruCache.edit(keyName);
             editor.set(0, data);
             editor.commit();
-            if(BuildConfig.DEBUG) Log.d(TAG, "SaveString: " + keyName + "=" +data);
+            if(BuildConfig.DEBUG) Logger.debug(TAG, "SaveString: " + keyName + "=" +data);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -218,7 +217,7 @@ public class CacheUtils {
         if(snapshot != null) {
             try {
                 String data = snapshot.getString(0);
-                if(BuildConfig.DEBUG) Log.d(TAG, "GetString: " + keyName + "=" +data);
+                if(BuildConfig.DEBUG) Logger.debug(TAG, "GetString: " + keyName + "=" +data);
                 return data;
             } catch (IOException e) {
                 e.printStackTrace();

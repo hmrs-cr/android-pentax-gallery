@@ -28,6 +28,7 @@ import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
 import com.hmsoft.pentaxgallery.camera.util.HttpHelper;
 import com.hmsoft.pentaxgallery.util.DefaultSettings;
+import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 import com.hmsoft.pentaxgallery.util.cache.CacheUtils;
 
@@ -153,12 +154,12 @@ public class PentaxController implements CameraController {
                     String response = CacheUtils.getString(cacheKey);
                     if (response != null) {
                         imageMetaData = new ImageMetaData(response);
-                        if(BuildConfig.DEBUG) Log.d(imageData.fileName, "Image metadata loaded from disk cache");
+                        if(BuildConfig.DEBUG) Logger.debug(imageData.fileName, "Image metadata loaded from disk cache");
                     } else {
                         response = getImageInfoJson(imageData);
                         if (response != null) {
                             imageMetaData = new ImageMetaData(response);
-                            if(BuildConfig.DEBUG) Log.d(imageData.fileName, "Image metadata loaded from camera");
+                            if(BuildConfig.DEBUG) Logger.debug(imageData.fileName, "Image metadata loaded from camera");
                             if (imageMetaData.errCode == HttpURLConnection.HTTP_OK) {
                                 CacheUtils.saveString(cacheKey, response);
                             }

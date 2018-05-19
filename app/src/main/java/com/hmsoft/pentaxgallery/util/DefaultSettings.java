@@ -69,7 +69,7 @@ public class DefaultSettings {
     public void saveDefault() {
         if(mProperties != null) {
             mProperties.setProperty(DOWNLOAD_LOCATION, MyApplication.ApplicationContext.getLocalDownloadsPath().getAbsolutePath());
-            mProperties.setProperty(THUMB_THREAD_NUMBER, String.valueOf(Runtime.getRuntime().availableProcessors()));
+            mProperties.setProperty(THUMB_THREAD_NUMBER, "1");
             mProperties.setProperty(DEFAULT_CONNECT_TIME_OUT, "3");
             mProperties.setProperty(DEFAULT_READ_TIME_OUT, "30");
 

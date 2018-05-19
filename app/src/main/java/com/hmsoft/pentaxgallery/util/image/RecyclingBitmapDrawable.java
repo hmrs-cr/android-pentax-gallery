@@ -22,6 +22,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.util.Log;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
+import com.hmsoft.pentaxgallery.util.Logger;
 
 
 /**
@@ -93,7 +94,7 @@ public class RecyclingBitmapDrawable extends BitmapDrawable {
         if (mCacheRefCount <= 0 && mDisplayRefCount <= 0 && mHasBeenDisplayed
                 && hasValidBitmap()) {
             if (BuildConfig.DEBUG) {
-                Log.d(TAG, "No longer being used or cached so recycling. "
+                Logger.debug(TAG, "No longer being used or cached so recycling. "
                         + toString());
             }
 
