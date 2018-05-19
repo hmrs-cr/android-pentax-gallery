@@ -16,8 +16,6 @@ public class ImageThumbWidget extends RelativeLayout {
     private ImageView mBatchImageView;
     private Context mContext;
 
-    ViewGroup.LayoutParams mViewLayoutParams;
-
     public ImageThumbWidget(Context context) {
         super(context);
         mContext = context;
@@ -42,7 +40,7 @@ public class ImageThumbWidget extends RelativeLayout {
             int px = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 24, r.getDisplayMetrics());
 
             mBatchImageView.setLayoutParams(new ViewGroup.LayoutParams(px, px));
-            //mBatchImageView.setBackgroundColor(Color.rgb(100, 100, 50));
+
             addView(mBatchImageView);
         }
 

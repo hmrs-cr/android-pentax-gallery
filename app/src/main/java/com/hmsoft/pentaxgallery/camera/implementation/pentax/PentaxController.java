@@ -183,4 +183,12 @@ public class PentaxController implements CameraController {
             }
         });
     }
+
+    public CameraData getDefaultCameraData() {
+
+        String ssid = "PENTAX_69C93F";
+        String key = "A469C93F";
+
+        return new CameraData(ssid, key);
+    }
 }

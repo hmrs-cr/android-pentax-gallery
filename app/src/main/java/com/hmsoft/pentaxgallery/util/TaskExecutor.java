@@ -68,10 +68,10 @@ public final class TaskExecutor
 		sExecuteOnUIHandler.postDelayed(runnable, seconds * 1000);
 	}
 
-	public static void sleep(int seconds) {
-		if(seconds < 1) return;
+	public static void sleep(long milis) {
+		if(milis < 1) return;
 		try {
-			Thread.sleep(seconds * 1000);
+			Thread.sleep(milis);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}

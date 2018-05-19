@@ -40,6 +40,18 @@ public class CameraData extends BaseResponse {
         this(new JSONTokener(response));
     }
 
+    public CameraData(String ssid, String key) {
+        super(200, "");
+
+        model = null;
+        firmwareVersion = null;
+        macAddress = null;
+        serialNo = null;
+
+        this.key = key;
+        this.ssid = ssid;
+    }
+
     public CameraData(JSONTokener jsonTokener) throws JSONException {
         this(new JSONObject(jsonTokener));
     }

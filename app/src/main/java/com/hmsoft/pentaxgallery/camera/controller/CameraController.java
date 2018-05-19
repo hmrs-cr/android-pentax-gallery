@@ -61,4 +61,7 @@ public interface CameraController {
     void getImageInfo(final ImageData imageData, final CameraController.OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
 
 
+    CameraData getDefaultCameraData();
+
+
 }

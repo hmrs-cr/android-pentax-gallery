@@ -33,7 +33,7 @@ import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.Html;
-import android.util.Log;
+import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -54,11 +54,12 @@ import android.widget.SearchView;
 import android.widget.Toast;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
+import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.ControllerFactory;
-import com.hmsoft.pentaxgallery.camera.model.ImageList;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
+import com.hmsoft.pentaxgallery.camera.model.ImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageListData;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
 import com.hmsoft.pentaxgallery.data.provider.DownloadQueue;
@@ -67,9 +68,10 @@ import com.hmsoft.pentaxgallery.util.DefaultSettings;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 import com.hmsoft.pentaxgallery.util.Utils;
+import com.hmsoft.pentaxgallery.util.WifiHelper;
 import com.hmsoft.pentaxgallery.util.cache.CacheUtils;
-import com.hmsoft.pentaxgallery.util.image.ImageFetcher;
 import com.hmsoft.pentaxgallery.util.image.ImageCache;
+import com.hmsoft.pentaxgallery.util.image.ImageFetcher;
 import com.hmsoft.pentaxgallery.util.image.ImageRotatorFetcher;
 
 import java.util.ArrayList;
@@ -511,16 +513,12 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     private void syncPictureList(int storageIndex, boolean ignoreCache, boolean showProgressBar) {
         if(mImageListTask == null) {
-            if(ControllerFactory.DefaultController.connectToCamera()) {
-                if(showProgressBar) {
-                    mProgressBar.setVisibility(View.VISIBLE);
-                    mSwipeRefreshLayout.setVisibility(View.GONE);
-                }
-                mImageListTask = new ImageListTask();
-                mImageListTask.execute(ignoreCache, storageIndex);
-            } else {
-                showNoConnectedDialog();
+            if(showProgressBar) {
+                mProgressBar.setVisibility(View.VISIBLE);
+                mSwipeRefreshLayout.setVisibility(View.GONE);
             }
+            mImageListTask = new ImageListTask();
+            mImageListTask.execute(ignoreCache, storageIndex);
         }
     }
 
@@ -827,7 +825,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 if(mAdapter.isInSelectMode()) {
                     actionBar.setSubtitle(String.format("%d SELECTED", mAdapter.getSelectedItems().size()));
                 } else if(Images.isShowDownloadQueueOnly()) {
-                    actionBar.setSubtitle("DOWNLOAD QUEUE");
+                    actionBar.setSubtitle(String.format("DOWNLOAD QUEUE (%d)", Images.imageCount()));
                 } else if(Images.isShowDownloadedOnly()) {
                     actionBar.setSubtitle(String.format("%s (%d/%s) - Downloaded", storageData.name, Images.imageCount(), storageData.format).toUpperCase());
                 } else {
@@ -841,33 +839,65 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
         private boolean mCameraConnected;
 
+
+        private CameraData connectCamera() {
+            CameraData cameraData = Images.getCameraData();
+            mCameraConnected = cameraData != null;
+
+            int retryes = 2;
+            while(!mCameraConnected && retryes-- > 0) {
+
+                if(ControllerFactory.DefaultController.connectToCamera()) {
+                    cameraData = ControllerFactory.DefaultController.getDeviceInfo(true);
+                    mCameraConnected = cameraData != null;
+                }
+
+                if (!mCameraConnected) {
+                    cameraData = ControllerFactory.DefaultController.getDeviceInfo(false);
+
+                    String ssid = null;
+                    String key = null;
+
+                    if (cameraData != null) {
+                        ssid = cameraData.ssid;
+                        key = cameraData.key;
+                    } else {
+                        CameraData defaultCameraData = ControllerFactory.DefaultController.getDefaultCameraData();
+                        ssid = defaultCameraData.ssid;
+                        key = defaultCameraData.key;
+                    }
+
+                    if(!TextUtils.isEmpty(ssid) && !TextUtils.isEmpty(key)) {
+                        // Try to connect to camera WiFi
+                        WifiHelper.turnWifiOn(MyApplication.ApplicationContext, 1500);
+                        boolean success = WifiHelper.connectToWifi(MyApplication.ApplicationContext, ssid, key);
+                        if (!success) {
+                            break;
+                        }
+                    }
+                }
+            }
+            return cameraData;
+        }
+
         @Override
         protected ImageListData doInBackground(Object... params) {
-            boolean ignoreCache = params.length > 0 ? (Boolean)params[0] : false;
-            int storageIndex = params.length > 1 ? (int)params[1] : 0;
+
+            boolean ignoreCache = params.length > 0 ? (Boolean) params[0] : false;
+            int storageIndex = params.length > 1 ? (int) params[1] : 0;
 
 
             DefaultSettings.getsInstance().load();
 
+            CameraData cameraData = connectCamera();
 
-            CameraData cameraData = Images.getCameraData();
-            mCameraConnected = cameraData != null;
-
-            if(!mCameraConnected) {
-                cameraData = ControllerFactory.DefaultController.getDeviceInfo(true);
-                mCameraConnected = cameraData != null;
-            }
-
-            if(!mCameraConnected) {
-                cameraData = ControllerFactory.DefaultController.getDeviceInfo(false);
-            }
 
             Images.setCameraData(cameraData);
             Images.setCurrentStorageIndex(storageIndex);
 
             ImageListData imageListResponse = ControllerFactory.DefaultController.getImageList(Images.getCurrentStorage(), mCameraConnected || ignoreCache);
 
-            if(imageListResponse != null) {
+            if (imageListResponse != null) {
                 DownloadQueue.loadFromCache(imageListResponse.dirList, ignoreCache);
             }
 
