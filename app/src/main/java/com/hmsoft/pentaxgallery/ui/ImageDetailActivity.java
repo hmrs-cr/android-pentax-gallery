@@ -227,8 +227,20 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
             case R.id.pic_info:
                 showInfoDialog();
                 return true;
+            case R.id.open_url:
+                openUrl();
+                return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void openUrl() {
+        int i = mPager.getCurrentItem();
+        ImageData imageData = Images.getImageList().getImage(i);
+        String downloadUrl = imageData.getDownloadUrl();
+
+        Intent intent = new Intent(Intent.ACTION_VIEW).setData(Uri.parse(downloadUrl));
+        startActivity(intent);
     }
 
     private void showInfoDialog() {

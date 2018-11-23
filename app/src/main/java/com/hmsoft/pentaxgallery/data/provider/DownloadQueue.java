@@ -230,7 +230,6 @@ public class DownloadQueue {
         request.setDescription(context.getString(R.string.download_title))
                 .setTitle(imageData.fileName)
                 .setAllowedOverMetered(false)
-                .setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI)
                 .setDestinationUri(Uri.fromFile(imageData.getLocalPath()));
 
         if (sDownloadFinishedReceiver == null) {
