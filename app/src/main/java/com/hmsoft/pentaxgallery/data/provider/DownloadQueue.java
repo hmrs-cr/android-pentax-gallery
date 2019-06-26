@@ -252,12 +252,38 @@ public class DownloadQueue {
     }
 
     private static class DownloadFinishedReceiver extends BroadcastReceiver {
+
+
+        private int getStatus(Context context, long id) {
+            DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
+            Cursor c = downloadManager.query(new DownloadManager.Query().setFilterById(id));
+
+            int status = -1;
+            //int reason = -1;
+
+            if (c.moveToNext()) {
+                int i = c.getColumnIndex(DownloadManager.COLUMN_STATUS);
+                if (i > -1) {
+                    status = c.getInt(i);
+                }
+
+                /*i = c.getColumnIndex(DownloadManager.COLUMN_REASON);
+                if (i > -1) {
+                    reason = c.getInt(i);
+                }*/
+            }
+
+            return status;
+        }
+
         @Override
         public void onReceive(Context context, Intent intent) {
             long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0);
             DownloadEntry downloadEntry = DownloadQueue.findDownloadEntry(id);
             if (downloadEntry != null) {
-                DownloadQueue.remove(downloadEntry, false);
+                if(getStatus(context, id) == DownloadManager.STATUS_SUCCESSFUL) {
+                    DownloadQueue.remove(downloadEntry, false);
+                }
                 DownloadQueue.processDownloadQueue();
             }
         }

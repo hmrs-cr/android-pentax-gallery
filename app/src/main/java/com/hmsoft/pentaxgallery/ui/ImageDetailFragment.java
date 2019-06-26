@@ -25,8 +25,11 @@ import android.support.v4.view.GestureDetectorCompat;
 import android.view.ContextMenu;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -49,6 +52,9 @@ public class ImageDetailFragment extends Fragment implements ImageFetcher.OnImag
         GestureDetector.OnDoubleTapListener {
 
     private static final String IMAGE_DATA_INDEX = "extra_image_index";
+
+    private ScaleGestureDetector mScaleGestureDetector;
+    private float mScaleFactor = 1.0f;
 
     private ImageView mImageView;
     private ImageData mImageData;
@@ -123,7 +129,30 @@ public class ImageDetailFragment extends Fragment implements ImageFetcher.OnImag
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 mDetector.onTouchEvent(event);
+                mScaleGestureDetector.onTouchEvent(event);
                 return true;
+            }
+        });
+
+        mScaleGestureDetector = new ScaleGestureDetector(this.getContext(), new ScaleGestureDetector.OnScaleGestureListener() {
+            @Override
+            public boolean onScale(ScaleGestureDetector detector) {
+                mScaleFactor *= mScaleGestureDetector.getScaleFactor();
+                mScaleFactor = Math.max(0.1f,
+                        Math.min(mScaleFactor, 10.0f));
+                mImageView.setScaleX(mScaleFactor);
+                mImageView.setScaleY(mScaleFactor);
+                return true;
+            }
+
+            @Override
+            public boolean onScaleBegin(ScaleGestureDetector detector) {
+                return false;
+            }
+
+            @Override
+            public void onScaleEnd(ScaleGestureDetector detector) {
+
             }
         });
 
@@ -135,6 +164,7 @@ public class ImageDetailFragment extends Fragment implements ImageFetcher.OnImag
         super.onCreateContextMenu(menu, v, menuInfo);
         MenuInflater inflater = getActivity().getMenuInflater();
         inflater.inflate(R.menu.detail_menu, menu);
+
     }
 
     @Override
