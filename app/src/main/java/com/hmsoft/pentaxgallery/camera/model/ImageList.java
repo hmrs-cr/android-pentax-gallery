@@ -97,6 +97,17 @@ public abstract class ImageList {
         return null;
     }
 
+    public String getFlaggedList() {
+        StringBuilder sb = new StringBuilder();
+        for (int c = 0; c < mImageList.size(); c++) {
+            ImageData imageData = getImage(c);
+            if (imageData.isFlagged()) {
+                sb.append(imageData.uniqueFileName).append("\n");
+            }
+        }
+        return sb.toString();
+    }
+
     public void setStorageData(StorageData storage) {
         mStorage = storage;
     }

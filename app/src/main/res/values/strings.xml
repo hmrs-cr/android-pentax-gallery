@@ -35,4 +35,6 @@
     <string name="select_all">Select All</string>
     <string name="select_non_downloaded">Select non-downloaded</string>
     <string name="open_url">Open URL</string>
+    <string name="flag">Flag</string>
+    <string name="flagged">Flagged</string>
 </resources>

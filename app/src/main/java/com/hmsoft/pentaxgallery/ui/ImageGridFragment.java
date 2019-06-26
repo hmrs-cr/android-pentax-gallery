@@ -256,7 +256,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     @Override
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-        if(Images.isShowDownloadQueueOnly() || Images.isShowDownloadedOnly()) {
+        if(Images.isShowDownloadQueueOnly() || Images.isShowDownloadedOnly() || Images.isShowFlaggedOnly()) {
             return true;
         }
 
@@ -359,9 +359,13 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             boolean isFilterd = Images.hasArbitraryFiltered();
             boolean isShowDownloadQueueOnly = Images.isShowDownloadQueueOnly();
             boolean isShowDownloadedOnly = Images.isShowDownloadedOnly();
+            boolean isFlaggedOnly = Images.isShowFlaggedOnly();
 
             MenuItem downloadFilterItem = mMenu.findItem(R.id.downloadFilter);
             downloadFilterItem.setVisible(!isFilterd);
+
+            MenuItem flaggedOnlyItem = mMenu.findItem(R.id.view_flagged_only);
+            flaggedOnlyItem.setChecked(isFlaggedOnly);
 
             MenuItem downloadsOnlyItem = mMenu.findItem(R.id.view_downloads_only);
             downloadsOnlyItem.setChecked(isShowDownloadQueueOnly);
@@ -373,7 +377,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             clearSearchItem.setVisible(isFilterd && !isShowDownloadQueueOnly);
 
             MenuItem searchItem = mMenu.findItem(R.id.search);
-            searchItem.setVisible(!Images.isShowDownloadQueueOnly());
+            searchItem.setVisible(!Images.isShowDownloadQueueOnly() && !Images.isShowFlaggedOnly());
 
 
             CameraData cameraData = Images.getCameraData();
@@ -401,6 +405,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         mSearchView.setIconified(true);
         Images.setShowDownloadQueueOnly(false);
         Images.setShowDownloadedOnly(false);
+        Images.setShowFlaggedOnly(false);
     }
 
     @Override
@@ -409,11 +414,13 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         switch (itemId) {
             case R.id.view_downloaded_only:
             case R.id.view_downloads_only:
+            case R.id.view_flagged_only:
                 mSearchView.setQuery("", false);
                 mSearchView.setIconified(true);
                 item.setChecked(!item.isChecked());
                 Images.setShowDownloadQueueOnly(item.isChecked() && itemId == R.id.view_downloads_only);
                 Images.setShowDownloadedOnly(item.isChecked() && itemId == R.id.view_downloaded_only);
+                Images.setShowFlaggedOnly(item.isChecked() && itemId == R.id.view_flagged_only);
                 mAdapter.notifyDataSetChanged();
                 updateMenuItems();
                 updateActionBarTitle();
@@ -899,6 +906,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
             if (imageListResponse != null) {
                 DownloadQueue.loadFromCache(imageListResponse.dirList, ignoreCache);
+                /*****/
             }
 
             return imageListResponse;

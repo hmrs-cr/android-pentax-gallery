@@ -42,6 +42,11 @@
             android:title="@string/downloads_filter">
             <menu>
                 <item
+                    android:id="@+id/view_flagged_only"
+                    android:checkable="true"
+                    android:icon="@drawable/ic_filter_list_white_24dp"
+                    android:title="@string/flagged"/>
+                <item
                     android:id="@+id/view_downloads_only"
                     android:checkable="true"
                     android:icon="@drawable/ic_filter_list_white_24dp"

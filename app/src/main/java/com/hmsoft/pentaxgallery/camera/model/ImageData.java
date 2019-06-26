@@ -34,6 +34,8 @@ public abstract class ImageData {
 
     protected Boolean mExistsOnLocalStorage;
 
+    private boolean mIsFlagged;
+
     public ImageData(String directory, String fileName) {
         this.directory = directory;
         this.fileName = fileName;
@@ -93,5 +95,13 @@ public abstract class ImageData {
 
     public void setStorageData(StorageData storageData) {
         mStorageData = storageData;
+    }
+
+    public boolean isFlagged() {
+        return mIsFlagged;
+    }
+
+    public void setIsFlagged(boolean mIsFlagged) {
+        this.mIsFlagged = mIsFlagged;
     }
 }

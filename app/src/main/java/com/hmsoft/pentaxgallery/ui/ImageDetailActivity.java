@@ -190,6 +190,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
             MenuItem cancelDownloadItem = mMenu.findItem(R.id.cancelDownload);
             MenuItem downloadNowItem = mMenu.findItem(R.id.downloadNow);
             MenuItem shareItem = mMenu.findItem(R.id.share);
+            MenuItem flagItem = mMenu.findItem(R.id.flag);
 
             cancelDownloadItem.setVisible(isInDownloadQueue);
             downloadNowItem.setVisible(isInDownloadQueue && !isDownloading);
@@ -198,7 +199,14 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
             shareItem.setVisible(isDownloaded);
             downloadItem.setVisible(!isDownloaded && !isInDownloadQueue);
             downloadAgainItem.setVisible(isDownloaded && !isInDownloadQueue);
+
+            flagItem.setChecked(imageData.isFlagged());
+            updateFlaggedBtnState(flagItem);
         }
+    }
+
+    private void updateFlaggedBtnState(MenuItem flagItem) {
+        flagItem.setIcon(flagItem.isChecked() ? R.drawable.ic_done_all_white_24dp : R.drawable.ic_done_white_24dp);
     }
 
 
@@ -230,8 +238,23 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
             case R.id.open_url:
                 openUrl();
                 return true;
+            case R.id.flag:
+                toggleFlag(item);
+                return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void toggleFlag(MenuItem item) {
+        item.setChecked(!item.isChecked());
+        setFlagged(item.isChecked());
+        updateFlaggedBtnState(item);
+    }
+
+    private void setFlagged(boolean flagged) {
+        int i = mPager.getCurrentItem();
+        ImageData imageData = Images.getImageList().getImage(i);
+        imageData.setIsFlagged(flagged);
     }
 
     private void openUrl() {
@@ -326,6 +349,9 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
         shareItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         MenuItem infoItem = menu.findItem(R.id.pic_info);
         infoItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        MenuItem flagItem = menu.findItem(R.id.flag);
+        flagItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        flagItem.setCheckable(true);
         
         mMenu = menu;
         
@@ -346,10 +372,8 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
 
     @Override
     public boolean onDoubleTap(MotionEvent e) {
-        ImageData imageData = Images.getImageList().getImage(mPager.getCurrentItem());
-        if(!imageData.existsOnLocalStorage()) {
-            download();
-        }
+        MenuItem flagItem = mMenu.findItem(R.id.flag);
+        toggleFlag(flagItem);
         return false;
     }
 

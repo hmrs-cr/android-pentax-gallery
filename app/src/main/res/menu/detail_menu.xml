@@ -18,6 +18,13 @@
     xmlns:android="http://schemas.android.com/apk/res/android" >
 
 
+
+    <item
+        android:id="@+id/flag"
+        android:title="@string/flag"
+        android:icon="@drawable/ic_done_white_24dp"
+        app:showAsAction="ifRoom"/>
+
     <item
         android:id="@+id/gallery_find"
         android:icon="@drawable/ic_photo_library_white_24dp"
@@ -41,7 +48,7 @@
         android:id="@+id/download"
         android:icon="@drawable/ic_cloud_download_white_24dp"
         android:title="@string/download"
-        app:showAsAction="ifRoom"/>
+        app:showAsAction="never"/>
 
     <item
         android:id="@+id/pic_info"

@@ -26,12 +26,16 @@ public class Images {
     private static CameraData sCameraData;
     private static int sCurrentStorageIndex;
 
+    private static boolean sShowFlaggedOnly = false;
     private static boolean sShowDownloadQueueOnly = false;
     private static FilteredImageList sFilteredImageList = null;
     private static boolean sShowDownloadedOnly;
 
 
     public static void clearFilter() {
+        sShowFlaggedOnly = false;
+        sShowDownloadQueueOnly = false;
+        sShowDownloadedOnly = false;
         setFilter(null);
     }
 
@@ -108,6 +112,21 @@ public class Images {
             sFilteredImageList = null;
         }
         sShowDownloadedOnly = showDownloadedOnly;
+    }
+
+    public static boolean isShowFlaggedOnly() {
+        return sShowFlaggedOnly;
+    }
+
+    public static void setShowFlaggedOnly(boolean showFlaggedOnly) {
+        if(showFlaggedOnly) {
+            sShowFlaggedOnly = false;
+            setFilter(FilteredImageList.FILTER_FLAGGED);
+
+        } else {
+            sFilteredImageList = null;
+        }
+        sShowFlaggedOnly = showFlaggedOnly;
     }
 
     public static StorageData getCurrentStorage() {
