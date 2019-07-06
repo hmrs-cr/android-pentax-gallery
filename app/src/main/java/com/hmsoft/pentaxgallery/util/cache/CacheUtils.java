@@ -225,4 +225,29 @@ public class CacheUtils {
         }
         return null;
     }
+
+    private static boolean keyExists(DiskLruCache lruCache, String keyName) {
+        DiskLruCache.Snapshot snapshot = null;
+        try {
+            snapshot = lruCache.get(keyName);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return snapshot != null;
+    }
+
+    public static boolean keyExists(String keyName) {
+        return keyExists(sMiscDiskCache, keyName);
+    }
+
+    public static void remove(String keyName) {
+        if(sMiscDiskCache != null) {
+            waitUntilCacheReady();
+            try {
+                sMiscDiskCache.remove(keyName);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }

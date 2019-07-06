@@ -22,6 +22,7 @@ public class FilteredImageList extends ImageList {
     public static final String FILTER_FLAGGED = "____FILTER_FLAGGED";
 
     private final ImageList mOriginalImageList;
+    private String mFilter;
 
     public FilteredImageList(ImageList imageList) {
         mOriginalImageList = imageList;
@@ -32,8 +33,14 @@ public class FilteredImageList extends ImageList {
         setFilter(filter);
     }
 
+
+    public void rebuildFilter() {
+        setFilter(mFilter);
+    }
+
     public void setFilter(String filter) {
         mImageList.clear();
+        mFilter = filter;
         if(filter == null || filter.length() == 0) {
             mImageList.addAll(mOriginalImageList.mImageList);
         } else {

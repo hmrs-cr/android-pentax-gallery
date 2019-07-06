@@ -34,6 +34,8 @@ public abstract class ImageData {
 
     protected Boolean mExistsOnLocalStorage;
 
+    public final String flaggedCacheKey;
+
     private boolean mIsFlagged;
 
     public ImageData(String directory, String fileName) {
@@ -41,6 +43,7 @@ public abstract class ImageData {
         this.fileName = fileName;
         this.fullPath = directory + "/" + fileName;
         this.uniqueFileName = directory + "_" + fileName;
+        this.flaggedCacheKey = uniqueFileName.substring(0, uniqueFileName.lastIndexOf('.')) + ".flagged";
     }
 
     public boolean match(String text) {

@@ -58,6 +58,7 @@ import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.ControllerFactory;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
+import com.hmsoft.pentaxgallery.camera.model.FilteredImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageListData;
@@ -207,8 +208,16 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         super.onResume();
         mImageFetcher.setCancel(false);
         mImageFetcher.setExitTasksEarly(false);
+
+        ImageList imageList = Images.getImageList();
+
+        if(imageList instanceof FilteredImageList) {
+            ((FilteredImageList)imageList).rebuildFilter();
+        }
+
         mAdapter.notifyDataSetChanged();
-        if(Images.getImageList() == null) {
+
+        if(imageList == null) {
             syncPictureList(false);
         } else {
             mProgressBar.setVisibility(View.GONE);
@@ -312,6 +321,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         selectionItem = menu.findItem(R.id.select_no_downloaded);
         selectionItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
 
+        MenuItem shareItem = menu.findItem(R.id.share);
+        shareItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+
 
         SearchManager searchManager =
                 (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
@@ -376,6 +388,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             MenuItem clearSearchItem = mMenu.findItem(R.id.clear_search);
             clearSearchItem.setVisible(isFilterd && !isShowDownloadQueueOnly);
 
+            MenuItem shareItem = mMenu.findItem(R.id.share);
+            shareItem.setVisible(isFilterd && isFlaggedOnly);
+
             MenuItem searchItem = mMenu.findItem(R.id.search);
             searchItem.setVisible(!Images.isShowDownloadQueueOnly() && !Images.isShowFlaggedOnly());
 
@@ -435,6 +450,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             case R.id.clear_search:
                 Images.clearFilter();
                 updateMenuItems();
+                updateActionBarTitle();
                 mAdapter.notifyDataSetChanged();
                 return true;
             case R.id.proccess_download_queue:
@@ -453,9 +469,22 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             case R.id.select_no_downloaded:
                 selectAllImages(itemId == R.id.select_no_downloaded);
                 return true;
-
+            case R.id.share:
+                shareFlaggedList();
+                return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void shareFlaggedList() {
+        ImageList imageList = Images.getImageList();
+        String text = imageList.getFlaggedList();
+
+        Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+        sharingIntent.setType("text/plain");
+        sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Subject Here");
+        sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, text);
+        startActivity(Intent.createChooser(sharingIntent, getResources().getString(R.string.share_in)));
     }
 
     private void selectAllImages(boolean ignoreAlreadyDownloaded) {
@@ -906,7 +935,10 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
             if (imageListResponse != null) {
                 DownloadQueue.loadFromCache(imageListResponse.dirList, ignoreCache);
-                /*****/
+                for(int c = 0; c < imageListResponse.dirList.length(); c++) {
+                    ImageData imageData = imageListResponse.dirList.getImage(c);
+                    imageData.setIsFlagged(CacheUtils.keyExists(imageData.flaggedCacheKey));
+                }
             }
 
             return imageListResponse;

@@ -52,9 +52,13 @@ import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.data.model.DownloadEntry;
 import com.hmsoft.pentaxgallery.data.provider.DownloadQueue;
 import com.hmsoft.pentaxgallery.data.provider.Images;
+import com.hmsoft.pentaxgallery.util.TaskExecutor;
+import com.hmsoft.pentaxgallery.util.cache.CacheUtils;
 import com.hmsoft.pentaxgallery.util.image.ImageCache;
 import com.hmsoft.pentaxgallery.util.image.ImageFetcher;
 import com.hmsoft.pentaxgallery.util.image.ImageRotatorFetcher;
+
+import java.util.Date;
 
 public class ImageDetailActivity extends FragmentActivity implements OnClickListener,
         GestureDetector.OnGestureListener,
@@ -249,12 +253,28 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
         item.setChecked(!item.isChecked());
         setFlagged(item.isChecked());
         updateFlaggedBtnState(item);
+        updateUiElements();
     }
 
     private void setFlagged(boolean flagged) {
         int i = mPager.getCurrentItem();
         ImageData imageData = Images.getImageList().getImage(i);
         imageData.setIsFlagged(flagged);
+        persistFlaggedFlag(imageData);
+    }
+
+    private void persistFlaggedFlag(final ImageData imageData) {
+        final boolean flagged = imageData.isFlagged();
+        TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
+            @Override
+            public void run() {
+                if(flagged) {
+                    CacheUtils.saveString(imageData.flaggedCacheKey, (new Date()).toString());
+                } else {
+                    CacheUtils.remove(imageData.flaggedCacheKey);
+                }
+            }
+        });
     }
 
     private void openUrl() {

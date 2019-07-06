@@ -21,6 +21,12 @@
         android:id="@+id/main_menu_group">
 
         <item
+            android:id="@+id/share"
+            android:title="@string/share"
+            android:icon="@drawable/ic_share_white_24dp"
+            app:showAsAction="always"/>
+
+        <item
             android:id="@+id/search"
             android:icon="@drawable/ic_search_white_24dp"
             android:title="Search"

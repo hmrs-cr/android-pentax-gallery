@@ -98,11 +98,16 @@ public abstract class ImageList {
     }
 
     public String getFlaggedList() {
+        return getFlaggedList(" ");
+    }
+
+    public String getFlaggedList(String separator) {
         StringBuilder sb = new StringBuilder();
         for (int c = 0; c < mImageList.size(); c++) {
             ImageData imageData = getImage(c);
             if (imageData.isFlagged()) {
-                sb.append(imageData.uniqueFileName).append("\n");
+                String fileName = imageData.fileName.substring(0, imageData.fileName.lastIndexOf('.'));
+                sb.append(fileName).append(separator);
             }
         }
         return sb.toString();
