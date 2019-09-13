@@ -6,9 +6,10 @@
     <string name="sync_images">Sync Images</string>
     <string name="pictures_loaded">%d pictures loaded from %s.</string>
     <string name="download">Download</string>
+    <string name="download_jpgs">Download JPGs</string>
     <string name="find_in_gallery">Find in Gallery</string>
     <string name="not_found_in_gallery">%s not found in gallery</string>
-    <string name="download_title">Pentax Gallery Download</string>
+    <string name="download_title">Pentax Gallery Download (%d)</string>
     <string name="download_description">Downloading %s...</string>
     <string name="cancel_download">Cancel download</string>
     <string name="download_now">Download now</string>

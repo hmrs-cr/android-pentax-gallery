@@ -2,34 +2,29 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.hmsoft.pentaxgallery">
 
-
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-
     <application
+        android:name=".MyApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
-        android:name=".MyApplication"
         android:theme="@style/AppThemeDark">
-
-        <activity android:name=".ui.ImageGridActivity"
+        <activity
+            android:name=".ui.ImageGridActivity"
             android:label="@string/app_name"
             android:screenOrientation="fullSensor">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH" />
             </intent-filter>
-            <meta-data android:name="android.app.searchable"
+
+            <meta-data
+                android:name="android.app.searchable"
                 android:resource="@xml/searchable" />
         </activity>
 
@@ -37,10 +32,22 @@
             android:name=".ui.ImageDetailActivity"
             android:label="@string/app_name"
             android:parentActivityName=".ui.ImageGridActivity"
-            android:theme="@style/AppThemeDark.FullScreen" >
-            <meta-data android:name="android.support.PARENT_ACTIVITY"
+            android:theme="@style/AppThemeDark.FullScreen">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ui.ImageGridActivity" />
         </activity>
+        <service
+            android:name=".service.BatchDownloadService"
+            android:enabled="true"
+            android:exported="true"></service>
     </application>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
 
 </manifest>

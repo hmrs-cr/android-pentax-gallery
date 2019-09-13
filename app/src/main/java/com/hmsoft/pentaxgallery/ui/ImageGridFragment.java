@@ -63,6 +63,7 @@ import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageListData;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
+import com.hmsoft.pentaxgallery.data.model.DownloadEntry;
 import com.hmsoft.pentaxgallery.data.provider.DownloadQueue;
 import com.hmsoft.pentaxgallery.data.provider.Images;
 import com.hmsoft.pentaxgallery.util.DefaultSettings;
@@ -311,6 +312,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         MenuItem proccessDownloadQueueItem = menu.findItem(R.id.proccess_download_queue);
         proccessDownloadQueueItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
 
+        MenuItem downloadJpgs = menu.findItem(R.id.download_jpgs);
+        downloadJpgs.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+
         MenuItem downloadItem = menu.findItem(R.id.download_selected);
         downloadItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         MenuItem clearSelectionItem = menu.findItem(R.id.clear_selection);
@@ -368,6 +372,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             MenuItem selectNonDownloadedItem = mMenu.findItem(R.id.select_no_downloaded);
             selectNonDownloadedItem.setVisible(false);
 
+
             boolean isFilterd = Images.hasArbitraryFiltered();
             boolean isShowDownloadQueueOnly = Images.isShowDownloadQueueOnly();
             boolean isShowDownloadedOnly = Images.isShowDownloadedOnly();
@@ -375,6 +380,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
             MenuItem downloadFilterItem = mMenu.findItem(R.id.downloadFilter);
             downloadFilterItem.setVisible(!isFilterd);
+
+            MenuItem downloadJpgs = mMenu.findItem(R.id.download_jpgs);
+            downloadJpgs.setVisible(!isShowDownloadQueueOnly);
 
             MenuItem flaggedOnlyItem = mMenu.findItem(R.id.view_flagged_only);
             flaggedOnlyItem.setChecked(isFlaggedOnly);
@@ -472,8 +480,24 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             case R.id.share:
                 shareFlaggedList();
                 return true;
+            case R.id.download_jpgs:
+                downloadJpgs();
+                return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void downloadJpgs() {
+        ImageList imageList = Images.getImageList();
+        for(int c = 0; c < imageList.length(); c++) {
+            ImageData imageData = imageList.getImage(c);
+            if(imageData.fileName.toLowerCase().endsWith(".jpg") && !imageData.existsOnLocalStorage()) {
+                DownloadEntry downloadEntry = DownloadQueue.findDownloadEntry(imageData);
+                if(downloadEntry == null) {
+                    DownloadQueue.addDownloadQueue(imageData);
+                }
+            }
+        }
     }
 
     private void shareFlaggedList() {

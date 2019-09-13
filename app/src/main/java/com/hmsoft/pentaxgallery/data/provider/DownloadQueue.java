@@ -227,9 +227,9 @@ public class DownloadQueue {
 
         DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-        request.setDescription(context.getString(R.string.download_title))
-                .setTitle(imageData.fileName)
-                .setAllowedOverMetered(false)
+        request.setDescription(String.format(context.getString(R.string.download_title), sDownloadQueue.size()))
+                .setTitle(String.format("%s (%d)", imageData.fileName, sDownloadQueue.size()))
+                //.setAllowedOverMetered(false)
                 .setDestinationUri(Uri.fromFile(imageData.getLocalPath()));
 
         if (sDownloadFinishedReceiver == null) {

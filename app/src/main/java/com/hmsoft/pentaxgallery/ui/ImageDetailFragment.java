@@ -125,15 +125,6 @@ public class ImageDetailFragment extends Fragment implements ImageFetcher.OnImag
         // listener.
         mDetector.setOnDoubleTapListener(this);
 
-        mImageView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                mDetector.onTouchEvent(event);
-                mScaleGestureDetector.onTouchEvent(event);
-                return true;
-            }
-        });
-
         mScaleGestureDetector = new ScaleGestureDetector(this.getContext(), new ScaleGestureDetector.OnScaleGestureListener() {
             @Override
             public boolean onScale(ScaleGestureDetector detector) {
@@ -147,12 +138,21 @@ public class ImageDetailFragment extends Fragment implements ImageFetcher.OnImag
 
             @Override
             public boolean onScaleBegin(ScaleGestureDetector detector) {
-                return false;
+                return true;
             }
 
             @Override
             public void onScaleEnd(ScaleGestureDetector detector) {
 
+            }
+        });
+
+        mImageView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                mDetector.onTouchEvent(event);
+                mScaleGestureDetector.onTouchEvent(event);
+                return true;
             }
         });
 
