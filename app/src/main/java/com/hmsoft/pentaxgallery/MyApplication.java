@@ -19,6 +19,7 @@ package com.hmsoft.pentaxgallery;
 import android.app.Application;
 import android.os.Environment;
 
+import com.hmsoft.pentaxgallery.data.provider.DownloadQueue;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 
 import java.io.File;
@@ -44,6 +45,7 @@ public class MyApplication extends Application {
     public void onCreate() {
         ApplicationContext = this;
         TaskExecutor.init();
+        DownloadQueue.createNotificationChannel();
         super.onCreate();
     }   
 }

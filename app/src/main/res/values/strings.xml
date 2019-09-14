@@ -38,4 +38,8 @@
     <string name="open_url">Open URL</string>
     <string name="flag">Flag</string>
     <string name="flagged">Flagged</string>
+    <string name="download_notification_channel_name">Download Notification Channel</string>
+    <string name="download_notification_channel_desc">Download Notification Channel</string>
+    <string name="download_notification_title">Transferring pictures from camera...</string>
+    <string name="donwload_done_notification_title">All pictures transferred</string>
 </resources>

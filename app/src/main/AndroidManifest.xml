@@ -38,16 +38,20 @@
                 android:value=".ui.ImageGridActivity" />
         </activity>
         <service
+            android:name=".service.DownloadService"
+            android:exported="false"></service>
+
+        <service
             android:name=".service.BatchDownloadService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true" />
     </application>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
 </manifest>

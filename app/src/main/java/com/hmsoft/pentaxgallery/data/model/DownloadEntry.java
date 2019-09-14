@@ -28,7 +28,7 @@ public class DownloadEntry {
     public static final String UNIQUE_FILE_NAME = "uniqueFileName";
 
     public final ImageData mImageData;
-    public long mDownloadId;
+    public int mDownloadId;
 
     public DownloadEntry(ImageData imageData)  {
         mImageData = imageData;
@@ -38,11 +38,11 @@ public class DownloadEntry {
     return mImageData;
   }
 
-    public long getDownloadId() {
+    public int getDownloadId() {
       return mDownloadId;
     }
   
-    public void setDownloadId(long downloadId) {
+    public void setDownloadId(int downloadId) {
         mDownloadId = downloadId;
     }
 

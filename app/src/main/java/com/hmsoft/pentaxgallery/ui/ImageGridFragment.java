@@ -584,11 +584,13 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     @Override
     public void onDownloadFinished(ImageData imageData, long donloadId, int remainingDownloads, boolean wasCanceled) {
+        Logger.debug(TAG, "onDownloadFinished: " + donloadId + " Remaining: " + remainingDownloads);
         if(Images.isShowDownloadQueueOnly()) {
             mAdapter.notifyDataSetChanged();
         }
+        updateActionBarTitle();
         if(remainingDownloads == 0) {
-            ControllerFactory.DefaultController.powerOff(null);
+            //ControllerFactory.DefaultController.powerOff(null);
         }
     }
 

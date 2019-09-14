@@ -72,7 +72,7 @@ public class CameraData extends BaseResponse {
             for (int c = 0; c < len; c++) {
                 JSONObject storageJsonObject = storajesArray.getJSONObject(c);
                 StorageData storageData = new StorageData(storageJsonObject);
-                if(storageData.active && storageData.available) {
+                if(storageData.available) {
                     storages.add(storageData);
                 }
             }

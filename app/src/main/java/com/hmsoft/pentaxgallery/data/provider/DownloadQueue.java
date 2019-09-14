@@ -16,43 +16,127 @@
 
 package com.hmsoft.pentaxgallery.data.provider;
 
-import android.app.DownloadManager;
-import android.content.BroadcastReceiver;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.database.Cursor;
-import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.ResultReceiver;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
+import android.widget.Toast;
 
+import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageList;
-import com.hmsoft.pentaxgallery.camera.model.StorageData;
 import com.hmsoft.pentaxgallery.data.model.DownloadEntry;
+import com.hmsoft.pentaxgallery.service.DownloadService;
+import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.cache.CacheUtils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.Hashtable;
 import java.util.List;
 
 public class DownloadQueue {
 
     private static final String CACHE_KEY = "downloadQueue.cache";
 
+    private static final String TAG = "DownloadQueue";
+    private static final String CHANNEL_ID = "DownloadChannel";
+
+    private static Hashtable<Integer, DownloadEntry> sDownloadQueueDict = null;
     private static List<DownloadEntry> sDownloadQueue;
-    private static DownloadFinishedReceiver sDownloadFinishedReceiver = null;
     private final static ImageList sIageList = new DownloadQueueImageList();
 
     private static OnDowloadFinishedListener onDowloadFinishedListener;
 
     public interface OnDowloadFinishedListener {
         void onDownloadFinished(ImageData imageData, long donloadId, int remainingDownloads, boolean wasCanceled);
+    }
+
+    public static ResultReceiver DownloadResultReceiver = new DownloadReceiver(new Handler());
+
+    private static class DownloadReceiver extends ResultReceiver {
+
+        public DownloadReceiver(Handler handler) {
+            super(handler);
+        }
+
+        @Override
+        protected void onReceiveResult(int resultCode, Bundle resultData) {
+
+            super.onReceiveResult(resultCode, resultData);
+
+            int id = resultData.getInt(DownloadService.EXTRA_DOWNLOAD_ID);
+            DownloadEntry downloadEntry = DownloadQueue.findDownloadEntry(id);
+
+            if (resultCode == DownloadService.UPDATE_PROGRESS) {
+                int progress = resultData.getInt(DownloadService.EXTRA_PROGRESS);
+                if(BuildConfig.DEBUG) Logger.debug(TAG, "Update Progress: " + id + " - " + progress + "%");
+                if(downloadEntry != null) {
+                    downloadNotification(downloadEntry.getImageData(), progress);
+                }
+            } else if (resultCode == DownloadService.DOWNLOAD_FINISHED) {
+                if(BuildConfig.DEBUG) Logger.debug(TAG, "Finished: " + id);
+                if (downloadEntry != null) {
+                    downloadNotification(downloadEntry.getImageData(), 100);
+                    DownloadQueue.remove(downloadEntry, false);
+                    DownloadQueue.processDownloadQueue();
+                }
+            }
+        }
+    }
+
+    public static void createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Context context = MyApplication.ApplicationContext;
+            String name = context.getString(R.string.download_notification_channel_name);
+            String description = context.getString(R.string.download_notification_channel_desc);
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
+            channel.setDescription(description);
+            channel.setSound(null,null);
+            channel.enableLights(false);
+            channel.enableVibration(false);
+
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = MyApplication.ApplicationContext.getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+    
+    public static void downloadNotification(ImageData imageData, int progress) {
+        Context context = MyApplication.ApplicationContext;
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID);
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+        if(imageData != null) {
+            boolean isOngoing = progress >= 0 && progress < 100;
+
+            builder.setSmallIcon(R.drawable.ic_cloud_download_white_24dp)
+                   .setContentTitle(context.getString(R.string.download_notification_title))
+                   .setContentText(String.format("%s (%d)", imageData.fileName, sDownloadQueue.size()))
+                   .setLocalOnly(true)
+                   .setOngoing(isOngoing)
+                   .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                   .setProgress(100, progress, progress == 0);
+
+            notificationManager.notify(5, builder.build());
+        } else {
+            notificationManager.cancel(5);
+            Toast.makeText(context, R.string.donwload_done_notification_title, Toast.LENGTH_LONG).show();
+        }
+
     }
 
     public static void loadFromCache(ImageList sourceImageList, boolean forceLoad) {
@@ -67,7 +151,6 @@ public class DownloadQueue {
             }
 
             sDownloadQueue = new ArrayList<DownloadEntry>();
-            DownloadManager downloadManager = (DownloadManager) MyApplication.ApplicationContext.getSystemService(Context.DOWNLOAD_SERVICE);
             try {
                 JSONArray jsonArray = new JSONArray(cacheValue);
                 for(int c = 0; c < jsonArray.length(); c++) {
@@ -75,19 +158,7 @@ public class DownloadQueue {
                     String fileName = jsonObject.getString(DownloadEntry.UNIQUE_FILE_NAME);
                     ImageData imageData = sourceImageList.findByUniqueFileName(fileName);
                     if(imageData != null) {
-                        long downloadId = jsonObject.getLong(DownloadEntry.DOWNLOAD_ID);
-                        if(downloadId != 0) {
-                            Cursor cursor = downloadManager.query(new DownloadManager.Query().setFilterById(downloadId));
-                            if(cursor != null && cursor.getCount() > 0 && cursor.moveToFirst()) {
-                                int status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS));
-                                if(status == DownloadManager.STATUS_SUCCESSFUL) {
-                                    downloadId = 0;
-                                }
-                            } else {
-                                downloadId = 0;
-                            }
-                        }
-
+                        int downloadId = jsonObject.getInt(DownloadEntry.DOWNLOAD_ID);
                         DownloadEntry downloadEntry = new DownloadEntry(imageData);
                         downloadEntry.setDownloadId(downloadId);
                         sDownloadQueue.add(downloadEntry);
@@ -123,6 +194,10 @@ public class DownloadQueue {
         if(onDowloadFinishedListener != null) {
             onDowloadFinishedListener.onDownloadFinished(imageData, donloadId, sDownloadQueue.size(), wasCanceled);
         }
+        if(sDownloadQueue.size() == 0) {
+            if(BuildConfig.DEBUG) Logger.debug(TAG, "Download finished clearing notification");
+            downloadNotification(null, 0);
+        }
     }
 
     public static DownloadEntry getNextDownload() {
@@ -143,16 +218,28 @@ public class DownloadQueue {
         return null;
     }
 
-    public static DownloadEntry findDownloadEntry(long downloadId) {
+    public static DownloadEntry findDownloadEntry(int downloadId) {
         if (sDownloadQueue == null) {
             return null;
         }
 
+         if (sDownloadQueueDict == null) {
+             sDownloadQueueDict = new Hashtable<>();
+         }
+
+         if(downloadId > 0 && sDownloadQueueDict.containsKey(downloadId)) {
+             return sDownloadQueueDict.get(downloadId);
+         }
+
         for (DownloadEntry downloadEntry : sDownloadQueue) {
             if (downloadEntry.getDownloadId() == downloadId) {
+                if(BuildConfig.DEBUG) Logger.debug(TAG, "Found download entry in list: " + downloadId);
+                sDownloadQueueDict.put(downloadId, downloadEntry);
                 return downloadEntry;
             }
         }
+
+        if(BuildConfig.DEBUG) Logger.warning(TAG, "No download entry found: " + downloadId);
 
         return null;
     }
@@ -164,10 +251,12 @@ public class DownloadQueue {
 
         for (DownloadEntry downloadEntry : sDownloadQueue) {
             if (downloadEntry.getDownloadId() > 0) {
+                if(BuildConfig.DEBUG) Logger.debug(TAG, "Downloading:" + downloadEntry.getDownloadId());
                 return true;
             }
         }
 
+        if(BuildConfig.DEBUG) Logger.debug(TAG, "Not downloading");
         return false;
     }
 
@@ -189,11 +278,6 @@ public class DownloadQueue {
 
         DownloadEntry downloadEntry = findDownloadEntry(imageData);
         if (downloadEntry != null) {
-            long downloadId = downloadEntry.getDownloadId();
-            if (downloadId > 0) {
-                DownloadManager downloadManager = (DownloadManager) MyApplication.ApplicationContext.getSystemService(Context.DOWNLOAD_SERVICE);
-                downloadManager.remove(downloadId);
-            }
             remove(downloadEntry, true);
         }
     }
@@ -207,6 +291,8 @@ public class DownloadQueue {
             DownloadEntry downloadEntry = getNextDownload();
             if (downloadEntry != null) {
                 download(downloadEntry);
+            }  else if(BuildConfig.DEBUG) {
+                Logger.debug(TAG, "No next download found");
             }
         }
     }
@@ -225,21 +311,11 @@ public class DownloadQueue {
 
         Context context = MyApplication.ApplicationContext;
 
-        DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-        request.setDescription(String.format(context.getString(R.string.download_title), sDownloadQueue.size()))
-                .setTitle(String.format("%s (%d)", imageData.fileName, sDownloadQueue.size()))
-                //.setAllowedOverMetered(false)
-                .setDestinationUri(Uri.fromFile(imageData.getLocalPath()));
-
-        if (sDownloadFinishedReceiver == null) {
-            sDownloadFinishedReceiver = new DownloadFinishedReceiver();
-            IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
-            context.registerReceiver(sDownloadFinishedReceiver, filter);
-        }
-
-        long id = downloadManager.enqueue(request);
+        downloadNotification(imageData, 0);
+        int id = DownloadService.download(context, url, imageData.getLocalPath().getAbsolutePath());
         downloadEntry.setDownloadId(id);
+
+        if(BuildConfig.DEBUG) Logger.debug(TAG, "Starting download: " + imageData.fileName + ", ID: " + id);
     }
 
     private static void remove(DownloadEntry downloadEntry, boolean canceled) {
@@ -251,7 +327,7 @@ public class DownloadQueue {
         return sIageList;
     }
 
-    private static class DownloadFinishedReceiver extends BroadcastReceiver {
+    /*private static class DownloadFinishedReceiver extends BroadcastReceiver {
 
 
         private int getStatus(Context context, long id) {
@@ -270,7 +346,7 @@ public class DownloadQueue {
                 /*i = c.getColumnIndex(DownloadManager.COLUMN_REASON);
                 if (i > -1) {
                     reason = c.getInt(i);
-                }*/
+                }-*-/
             }
 
             return status;
@@ -287,7 +363,7 @@ public class DownloadQueue {
                 DownloadQueue.processDownloadQueue();
             }
         }
-    }
+    }*/
 
     private static class DownloadQueueImageList extends ImageList {
 
