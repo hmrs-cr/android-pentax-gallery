@@ -40,11 +40,6 @@
         <service
             android:name=".service.DownloadService"
             android:exported="false"></service>
-
-        <service
-            android:name=".service.BatchDownloadService"
-            android:enabled="true"
-            android:exported="true" />
     </application>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />

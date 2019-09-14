@@ -62,8 +62,6 @@ public abstract class ImageData {
 
     public abstract String getThumbUrl();
 
-    public abstract String getFullJpgUrl();
-
     public abstract String getDownloadUrl();
 
     public abstract File getLocalPath();
