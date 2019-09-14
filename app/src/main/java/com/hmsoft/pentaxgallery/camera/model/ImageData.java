@@ -42,7 +42,7 @@ public abstract class ImageData {
         this.directory = directory;
         this.fileName = fileName;
         this.fullPath = directory + "/" + fileName;
-        this.uniqueFileName = directory + "_" + fileName;
+        this.uniqueFileName = directory + "-" + fileName;
         this.flaggedCacheKey = uniqueFileName.substring(0, uniqueFileName.lastIndexOf('.')) + ".flagged";
     }
 

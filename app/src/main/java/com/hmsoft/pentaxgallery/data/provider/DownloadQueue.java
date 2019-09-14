@@ -41,6 +41,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
@@ -60,6 +61,7 @@ public class DownloadQueue {
 
     public interface OnDowloadFinishedListener {
         void onDownloadFinished(ImageData imageData, long donloadId, int remainingDownloads, boolean wasCanceled);
+        void onDownloadProgress(ImageData imageData, long donloadId, int progress);
     }
 
     public static ResultReceiver DownloadResultReceiver = new DownloadReceiver(new Handler());
@@ -83,6 +85,8 @@ public class DownloadQueue {
                 if(BuildConfig.DEBUG) Logger.debug(TAG, "Update Progress: " + id + " - " + progress + "%");
                 if(downloadEntry != null) {
                     downloadNotification(downloadEntry.getImageData(), progress);
+                    downloadEntry.setProgress(progress);
+                    doDownloadProgress(downloadEntry.getImageData(), id, progress);
                 }
             } else if (resultCode == DownloadService.DOWNLOAD_FINISHED) {
                 if(BuildConfig.DEBUG) Logger.debug(TAG, "Finished: " + id);
@@ -158,9 +162,7 @@ public class DownloadQueue {
                     String fileName = jsonObject.getString(DownloadEntry.UNIQUE_FILE_NAME);
                     ImageData imageData = sourceImageList.findByUniqueFileName(fileName);
                     if(imageData != null) {
-                        int downloadId = jsonObject.getInt(DownloadEntry.DOWNLOAD_ID);
                         DownloadEntry downloadEntry = new DownloadEntry(imageData);
-                        downloadEntry.setDownloadId(downloadId);
                         sDownloadQueue.add(downloadEntry);
                     }
                 }
@@ -187,6 +189,12 @@ public class DownloadQueue {
         DownloadQueue.onDowloadFinishedListener = onDowloadFinishedListener;
     }
 
+    private static void doDownloadProgress(ImageData imageData, long donloadId, int progress) {
+        if(onDowloadFinishedListener != null) {
+            onDowloadFinishedListener.onDownloadProgress(imageData, donloadId, progress);
+        }
+    }
+
     private static void doDowloadFinished(ImageData imageData, long donloadId, boolean wasCanceled) {
         if(!wasCanceled) {
             imageData.updateExistsOnLocasStorage();
@@ -195,7 +203,6 @@ public class DownloadQueue {
             onDowloadFinishedListener.onDownloadFinished(imageData, donloadId, sDownloadQueue.size(), wasCanceled);
         }
         if(sDownloadQueue.size() == 0) {
-            if(BuildConfig.DEBUG) Logger.debug(TAG, "Download finished clearing notification");
             downloadNotification(null, 0);
         }
     }
@@ -312,6 +319,10 @@ public class DownloadQueue {
         Context context = MyApplication.ApplicationContext;
 
         downloadNotification(imageData, 0);
+
+        File parentDir = imageData.getLocalPath().getParentFile();
+        parentDir.mkdirs();
+
         int id = DownloadService.download(context, url, imageData.getLocalPath().getAbsolutePath());
         downloadEntry.setDownloadId(id);
 

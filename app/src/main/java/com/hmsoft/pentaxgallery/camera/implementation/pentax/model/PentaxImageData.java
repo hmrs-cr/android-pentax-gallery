@@ -54,6 +54,11 @@ public class PentaxImageData extends ImageData {
     public File getLocalPath() {
         if(mLocalPath == null) {
             String location = DefaultSettings.getsInstance().getStringValue(DefaultSettings.DOWNLOAD_LOCATION);
+
+            if (!fileName.toLowerCase().endsWith(".jpg")) {
+                location += " (RAW)";
+            }
+
             mLocalPath = new File(location, uniqueFileName);
         }
         return mLocalPath;

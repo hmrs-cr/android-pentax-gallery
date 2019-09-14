@@ -444,7 +444,6 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
 
     private void updateUiElements() {
         updateOptionsMenu();
-        updateActionBarTitle();
     }
 
     private void updateActionBarTitle() {
@@ -458,7 +457,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
                 if (downloadEntry != null) {
                     subtitle = getString(R.string.in_download_queue);
                     if (downloadEntry.getDownloadId() != 0) {
-                        subtitle = getString(R.string.downloading);
+                        subtitle = getString(R.string.downloading) + " (" + downloadEntry.getProgress() + "%)";
                     }
                 } else {
                     if (imageData.existsOnLocalStorage()) {
@@ -489,6 +488,11 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
         if(remainingDownloads == 0) {
             ControllerFactory.DefaultController.powerOff(null);
         }
+    }
+
+    @Override
+    public void onDownloadProgress(ImageData imageData, long donloadId, int progress) {
+        updateActionBarTitle();
     }
 
     @Override

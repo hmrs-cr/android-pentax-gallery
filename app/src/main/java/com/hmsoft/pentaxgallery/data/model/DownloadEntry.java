@@ -29,6 +29,7 @@ public class DownloadEntry {
 
     public final ImageData mImageData;
     public int mDownloadId;
+    private int mProgress;
 
     public DownloadEntry(ImageData imageData)  {
         mImageData = imageData;
@@ -56,5 +57,13 @@ public class DownloadEntry {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public int getProgress() {
+        return mProgress;
+    }
+
+    public void setProgress(int progress) {
+        mProgress = progress;
     }
 }

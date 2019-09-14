@@ -86,21 +86,25 @@ public class DownloadService extends IntentService {
 
             // download the file
             InputStream input = new BufferedInputStream(connection.getInputStream());
-
-
             OutputStream output = new FileOutputStream(destination);
 
             byte data[] = new byte[1024];
             long total = 0;
+            int lastProgress = 0;
             int count;
             while ((count = input.read(data)) != -1) {
                 total += count;
 
-                // publishing the progress....
-                Bundle resultData = new Bundle();
-                resultData.putInt(EXTRA_PROGRESS ,(int) (total * 100 / fileLength));
-                resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
-                receiver.send(UPDATE_PROGRESS, resultData);
+                int progress = (int) (total * 100 / fileLength);
+                if(progress > lastProgress) {
+                    // publishing the progress....
+                    Bundle resultData = new Bundle();
+                    resultData.putInt(EXTRA_PROGRESS, progress);
+                    resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
+                    receiver.send(UPDATE_PROGRESS, resultData);
+                    lastProgress = progress;
+                }
+
                 output.write(data, 0, count);
             }
 
