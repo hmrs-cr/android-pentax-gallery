@@ -11,6 +11,7 @@ import com.hmsoft.pentaxgallery.data.provider.DownloadQueue;
 import com.hmsoft.pentaxgallery.util.Logger;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,12 +30,21 @@ public class DownloadService extends IntentService {
 
     private static final String TAG = "DownloadService";
 
+    private static int shouldCancelId = -1;
+
     public static final int DOWNLOAD_FINISHED = 1000;
     public static final int UPDATE_PROGRESS = 1001;
+
+
+    public static final int DOWNLOAD_STATUS_SUCCESS = 0;
+    public static final int DOWNLOAD_STATUS_CANCELED = 1;
+    public static final int DOWNLOAD_STATUS_ERROR = 2;
 
     private static final String ACTION_DOWNLOAD = "com.hmsoft.pentaxgallery.service.action.DOWNLOAD";
     public static final String EXTRA_PROGRESS = "com.hmsoft.pentaxgallery.service.extra.PROGRESS";;
     public static final String EXTRA_DOWNLOAD_ID = "com.hmsoft.pentaxgallery.service.extra.DOWNLOAD_ID";
+    public static final String EXTRA_DOWNLOAD_STATUS = "com.hmsoft.pentaxgallery.service.extra.DOWNLOAD_STATUS";
+    public static final String EXTRA_DOWNLOAD_STATUS_MESSAGE = "com.hmsoft.pentaxgallery.service.extra.DOWNLOAD_STATUS_MESSAGE";
 
     private static int downloadId = 0;
 
@@ -57,7 +67,13 @@ public class DownloadService extends IntentService {
         return downloadId;
     }
 
+    public static void cancelCurrentDownload() {
+        cancelDownload(0);
+    }
 
+    public synchronized static void cancelDownload(int downloadId) {
+        shouldCancelId = downloadId;
+    }
 
     @Override
     protected void onHandleIntent(Intent intent) {
@@ -74,15 +90,20 @@ public class DownloadService extends IntentService {
     }
 
     private void handleActionDownload(String downloadUrl, String destination, int downloadId, ResultReceiver receiver) {
+        boolean canceled = false;
+        int status;
+        String statusMessage = "";
+        int fileLength = 0;
         try {
 
+            cancelDownload(-1);
             //create url and connect
             URL url = new URL(downloadUrl);
             URLConnection connection = url.openConnection();
             connection.connect();
 
             // this will be useful so that you can show a typical 0-100% progress bar
-            int fileLength = connection.getContentLength();
+            fileLength = connection.getContentLength();
 
             // download the file
             InputStream input = new BufferedInputStream(connection.getInputStream());
@@ -92,33 +113,62 @@ public class DownloadService extends IntentService {
             long total = 0;
             int lastProgress = 0;
             int count;
-            while ((count = input.read(data)) != -1) {
-                total += count;
+            try {
+                while ((count = input.read(data)) != -1) {
 
-                int progress = (int) (total * 100 / fileLength);
-                if(progress > lastProgress) {
-                    // publishing the progress....
-                    Bundle resultData = new Bundle();
-                    resultData.putInt(EXTRA_PROGRESS, progress);
-                    resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
-                    receiver.send(UPDATE_PROGRESS, resultData);
-                    lastProgress = progress;
+                    if (shouldCancelId == downloadId || shouldCancelId == 0) {
+                        canceled = true;
+                        break;
+                    }
+
+                    total += count;
+
+                    int progress = (int) (total * 100 / fileLength);
+                    if (progress > lastProgress) {
+                        // publishing the progress....
+                        Bundle resultData = new Bundle();
+                        resultData.putInt(EXTRA_PROGRESS, progress);
+                        resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
+                        receiver.send(UPDATE_PROGRESS, resultData);
+                        lastProgress = progress;
+                    }
+
+                    output.write(data, 0, count);
                 }
+                status = DOWNLOAD_STATUS_SUCCESS;
+            } finally {
+                // close streams
+                output.flush();
+                output.close();
+                input.close();
 
-                output.write(data, 0, count);
+                if(canceled) {
+                    status = DOWNLOAD_STATUS_CANCELED;
+                }
             }
 
-            // close streams
-            output.flush();
-            output.close();
-            input.close();
-
         } catch (IOException e) {
-           Logger.warning(TAG,"Error downloading file", e);
+           Logger.error(TAG,"Error downloading file", e);
+           status = DOWNLOAD_STATUS_ERROR;
+           statusMessage = e.getLocalizedMessage();
+        }
+
+        File downloadFile = new File(destination);
+        if(BuildConfig.DEBUG) Logger.debug(TAG, "Camera Size:" + fileLength + " - Downloaded size: " + downloadFile.length());
+
+        if(status == DOWNLOAD_STATUS_SUCCESS && fileLength != downloadFile.length()) {
+            status = DOWNLOAD_STATUS_ERROR;
+            statusMessage = "Corrupted file.";
+        }
+
+        if (status != DOWNLOAD_STATUS_SUCCESS) {
+            downloadFile.delete();
         }
 
         Bundle resultData = new Bundle();
         resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
+        resultData.putInt(EXTRA_DOWNLOAD_STATUS, status);
+        resultData.putString(EXTRA_DOWNLOAD_STATUS_MESSAGE, statusMessage);
         receiver.send(DOWNLOAD_FINISHED, resultData);
     }
 }

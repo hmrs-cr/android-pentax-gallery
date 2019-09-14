@@ -22,7 +22,9 @@ import android.net.Network;
 import android.net.NetworkInfo;
 import android.os.Build;
 
+import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
+import com.hmsoft.pentaxgallery.util.Logger;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -34,6 +36,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 public final class HttpHelper {
+
+    private static final String TAG = "HttpHelper";
 
     public enum RequestMethod {
         DEFAULT(null),
@@ -103,6 +107,7 @@ public final class HttpHelper {
             for (Network network : networks) {
                 NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
                 if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI && networkInfo.isConnected()) {
+                    if(BuildConfig.DEBUG) Logger.debug(TAG, "isConnectedOrConnecting:" + networkInfo.isConnectedOrConnecting());
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         connectivityManager.bindProcessToNetwork(network);
                     } else {

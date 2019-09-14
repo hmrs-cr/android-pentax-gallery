@@ -444,6 +444,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
 
     private void updateUiElements() {
         updateOptionsMenu();
+        updateActionBarTitle();
     }
 
     private void updateActionBarTitle() {
@@ -486,7 +487,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
         updateUiElements();
 
         if(remainingDownloads == 0) {
-            ControllerFactory.DefaultController.powerOff(null);
+            //ControllerFactory.DefaultController.powerOff(null);
         }
     }
 

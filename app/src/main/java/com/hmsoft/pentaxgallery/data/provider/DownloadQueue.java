@@ -76,6 +76,7 @@ public class DownloadQueue {
         protected void onReceiveResult(int resultCode, Bundle resultData) {
 
             super.onReceiveResult(resultCode, resultData);
+            Context context = MyApplication.ApplicationContext;
 
             int id = resultData.getInt(DownloadService.EXTRA_DOWNLOAD_ID);
             DownloadEntry downloadEntry = DownloadQueue.findDownloadEntry(id);
@@ -91,6 +92,15 @@ public class DownloadQueue {
             } else if (resultCode == DownloadService.DOWNLOAD_FINISHED) {
                 if(BuildConfig.DEBUG) Logger.debug(TAG, "Finished: " + id);
                 if (downloadEntry != null) {
+
+                    int status = resultData.getInt(DownloadService.EXTRA_DOWNLOAD_STATUS);
+                    if(status == DownloadService.DOWNLOAD_STATUS_ERROR) {
+                        String message = resultData.getString(DownloadService.EXTRA_DOWNLOAD_STATUS_MESSAGE);
+                        Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+                    } else if(status == DownloadService.DOWNLOAD_STATUS_CANCELED) {
+                        Toast.makeText(context, "Download canceled: " + downloadEntry.getImageData().fileName, Toast.LENGTH_LONG).show();
+                    }
+
                     downloadNotification(downloadEntry.getImageData(), 100);
                     DownloadQueue.remove(downloadEntry, false);
                     DownloadQueue.processDownloadQueue();
@@ -285,6 +295,7 @@ public class DownloadQueue {
 
         DownloadEntry downloadEntry = findDownloadEntry(imageData);
         if (downloadEntry != null) {
+            DownloadService.cancelDownload(downloadEntry.getDownloadId());
             remove(downloadEntry, true);
         }
     }
@@ -331,6 +342,7 @@ public class DownloadQueue {
 
     private static void remove(DownloadEntry downloadEntry, boolean canceled) {
         sDownloadQueue.remove(downloadEntry);
+        downloadEntry.getImageData().updateExistsOnLocasStorage();
         doDowloadFinished(downloadEntry.mImageData, downloadEntry.getDownloadId(), canceled);
     }
 

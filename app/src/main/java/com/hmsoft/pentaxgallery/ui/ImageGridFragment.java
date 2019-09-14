@@ -498,15 +498,25 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     private void downloadJpgs() {
         ImageList imageList = Images.getImageList();
+        List<ImageData> enqueue = new ArrayList<>(imageList.length());
+
         for(int c = 0; c < imageList.length(); c++) {
             ImageData imageData = imageList.getImage(c);
             if(imageData.fileName.toLowerCase().endsWith(".jpg") && !imageData.existsOnLocalStorage()) {
                 DownloadEntry downloadEntry = DownloadQueue.findDownloadEntry(imageData);
                 if(downloadEntry == null) {
-                    DownloadQueue.addDownloadQueue(imageData);
+                    enqueue.add(imageData);
                 }
             }
         }
+
+        if(enqueue.size() > 0) {
+            Toast.makeText(this.getActivity(), "Downloading " + enqueue.size() + " pictures", Toast.LENGTH_LONG).show();
+            for(ImageData imageData : enqueue) {
+                DownloadQueue.addDownloadQueue(imageData);
+            }
+        }
+        DownloadQueue.processDownloadQueue();
     }
 
     private void shareFlaggedList() {
@@ -640,6 +650,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     @Override
     public void onRefresh() {
+        Images.setCameraData(null);
+        Images.setCurrentStorageIndex(0);
         syncPictureList(Images.getCurrentStorageIndex(), true, false);
     }
 
@@ -913,19 +925,29 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     private class ImageListTask extends AsyncTask<Object, Void, ImageListData> {
 
+        private static final String TAG = "ImageListTask";
+
         private boolean mCameraConnected;
 
+
+        private void debug(String message) {
+            if (BuildConfig.DEBUG) Logger.debug(TAG, message);
+        }
 
         private CameraData connectCamera() {
             CameraData cameraData = Images.getCameraData();
             mCameraConnected = cameraData != null;
 
-            int retryes = 2;
+            debug(mCameraConnected ? "Got camera data: " + cameraData.getDisplayName() : "No camera data");
+
+            int retryes = 3;
             while(!mCameraConnected && retryes-- > 0) {
 
                 if(ControllerFactory.DefaultController.connectToCamera()) {
+                    debug("Binded to WiFi!");
                     cameraData = ControllerFactory.DefaultController.getDeviceInfo(true);
                     mCameraConnected = cameraData != null;
+                    debug(mCameraConnected ? "Got camera data from device: " + cameraData.getDisplayName() : "No camera data from device");
                 }
 
                 if (!mCameraConnected) {
@@ -937,10 +959,12 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                     if (cameraData != null) {
                         ssid = cameraData.ssid;
                         key = cameraData.key;
+                        debug("Got camera data from cache: " + ssid);
                     } else {
                         CameraData defaultCameraData = ControllerFactory.DefaultController.getDefaultCameraData();
                         ssid = defaultCameraData.ssid;
                         key = defaultCameraData.key;
+                        debug("Got default camera data: " + ssid);
                     }
 
                     if(!TextUtils.isEmpty(ssid) && !TextUtils.isEmpty(key)) {
@@ -948,7 +972,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                         WifiHelper.turnWifiOn(MyApplication.ApplicationContext, 1500);
                         boolean success = WifiHelper.connectToWifi(MyApplication.ApplicationContext, ssid, key);
                         if (!success) {
-                            break;
+                            debug("Failed to connect to wifi");
                         }
                     }
                 }
@@ -1015,6 +1039,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 mGridView.smoothScrollToPosition(0);
             } else {
                 showNoConnectedDialog();
+                Images.setCameraData(null);
             }
             mImageListTask = null;
         }
