@@ -923,7 +923,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         }
     }
 
-    private class ImageListTask extends AsyncTask<Object, Void, ImageListData> {
+    private  class ImageListTask extends AsyncTask<Object, Void, ImageListData> {
 
         private static final String TAG = "ImageListTask";
 

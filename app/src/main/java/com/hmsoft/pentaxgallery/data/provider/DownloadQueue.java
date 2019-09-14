@@ -19,6 +19,7 @@ package com.hmsoft.pentaxgallery.data.provider;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.media.MediaScannerConnection;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -56,6 +57,7 @@ public class DownloadQueue {
     private static Hashtable<Integer, DownloadEntry> sDownloadQueueDict = null;
     private static List<DownloadEntry> sDownloadQueue;
     private final static ImageList sIageList = new DownloadQueueImageList();
+    private static final String[] sFileToScan = new String[1];
 
     private static OnDowloadFinishedListener onDowloadFinishedListener;
 
@@ -94,7 +96,11 @@ public class DownloadQueue {
                 if (downloadEntry != null) {
 
                     int status = resultData.getInt(DownloadService.EXTRA_DOWNLOAD_STATUS);
-                    if(status == DownloadService.DOWNLOAD_STATUS_ERROR) {
+
+                    if(status == DownloadService.DOWNLOAD_STATUS_SUCCESS) {
+                        sFileToScan[0] = downloadEntry.getImageData().getLocalPath().getAbsolutePath();
+                        MediaScannerConnection.scanFile(context, sFileToScan, null, null);
+                    } else if(status == DownloadService.DOWNLOAD_STATUS_ERROR) {
                         String message = resultData.getString(DownloadService.EXTRA_DOWNLOAD_STATUS_MESSAGE);
                         Toast.makeText(context, message, Toast.LENGTH_LONG).show();
                     } else if(status == DownloadService.DOWNLOAD_STATUS_CANCELED) {
