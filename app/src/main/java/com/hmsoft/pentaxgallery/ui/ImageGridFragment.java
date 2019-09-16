@@ -497,6 +497,31 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     }
 
     private void downloadJpgs() {
+
+        List<ImageData> enqueue = getDownloadList();
+        if(enqueue.size() == 0) {
+            syncPictureList(Images.getCurrentStorageIndex(), true, false, new OnRefreshDoneListener() {
+                @Override
+                public void onRefreshDone() {
+                    addToDownloadQueue(getDownloadList());
+                }
+            });
+        } else {
+            addToDownloadQueue(enqueue);
+        }
+    }
+
+    private void addToDownloadQueue(List<ImageData> enqueue) {
+        if (enqueue.size() > 0) {
+            Toast.makeText(this.getActivity(), "Downloading " + enqueue.size() + " pictures", Toast.LENGTH_LONG).show();
+            for (ImageData imageData : enqueue) {
+                DownloadQueue.addDownloadQueue(imageData);
+            }
+        }
+        DownloadQueue.processDownloadQueue();
+    }
+
+    private List<ImageData> getDownloadList() {
         ImageList imageList = Images.getImageList();
         List<ImageData> enqueue = new ArrayList<>(imageList.length());
 
@@ -509,14 +534,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 }
             }
         }
-
-        if(enqueue.size() > 0) {
-            Toast.makeText(this.getActivity(), "Downloading " + enqueue.size() + " pictures", Toast.LENGTH_LONG).show();
-            for(ImageData imageData : enqueue) {
-                DownloadQueue.addDownloadQueue(imageData);
-            }
-        }
-        DownloadQueue.processDownloadQueue();
+        return  enqueue;
     }
 
     private void shareFlaggedList() {
@@ -591,12 +609,16 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     }
 
     private void syncPictureList(int storageIndex, boolean ignoreCache, boolean showProgressBar) {
+        syncPictureList(0, ignoreCache, showProgressBar, null);
+    }
+
+    private void syncPictureList(int storageIndex, boolean ignoreCache, boolean showProgressBar, OnRefreshDoneListener refreshDoneListener) {
         if(mImageListTask == null) {
             if(showProgressBar) {
                 mProgressBar.setVisibility(View.VISIBLE);
                 mSwipeRefreshLayout.setVisibility(View.GONE);
             }
-            mImageListTask = new ImageListTask();
+            mImageListTask = new ImageListTask(refreshDoneListener);
             mImageListTask.execute(ignoreCache, storageIndex);
         }
     }
@@ -923,12 +945,22 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         }
     }
 
+
+    public interface OnRefreshDoneListener {
+        void onRefreshDone();
+    }
+
     private  class ImageListTask extends AsyncTask<Object, Void, ImageListData> {
+
+        private OnRefreshDoneListener refreshDoneListener;
 
         private static final String TAG = "ImageListTask";
 
         private boolean mCameraConnected;
 
+        public ImageListTask(OnRefreshDoneListener refreshDoneListener) {
+            this.refreshDoneListener = refreshDoneListener;
+        }
 
         private void debug(String message) {
             if (BuildConfig.DEBUG) Logger.debug(TAG, message);
@@ -1037,6 +1069,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 Toast.makeText(ImageGridFragment.this.getContext(),  msg, Toast.LENGTH_LONG).show();
                 mSwipeRefreshLayout.setVisibility(View.VISIBLE);
                 mGridView.smoothScrollToPosition(0);
+                if(refreshDoneListener != null) {
+                    refreshDoneListener.onRefreshDone();
+                }
             } else {
                 showNoConnectedDialog();
                 Images.setCameraData(null);
