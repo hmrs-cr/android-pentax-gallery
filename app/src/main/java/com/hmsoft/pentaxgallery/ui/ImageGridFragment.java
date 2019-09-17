@@ -447,15 +447,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             case R.id.view_downloaded_only:
             case R.id.view_downloads_only:
             case R.id.view_flagged_only:
-                mSearchView.setQuery("", false);
-                mSearchView.setIconified(true);
                 item.setChecked(!item.isChecked());
-                Images.setShowDownloadQueueOnly(item.isChecked() && itemId == R.id.view_downloads_only);
-                Images.setShowDownloadedOnly(item.isChecked() && itemId == R.id.view_downloaded_only);
-                Images.setShowFlaggedOnly(item.isChecked() && itemId == R.id.view_flagged_only);
-                mAdapter.notifyDataSetChanged();
-                updateMenuItems();
-                updateActionBarTitle();
+                showView(item.isChecked(), itemId);
                 return true;
             case R.id.sync_images_1:
             case R.id.sync_images_2:
@@ -496,6 +489,17 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         return super.onOptionsItemSelected(item);
     }
 
+    private void showView(boolean show, int itemId) {
+        mSearchView.setQuery("", false);
+        mSearchView.setIconified(true);
+        Images.setShowDownloadQueueOnly(show && itemId == R.id.view_downloads_only);
+        Images.setShowDownloadedOnly(show && itemId == R.id.view_downloaded_only);
+        Images.setShowFlaggedOnly(show && itemId == R.id.view_flagged_only);
+        mAdapter.notifyDataSetChanged();
+        updateMenuItems();
+        updateActionBarTitle();
+    }
+
     private void downloadJpgs() {
 
         List<ImageData> enqueue = getDownloadList();
@@ -519,6 +523,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             }
         }
         DownloadQueue.processDownloadQueue();
+        showView(true, R.id.view_downloads_only);
     }
 
     private List<ImageData> getDownloadList() {
@@ -609,7 +614,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     }
 
     private void syncPictureList(int storageIndex, boolean ignoreCache, boolean showProgressBar) {
-        syncPictureList(0, ignoreCache, showProgressBar, null);
+        syncPictureList(storageIndex, ignoreCache, showProgressBar, null);
     }
 
     private void syncPictureList(int storageIndex, boolean ignoreCache, boolean showProgressBar, OnRefreshDoneListener refreshDoneListener) {
