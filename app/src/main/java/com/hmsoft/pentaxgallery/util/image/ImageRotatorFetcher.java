@@ -50,6 +50,8 @@ public class ImageRotatorFetcher extends ImageFetcher {
             }
         }
 
+        imageData.setData(bitmap);
+
         return bitmap;
     }
 }

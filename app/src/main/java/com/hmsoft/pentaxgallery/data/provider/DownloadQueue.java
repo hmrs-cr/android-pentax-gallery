@@ -19,6 +19,7 @@ package com.hmsoft.pentaxgallery.data.provider;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.media.MediaScannerConnection;
 import android.os.Build;
 import android.os.Bundle;
@@ -149,6 +150,7 @@ public class DownloadQueue {
                    .setLocalOnly(true)
                    .setOngoing(isOngoing)
                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                   .setLargeIcon(imageData.getData() instanceof Bitmap ? (Bitmap)imageData.getData() : null)
                    .setProgress(100, progress, progress == 0);
 
             notificationManager.notify(5, builder.build());

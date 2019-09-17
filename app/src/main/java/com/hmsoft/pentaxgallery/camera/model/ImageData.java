@@ -37,6 +37,7 @@ public abstract class ImageData {
     public final String flaggedCacheKey;
 
     private boolean mIsFlagged;
+    private Object mData;
 
     public ImageData(String directory, String fileName) {
         this.directory = directory;
@@ -56,6 +57,14 @@ public abstract class ImageData {
     @Override
     public String toString() {
         return fullPath;
+    }
+
+    public void setData(Object data) {
+        mData = data;
+    }
+
+    public Object getData() {
+        return  mData;
     }
 
     public abstract String getViewUrl();
