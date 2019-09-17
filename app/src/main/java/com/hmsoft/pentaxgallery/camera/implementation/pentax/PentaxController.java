@@ -66,6 +66,10 @@ public class PentaxController implements CameraController {
         return HttpHelper.getStringResponse(UrlHelper.URL_POWEROFF, HttpHelper.RequestMethod.POST);
     }
 
+    protected String pingJson() {
+        return HttpHelper.getStringResponse(UrlHelper.URL_PING, HttpHelper.RequestMethod.GET);
+    }
+
 
     public  CameraData getDeviceInfo(boolean ignoreCache) {
 
@@ -134,6 +138,27 @@ public class PentaxController implements CameraController {
             @Override
             public void run() {
                 BaseResponse response = powerOff();
+                TaskExecutor.executeOnUIThread(new CameraController.AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, response));
+
+            }
+        });
+    }
+
+    public BaseResponse ping() {
+        String response = pingJson();
+        try {
+            return response != null ? new BaseResponse(response) : null;
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public void ping(final CameraController.OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {
+        TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
+            @Override
+            public void run() {
+                BaseResponse response = ping();
                 TaskExecutor.executeOnUIThread(new CameraController.AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, response));
 
             }

@@ -55,6 +55,9 @@ public interface CameraController {
     BaseResponse powerOff();
     void powerOff(final CameraController.OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
 
+    BaseResponse ping();
+    void ping(final CameraController.OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
+
     boolean connectToCamera();
 
     ImageMetaData getImageInfo(ImageData imageData);

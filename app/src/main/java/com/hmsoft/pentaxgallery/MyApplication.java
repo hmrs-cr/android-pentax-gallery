@@ -17,19 +17,10 @@
 package com.hmsoft.pentaxgallery;
 
 import android.app.Application;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.net.NetworkInfo;
-import android.net.wifi.WifiManager;
-import android.os.Environment;
 
 import com.hmsoft.pentaxgallery.data.provider.DownloadQueue;
-import com.hmsoft.pentaxgallery.util.Logger;
+import com.hmsoft.pentaxgallery.service.WifiIntentReceiver;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
-
-import java.io.File;
 
 public class MyApplication extends Application {
 
@@ -41,6 +32,8 @@ public class MyApplication extends Application {
         TaskExecutor.init();
         DownloadQueue.createNotificationChannel();
         super.onCreate();
+
+        WifiIntentReceiver.register(this);
 
     }   
 }

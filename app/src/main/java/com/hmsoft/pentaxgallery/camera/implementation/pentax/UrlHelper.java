@@ -30,7 +30,8 @@ public final class UrlHelper {
     protected final static String URL_DOWNLOAD = URL_PHOTOS + "/";
     protected final static String URL_DEVICE_INFO = URL_BASE + "/props";
     protected final static String URL_POWEROFF = URL_BASE + "/device/finish";
-    protected static final String STORAGE_PARAM = "storage=";
+    protected final static String URL_PING = URL_BASE + "/ping";
+    protected final static String STORAGE_PARAM = "storage=";
 
 
     private static String appendStorageParam(String url, StorageData storage) {
