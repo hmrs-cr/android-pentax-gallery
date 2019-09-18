@@ -27,6 +27,8 @@ import android.app.SearchManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -880,7 +882,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 imageThumb = (ImageThumbWidget) convertView;
             }
 
-            ImageView imageView = imageThumb.getmImageView();
+            final ImageView imageView = imageThumb.getmImageView();
 
             // Check the height matches our calculated column width
             if (imageView.getLayoutParams().height != mItemHeight) {
@@ -892,8 +894,14 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             ImageList imageList = Images.getImageList();
 
             final ImageData imageData = imageList.getImage(position - mNumColumns);
-            mImageFetcher.loadImage(imageData.getThumbUrl(), imageData, imageView);
-            //mImageFetcher.loadImageThumb(imageData, imageView);
+            mImageFetcher.loadImage(imageData.getThumbUrl(), imageData, imageView, new ImageFetcher.OnImageLoadedListener() {
+                public void onImageLoaded(boolean success) {
+                    Drawable drawable = imageView.getDrawable();
+                    if (success && drawable instanceof BitmapDrawable) {
+                        imageData.setData(((BitmapDrawable) drawable).getBitmap());
+                    }
+                }
+            });
 
             if(isItemSelected(imageData)) {
                 imageThumb.showAsSelected();

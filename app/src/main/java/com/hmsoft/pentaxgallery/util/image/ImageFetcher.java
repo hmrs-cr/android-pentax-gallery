@@ -22,7 +22,6 @@ package com.hmsoft.pentaxgallery.util.image;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Build;
-import android.util.Log;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
@@ -245,7 +244,15 @@ public class ImageFetcher extends ImageResizer {
                 }
             }
         }
-
+        
+        if (fileInputStream == null && fileDescriptor == null && imageData.existsOnLocalStorage()) {
+            try {
+                fileInputStream = new FileInputStream(imageData.getLocalPath());
+                fileDescriptor = fileInputStream.getFD();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
         Bitmap bitmap = null;
         if (fileDescriptor != null) {
