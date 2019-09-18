@@ -18,7 +18,9 @@ package com.hmsoft.pentaxgallery.data.provider;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.media.MediaScannerConnection;
 import android.os.Build;
@@ -36,6 +38,7 @@ import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageList;
 import com.hmsoft.pentaxgallery.data.model.DownloadEntry;
 import com.hmsoft.pentaxgallery.service.DownloadService;
+import com.hmsoft.pentaxgallery.ui.ImageGridActivity;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.cache.CacheUtils;
 
@@ -144,6 +147,11 @@ public class DownloadQueue {
         if(imageData != null) {
             boolean isOngoing = progress >= 0 && progress < 100;
 
+            final Intent i = new Intent(context, ImageGridActivity.class);
+            i.putExtra(ImageGridActivity.EXTRA_START_DOWNLOADS, true);
+            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, i, 0);
+
             builder.setSmallIcon(R.drawable.ic_cloud_download_white_24dp)
                    .setContentTitle(context.getString(R.string.download_notification_title))
                    .setContentText(String.format("%s (%d)", imageData.fileName, sDownloadQueue.size()))
@@ -151,6 +159,7 @@ public class DownloadQueue {
                    .setOngoing(isOngoing)
                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                    .setLargeIcon(imageData.getData() instanceof Bitmap ? (Bitmap)imageData.getData() : null)
+                    .setContentIntent(pendingIntent)
                    .setProgress(100, progress, progress == 0);
 
             notificationManager.notify(5, builder.build());

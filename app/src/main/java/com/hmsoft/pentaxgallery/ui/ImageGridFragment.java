@@ -444,6 +444,12 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+
+        if(Images.getImageList() == null) {
+            if(BuildConfig.DEBUG) Logger.debug(TAG, "No images loaded yet.");
+            return false;
+        }
+
         int itemId = item.getItemId();
         switch (itemId) {
             case R.id.view_downloaded_only:
@@ -655,15 +661,17 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     public boolean onQueryTextSubmit(String query) {
         mSearchView.setQuery("", false);
         mSearchView.setIconified(true);
-        Images.setFilter(query);
-        mAdapter.notifyDataSetChanged();
-        updateMenuItems();
+        if(Images.getImageList() != null) {
+            Images.setFilter(query);
+            mAdapter.notifyDataSetChanged();
+            updateMenuItems();
+        }
         return true;
     }
 
     @Override
     public boolean onQueryTextChange(String newText) {
-        if(newText.length() == 4) {
+        if(newText.length() == 4 && Images.getImageList() != null) {
             int i = Images.getImageList().getFirstMatchIntex(newText);
             if(i >= 0) {
                 startDetailActivity(null, i);
@@ -989,7 +997,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
             debug(mCameraConnected ? "Got camera data: " + cameraData.getDisplayName() : "No camera data");
 
-            int retryes = 3;
+            int retryes = 2;
             while(!mCameraConnected && retryes-- > 0) {
 
                 if(ControllerFactory.DefaultController.connectToCamera()) {
