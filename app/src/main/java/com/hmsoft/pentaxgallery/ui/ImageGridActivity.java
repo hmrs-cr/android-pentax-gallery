@@ -35,6 +35,8 @@ public class ImageGridActivity extends FragmentActivity {
     private static final String TAG = "ImageGridActivity";
 
     public static final String EXTRA_START_DOWNLOADS = "EXTRA_START_DOWNLOADS";
+    public static final String EXTRA_SHOW_VIEW = "EXTRA_SHOW_VIEW";
+
     private ImageGridFragment fragment;
 
     public static void start(Context context, boolean inDownloadView) {

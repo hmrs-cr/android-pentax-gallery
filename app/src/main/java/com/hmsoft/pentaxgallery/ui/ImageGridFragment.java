@@ -514,12 +514,12 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     /*package*/ void downloadJpgs(boolean forceRefresh) {
 
-        List<ImageData> enqueue = getDownloadList();
-        if(enqueue.size() == 0 || forceRefresh) {
+        final List<ImageData> enqueue = getDownloadList();
+        if(enqueue == null || enqueue.size() == 0 || forceRefresh) {
             syncPictureList(Images.getCurrentStorageIndex(), true, false, new OnRefreshDoneListener() {
                 @Override
                 public void onRefreshDone() {
-                    addToDownloadQueue(getDownloadList());
+                    addToDownloadQueue(enqueue);
                 }
             });
         } else {
@@ -528,7 +528,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     }
 
     private void addToDownloadQueue(List<ImageData> enqueue) {
-        if (enqueue.size() > 0) {
+        if (enqueue != null && enqueue.size() > 0) {
             Toast.makeText(this.getActivity(), "Downloading " + enqueue.size() + " pictures", Toast.LENGTH_LONG).show();
             for (ImageData imageData : enqueue) {
                 DownloadQueue.addDownloadQueue(imageData);
@@ -540,14 +540,16 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     private List<ImageData> getDownloadList() {
         ImageList imageList = Images.getImageList();
-        List<ImageData> enqueue = new ArrayList<>(imageList.length());
+        List<ImageData> enqueue = new ArrayList<>();
 
-        for(int c = 0; c < imageList.length(); c++) {
-            ImageData imageData = imageList.getImage(c);
-            if(imageData.fileName.toLowerCase().endsWith(".jpg") && !imageData.existsOnLocalStorage()) {
-                DownloadEntry downloadEntry = DownloadQueue.findDownloadEntry(imageData);
-                if(downloadEntry == null) {
-                    enqueue.add(imageData);
+        if(imageList != null) {
+            for (int c = 0; c < imageList.length(); c++) {
+                ImageData imageData = imageList.getImage(c);
+                if (imageData.fileName.toLowerCase().endsWith(".jpg") && !imageData.existsOnLocalStorage()) {
+                    DownloadEntry downloadEntry = DownloadQueue.findDownloadEntry(imageData);
+                    if (downloadEntry == null) {
+                        enqueue.add(imageData);
+                    }
                 }
             }
         }
@@ -997,7 +999,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
             debug(mCameraConnected ? "Got camera data: " + cameraData.getDisplayName() : "No camera data");
 
-            int retryes = 2;
+            int retryes = BuildConfig.DEBUG ? 1 : 2;
             while(!mCameraConnected && retryes-- > 0) {
 
                 if(ControllerFactory.DefaultController.connectToCamera()) {

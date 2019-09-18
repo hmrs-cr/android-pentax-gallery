@@ -244,7 +244,9 @@ public class ImageFetcher extends ImageResizer {
                 }
             }
         }
-        
+
+        Logger.debug(TAG, (fileInputStream == null) + ", " + (fileDescriptor == null) + ", " + (imageData.existsOnLocalStorage(true)));
+
         if (fileInputStream == null && fileDescriptor == null && imageData.existsOnLocalStorage()) {
             try {
                 fileInputStream = new FileInputStream(imageData.getLocalPath());

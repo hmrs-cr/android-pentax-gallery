@@ -16,7 +16,6 @@
 
 package com.hmsoft.pentaxgallery.camera.implementation.pentax.model;
 
-import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.camera.implementation.pentax.UrlHelper;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.util.DefaultSettings;

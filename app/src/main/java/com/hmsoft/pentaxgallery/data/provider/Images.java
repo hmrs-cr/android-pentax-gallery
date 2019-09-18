@@ -16,13 +16,16 @@
 
 package com.hmsoft.pentaxgallery.data.provider;
 
+import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
 import com.hmsoft.pentaxgallery.camera.model.FilteredImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageList;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
+import com.hmsoft.pentaxgallery.util.Logger;
 
 public class Images {
 
+    private static final String TAG = "Images";
     private static CameraData sCameraData;
     private static int sCurrentStorageIndex;
 
@@ -42,9 +45,11 @@ public class Images {
     public static void setFilter(String filter) {
         if(filter != null && filter.length() > 0) {
             StorageData storageData = getCurrentStorage();
+            if(BuildConfig.DEBUG) Logger.debug(TAG, "Filter:"+filter);
             sFilteredImageList = new FilteredImageList(storageData.getImageList(), filter);
             sFilteredImageList.setStorageData(storageData);
         } else {
+            if(BuildConfig.DEBUG) Logger.debug(TAG, "No Filter Filter");
             sFilteredImageList = null;
         }
     }
@@ -57,9 +62,11 @@ public class Images {
         if(sShowDownloadQueueOnly) {
             return DownloadQueue.getImageList();
         }
+
         if(sFilteredImageList != null) {
             return sFilteredImageList;
         }
+
         StorageData storageData = getCurrentStorage();
         return storageData != null ? storageData.getImageList() : null;
     }
@@ -106,9 +113,10 @@ public class Images {
     public static void setShowDownloadedOnly(boolean showDownloadedOnly) {
         if(showDownloadedOnly) {
             sShowDownloadQueueOnly = false;
+            sShowFlaggedOnly = false;
             setFilter(FilteredImageList.FILTER_DOWNLOADED);
 
-        } else {
+        } else if(!sShowFlaggedOnly){
             sFilteredImageList = null;
         }
         sShowDownloadedOnly = showDownloadedOnly;
@@ -120,10 +128,11 @@ public class Images {
 
     public static void setShowFlaggedOnly(boolean showFlaggedOnly) {
         if(showFlaggedOnly) {
-            sShowFlaggedOnly = false;
+            sShowDownloadQueueOnly = false;
+            sShowDownloadedOnly = false;
             setFilter(FilteredImageList.FILTER_FLAGGED);
 
-        } else {
+        } else if(!sShowDownloadedOnly){
             sFilteredImageList = null;
         }
         sShowFlaggedOnly = showFlaggedOnly;
