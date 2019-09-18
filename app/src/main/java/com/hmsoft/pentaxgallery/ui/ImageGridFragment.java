@@ -1041,12 +1041,19 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         protected ImageListData doInBackground(Object... params) {
 
             boolean ignoreCache = params.length > 0 ? (Boolean) params[0] : false;
-            int storageIndex = params.length > 1 ? (int) params[1] : 0;
-
 
             DefaultSettings.getsInstance().load();
 
             CameraData cameraData = connectCamera();
+            int activeStorageIndex = -1;
+            for(StorageData storage : cameraData.storages) {
+                activeStorageIndex++;
+                if(storage.active) {
+                    break;
+                }
+            }
+
+            int storageIndex = params.length > 1 ? (int) params[1] : Math.max(activeStorageIndex, 0);
 
 
             Images.setCameraData(cameraData);
