@@ -154,18 +154,15 @@ public class DownloadQueue {
         Context context = MyApplication.ApplicationContext;
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID);
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-      
-        final Intent i = new Intent(context, ImageGridActivity.class);        
-        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, i, 0);
-      
+
+        PendingIntent pi = ImageGridActivity.getPendingIntent();
         builder.setSmallIcon(R.drawable.ic_cloud_download_white_24dp)                   
                    .setLocalOnly(true)                   
                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)                   
-                   .setContentIntent(pendingIntent);
+                   .setContentIntent(pi);
       
-        if(imageData != null) {            
-            i.putExtra(ImageGridActivity.EXTRA_START_DOWNLOADS, true);
+        if(imageData != null) {
+            //i.putExtra(ImageGridActivity.EXTRA_START_DOWNLOADS, true);
           
             builder.setContentTitle(context.getString(R.string.download_notification_title))
                    .setContentText(String.format("%s (%d)", imageData.fileName, sDownloadQueue.size()))

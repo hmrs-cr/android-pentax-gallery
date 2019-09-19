@@ -19,6 +19,7 @@
 
 package com.hmsoft.pentaxgallery.ui;
 
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -26,6 +27,7 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
+import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.util.Logger;
 
 /**
@@ -36,6 +38,7 @@ public class ImageGridActivity extends FragmentActivity {
 
     public static final String EXTRA_START_DOWNLOADS = "EXTRA_START_DOWNLOADS";
     public static final String EXTRA_SHOW_VIEW = "EXTRA_SHOW_VIEW";
+    private static PendingIntent sPendingIntent = null;
 
     private ImageGridFragment fragment;
 
@@ -44,6 +47,16 @@ public class ImageGridActivity extends FragmentActivity {
         i.putExtra(EXTRA_START_DOWNLOADS, inDownloadView);
         context.startActivity(i);
 
+    }
+
+    public static PendingIntent getPendingIntent() {
+        if(sPendingIntent == null) {
+            Context context = MyApplication.ApplicationContext;
+            final Intent i = new Intent(context, ImageGridActivity.class);
+            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            sPendingIntent = PendingIntent.getActivity(context, 0, i, 0);
+        }
+        return sPendingIntent;
     }
 
     private void handleStartDownloadIntent(Intent intent) {
