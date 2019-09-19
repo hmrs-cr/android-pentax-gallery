@@ -42,4 +42,6 @@
     <string name="download_notification_channel_desc">Download Notification Channel</string>
     <string name="download_notification_title">Transferring pictures</string>
     <string name="donwload_done_notification_title">All pictures transferred</string>
+    <string name="download_done_notification_title">Transfer done.</string>
+    <string name="download_done_notification_text">%d images transferred</string>
 </resources>

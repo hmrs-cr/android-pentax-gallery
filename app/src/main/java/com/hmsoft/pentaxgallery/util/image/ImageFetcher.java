@@ -245,10 +245,9 @@ public class ImageFetcher extends ImageResizer {
             }
         }
 
-        Logger.debug(TAG, (fileInputStream == null) + ", " + (fileDescriptor == null) + ", " + (imageData.existsOnLocalStorage(true)));
-
         if (fileInputStream == null && fileDescriptor == null && imageData.existsOnLocalStorage()) {
             try {
+                if(BuildConfig.DEBUG) Logger.debug(TAG, "Loading picture from " + imageData.getLocalPath());
                 fileInputStream = new FileInputStream(imageData.getLocalPath());
                 fileDescriptor = fileInputStream.getFD();
             } catch (IOException e) {

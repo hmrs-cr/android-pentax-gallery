@@ -57,11 +57,16 @@ public class DownloadQueue {
 
     private static final String TAG = "DownloadQueue";
     private static final String CHANNEL_ID = "DownloadChannel";
+  
+    private static final int PROGRESS_NOTIFICATION_ID = 5;
+    private static final int DONE_NOTIFICATION_ID = 6;
 
     private static Hashtable<Integer, DownloadEntry> sDownloadQueueDict = null;
     private static List<DownloadEntry> sDownloadQueue;
     private final static ImageList sIageList = new DownloadQueueImageList();
     private static final String[] sFileToScan = new String[1];
+  
+    private static int downloadCount = 0;
 
     private static OnDowloadFinishedListener onDowloadFinishedListener;
 
@@ -104,11 +109,16 @@ public class DownloadQueue {
                     if(status == DownloadService.DOWNLOAD_STATUS_SUCCESS) {
                         sFileToScan[0] = downloadEntry.getImageData().getLocalPath().getAbsolutePath();
                         MediaScannerConnection.scanFile(context, sFileToScan, null, null);
+                        downloadCount++;
                     } else if(status == DownloadService.DOWNLOAD_STATUS_ERROR) {
                         String message = resultData.getString(DownloadService.EXTRA_DOWNLOAD_STATUS_MESSAGE);
                         Toast.makeText(context, message, Toast.LENGTH_LONG).show();
                     } else if(status == DownloadService.DOWNLOAD_STATUS_CANCELED) {
                         Toast.makeText(context, "Download canceled: " + downloadEntry.getImageData().fileName, Toast.LENGTH_LONG).show();
+                    } else if(status == DownloadService.DOWNLOAD_STATUS_TOO_MANY_ERRORS) {
+                        Toast.makeText(context, "Too many errors.", Toast.LENGTH_LONG).show();                        
+                        cancelAll();
+                        return;
                     }
 
                     downloadNotification(downloadEntry.getImageData(), 100);
@@ -144,30 +154,40 @@ public class DownloadQueue {
         Context context = MyApplication.ApplicationContext;
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID);
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-        if(imageData != null) {
-            boolean isOngoing = progress >= 0 && progress < 100;
-
-            final Intent i = new Intent(context, ImageGridActivity.class);
+      
+        final Intent i = new Intent(context, ImageGridActivity.class);        
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, i, 0);
+      
+        builder.setSmallIcon(R.drawable.ic_cloud_download_white_24dp)                   
+                   .setLocalOnly(true)                   
+                   .setPriority(NotificationCompat.PRIORITY_DEFAULT)                   
+                   .setContentIntent(pendingIntent);
+      
+        if(imageData != null) {            
             i.putExtra(ImageGridActivity.EXTRA_START_DOWNLOADS, true);
-            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, i, 0);
-
-            builder.setSmallIcon(R.drawable.ic_cloud_download_white_24dp)
-                   .setContentTitle(context.getString(R.string.download_notification_title))
+          
+            builder.setContentTitle(context.getString(R.string.download_notification_title))
                    .setContentText(String.format("%s (%d)", imageData.fileName, sDownloadQueue.size()))
-                   .setLocalOnly(true)
-                   .setOngoing(isOngoing)
-                   .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                   .setLargeIcon(imageData.getData() instanceof Bitmap ? (Bitmap)imageData.getData() : null)
-                    .setContentIntent(pendingIntent)
+                   .setOngoing(true)                   
+                   .setLargeIcon(imageData.getData() instanceof Bitmap ? (Bitmap)imageData.getData() : null)                    
                    .setProgress(100, progress, progress == 0);
 
-            notificationManager.notify(5, builder.build());
+            notificationManager.notify(PROGRESS_NOTIFICATION_ID, builder.build());
         } else {
-            notificationManager.cancel(5);
-            Toast.makeText(context, R.string.donwload_done_notification_title, Toast.LENGTH_LONG).show();
-        }
+            notificationManager.cancel(PROGRESS_NOTIFICATION_ID);
+          
+            if(downloadCount > 0) {
+                builder.setContentText(String.format(context.getString(R.string.download_done_notification_text), downloadCount))
+                       .setContentTitle(context.getString(R.string.download_done_notification_title));
+                notificationManager.notify(DONE_NOTIFICATION_ID, builder.build());
+                downloadCount = 0;
+            }
 
+            if(progress > -1) {
+               Toast.makeText(context, R.string.donwload_done_notification_title, Toast.LENGTH_LONG).show();     
+            }
+        }
     }
 
     public static void loadFromCache(ImageList sourceImageList, boolean forceLoad) {
@@ -230,7 +250,7 @@ public class DownloadQueue {
             onDowloadFinishedListener.onDownloadFinished(imageData, donloadId, sDownloadQueue.size(), wasCanceled);
         }
         if(sDownloadQueue.size() == 0) {
-            downloadNotification(null, 0);
+            downloadNotification(null, donloadId > 0 ? 0 : -1);
         }
     }
 
@@ -356,6 +376,12 @@ public class DownloadQueue {
 
         if(BuildConfig.DEBUG) Logger.debug(TAG, "Starting download: " + imageData.fileName + ", ID: " + id);
     }
+
+    private static void cancelAll() {
+        DownloadService.cancelCurrentDownload();
+        sDownloadQueue.clear();
+        doDowloadFinished(null, -1, true);        
+    } 
 
     private static void remove(DownloadEntry downloadEntry, boolean canceled) {
         sDownloadQueue.remove(downloadEntry);

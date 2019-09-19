@@ -1048,10 +1048,12 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
             CameraData cameraData = connectCamera();
             int activeStorageIndex = -1;
-            for(StorageData storage : cameraData.storages) {
-                activeStorageIndex++;
-                if(storage.active) {
-                    break;
+            if(cameraData != null) {
+                for (StorageData storage : cameraData.storages) {
+                    activeStorageIndex++;
+                    if (storage.active) {
+                        break;
+                    }
                 }
             }
 

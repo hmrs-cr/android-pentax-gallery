@@ -8,6 +8,7 @@ import android.os.ResultReceiver;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.data.provider.DownloadQueue;
+import com.hmsoft.pentaxgallery.util.DefaultSettings;
 import com.hmsoft.pentaxgallery.util.Logger;
 
 import java.io.BufferedInputStream;
@@ -39,6 +40,7 @@ public class DownloadService extends IntentService {
     public static final int DOWNLOAD_STATUS_SUCCESS = 0;
     public static final int DOWNLOAD_STATUS_CANCELED = 1;
     public static final int DOWNLOAD_STATUS_ERROR = 2;
+    public static final int DOWNLOAD_STATUS_TOO_MANY_ERRORS = 3;
 
     private static final String ACTION_DOWNLOAD = "com.hmsoft.pentaxgallery.service.action.DOWNLOAD";
     public static final String EXTRA_PROGRESS = "com.hmsoft.pentaxgallery.service.extra.PROGRESS";;
@@ -47,6 +49,8 @@ public class DownloadService extends IntentService {
     public static final String EXTRA_DOWNLOAD_STATUS_MESSAGE = "com.hmsoft.pentaxgallery.service.extra.DOWNLOAD_STATUS_MESSAGE";
 
     private static int downloadId = 0;
+
+    private static int errorCount = 0;
 
     private static final String EXTRA_URL = "com.hmsoft.pentaxgallery.service.extra.URL";
     private static final String EXTRA_DESTINATION_PATH = "com.hmsoft.pentaxgallery.service.extra.DESTINATION_PATH";
@@ -94,12 +98,27 @@ public class DownloadService extends IntentService {
         int status;
         String statusMessage = "";
         int fileLength = 0;
+
+        if(errorCount >= 3) {
+            Bundle resultData = new Bundle();
+            resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
+            resultData.putInt(EXTRA_DOWNLOAD_STATUS, DOWNLOAD_STATUS_TOO_MANY_ERRORS);
+            receiver.send(DOWNLOAD_FINISHED, resultData);
+            errorCount = 0;
+            return;
+        }
+
         try {
 
             cancelDownload(-1);
             //create url and connect
             URL url = new URL(downloadUrl);
             URLConnection connection = url.openConnection();
+
+            DefaultSettings settings = DefaultSettings.getsInstance();
+            int connectTimeOut = settings.getIntValue(DefaultSettings.DEFAULT_CONNECT_TIME_OUT);
+            connection.setConnectTimeout(connectTimeOut * 500);
+
             connection.connect();
 
             // this will be useful so that you can show a typical 0-100% progress bar
@@ -136,6 +155,7 @@ public class DownloadService extends IntentService {
                     output.write(data, 0, count);
                 }
                 status = DOWNLOAD_STATUS_SUCCESS;
+                errorCount = 0;
             } finally {
                 // close streams
                 output.flush();
@@ -151,6 +171,7 @@ public class DownloadService extends IntentService {
            Logger.error(TAG,"Error downloading file", e);
            status = DOWNLOAD_STATUS_ERROR;
            statusMessage = e.getLocalizedMessage();
+           errorCount++;
         }
 
         File downloadFile = new File(destination);
