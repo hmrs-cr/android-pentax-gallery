@@ -20,12 +20,12 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.media.MediaScannerConnection;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.PowerManager;
 import android.os.ResultReceiver;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
@@ -65,6 +65,9 @@ public class DownloadQueue {
     private static List<DownloadEntry> sDownloadQueue;
     private final static ImageList sIageList = new DownloadQueueImageList();
     private static final String[] sFileToScan = new String[1];
+
+    private static PowerManager.WakeLock sWackeLock;
+
   
     private static int downloadCount = 0;
 
@@ -170,6 +173,7 @@ public class DownloadQueue {
                    .setLargeIcon(imageData.getData() instanceof Bitmap ? (Bitmap)imageData.getData() : null)                    
                    .setProgress(100, progress, progress == 0);
 
+            notificationManager.cancel(DONE_NOTIFICATION_ID);
             notificationManager.notify(PROGRESS_NOTIFICATION_ID, builder.build());
         } else {
             notificationManager.cancel(PROGRESS_NOTIFICATION_ID);
@@ -246,7 +250,13 @@ public class DownloadQueue {
         if(onDowloadFinishedListener != null) {
             onDowloadFinishedListener.onDownloadFinished(imageData, donloadId, sDownloadQueue.size(), wasCanceled);
         }
+
         if(sDownloadQueue.size() == 0) {
+            if(sWackeLock != null) {
+                sWackeLock.release();
+                sWackeLock = null;
+                if(BuildConfig.DEBUG) Logger.debug(TAG, "WakeLock released");
+            }
             downloadNotification(null, donloadId > 0 ? 0 : -1);
         }
     }
@@ -370,6 +380,10 @@ public class DownloadQueue {
 
         int id = DownloadService.download(context, url, imageData.getLocalPath().getAbsolutePath());
         downloadEntry.setDownloadId(id);
+
+        if(sWackeLock == null) {
+            sWackeLock = MyApplication.acquireWakeLock();
+        }
 
         if(BuildConfig.DEBUG) Logger.debug(TAG, "Starting download: " + imageData.fileName + ", ID: " + id);
     }

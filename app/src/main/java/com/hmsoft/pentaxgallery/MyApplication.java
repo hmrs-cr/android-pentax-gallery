@@ -17,14 +17,29 @@
 package com.hmsoft.pentaxgallery;
 
 import android.app.Application;
+import android.os.PowerManager;
 
 import com.hmsoft.pentaxgallery.data.provider.DownloadQueue;
 import com.hmsoft.pentaxgallery.service.WifiIntentReceiver;
+import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 
 public class MyApplication extends Application {
 
+    private static final String TAG = "MyApplication";
+
     public static MyApplication ApplicationContext = null;
+
+    public static PowerManager.WakeLock acquireWakeLock() {
+        PowerManager powerManager = (PowerManager)ApplicationContext.getSystemService(POWER_SERVICE);
+        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                "MyApp::MyWakelockTag");
+        wakeLock.acquire(15 * 60000);
+
+        if(BuildConfig.DEBUG) Logger.debug(TAG, "WakeLock acquired");
+
+        return wakeLock;
+    }
 
     @Override
     public void onCreate() {
@@ -34,6 +49,5 @@ public class MyApplication extends Application {
         super.onCreate();
 
         WifiIntentReceiver.register(this);
-
     }   
 }
