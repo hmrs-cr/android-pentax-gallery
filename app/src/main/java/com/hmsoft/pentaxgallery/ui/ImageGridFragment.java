@@ -530,9 +530,11 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     private void addToDownloadQueue(List<ImageData> enqueue) {
         if (enqueue != null && enqueue.size() > 0) {
             Toast.makeText(this.getActivity(), "Downloading " + enqueue.size() + " pictures", Toast.LENGTH_LONG).show();
+            DownloadQueue.inBatchDownload = false;
             for (ImageData imageData : enqueue) {
                 DownloadQueue.addDownloadQueue(imageData);
             }
+            DownloadQueue.inBatchDownload = true;
         }
         DownloadQueue.processDownloadQueue();
         showView(true, R.id.view_downloads_only);
@@ -543,9 +545,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         List<ImageData> enqueue = new ArrayList<>();
 
         if(imageList != null) {
-            for (int c = 0; c < imageList.length(); c++) {
+            for (int c = imageList.length() - 1; c >= 0; c--) {
                 ImageData imageData = imageList.getImage(c);
-                if (imageData.fileName.toLowerCase().endsWith(".jpg") && !imageData.existsOnLocalStorage()) {
+                if (!imageData.isRaw && !imageData.existsOnLocalStorage()) {
                     DownloadEntry downloadEntry = DownloadQueue.findDownloadEntry(imageData);
                     if (downloadEntry == null) {
                         enqueue.add(imageData);

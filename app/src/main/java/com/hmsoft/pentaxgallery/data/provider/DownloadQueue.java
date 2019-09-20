@@ -20,7 +20,6 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.media.MediaScannerConnection;
 import android.os.Build;
 import android.os.Bundle;
@@ -70,6 +69,8 @@ public class DownloadQueue {
 
   
     private static int downloadCount = 0;
+
+    public static boolean inBatchDownload;
 
     private static OnDowloadFinishedListener onDowloadFinishedListener;
 
@@ -252,6 +253,7 @@ public class DownloadQueue {
         }
 
         if(sDownloadQueue.size() == 0) {
+            inBatchDownload = false;
             if(sWackeLock != null) {
                 sWackeLock.release();
                 sWackeLock = null;
@@ -322,10 +324,10 @@ public class DownloadQueue {
     }
 
     public static DownloadEntry addDownloadQueue(ImageData imageData) {
-        return addDownloadQueue(imageData, false);
+        return addDownloadQueue(imageData, DownloadQueue.inBatchDownload);
     }
   
-    public static DownloadEntry addDownloadQueue(ImageData imageData, boolean atTheBeggining) {
+    public static DownloadEntry addDownloadQueue(ImageData imageData, boolean atTheBeginning) {
         if (sDownloadQueue == null) {
             sDownloadQueue = new ArrayList<DownloadEntry>();
         }
@@ -333,14 +335,14 @@ public class DownloadQueue {
         DownloadEntry downloadEntry = findDownloadEntry(imageData);
         if(downloadEntry == null) {
             downloadEntry = new DownloadEntry(imageData);
-        } else if(atTheBeggining) {
+        } else if(atTheBeginning) {
             sDownloadQueue.remove(downloadEntry);
         } else {
             downloadEntry = null;
         } 
       
         if (downloadEntry != null) {            
-            if(atTheBeggining) {
+            if(atTheBeginning) {
               sDownloadQueue.add(0, downloadEntry);
             } else {
               sDownloadQueue.add(downloadEntry);

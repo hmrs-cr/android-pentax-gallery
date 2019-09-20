@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.hmsoft.pentaxgallery">
 
     <application
@@ -9,7 +10,8 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
-        android:theme="@style/AppThemeDark">
+        android:theme="@style/AppThemeDark"
+        tools:ignore="GoogleAppIndexingWarning">
         <activity
             android:name=".ui.ImageGridActivity"
             android:label="@string/app_name"
@@ -17,8 +19,6 @@
             android:screenOrientation="fullSensor">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-                <action android:name="android.intent.action.VIEW" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             <intent-filter>
@@ -34,7 +34,8 @@
             android:name=".ui.ImageDetailActivity"
             android:label="@string/app_name"
             android:parentActivityName=".ui.ImageGridActivity"
-            android:theme="@style/AppThemeDark.FullScreen">
+            android:theme="@style/AppThemeDark.FullScreen"
+            android:keepScreenOn="true">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ui.ImageGridActivity" />
