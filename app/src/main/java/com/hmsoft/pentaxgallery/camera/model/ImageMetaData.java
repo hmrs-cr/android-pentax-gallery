@@ -62,7 +62,7 @@ public class ImageMetaData extends BaseResponse {
 
     @Override
     public String toString() {
-        return String.format("f%s %s ISO%s", aperture, shutterSpeed.replace(".","/"), iso);
+        return String.format("f%s %s ISO%s", aperture, shutterSpeed != null ? shutterSpeed.replace(".","/") : "", iso);
     }
 
     public ImageMetaData(JSONObject jsonObject) throws JSONException {
