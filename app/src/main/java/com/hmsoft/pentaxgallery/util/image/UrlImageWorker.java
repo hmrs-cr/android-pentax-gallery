@@ -30,7 +30,6 @@ import android.graphics.drawable.TransitionDrawable;
 import android.os.AsyncTask;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
-import android.util.Log;
 import android.widget.ImageView;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
@@ -72,6 +71,26 @@ public abstract class UrlImageWorker {
         mResources = context.getResources();
     }
 
+    protected BitmapDrawable getBitmapFromMemCache(String key) {
+        if (mImageCache != null) {
+            return mImageCache.getBitmapFromMemCache(key);
+        }
+        return null;
+    }
+
+    protected Bitmap getBitmapFromDiskCache(String key) {
+        if(mImageCache != null) {
+            return mImageCache.getBitmapFromDiskCache(key);
+        }
+        return null;
+    }
+
+    protected void addBitmapToCache(String key, BitmapDrawable value) {
+        if (mImageCache != null) {
+            mImageCache.addBitmapToCache(key, value);
+        }
+    }
+
     /**
      * Load an image specified by the url parameter into an ImageView (override
      * { UrlImageWorker#processBitmap(Object)} to define the processing logic). A memory and
@@ -89,12 +108,7 @@ public abstract class UrlImageWorker {
             return;
         }
 
-        BitmapDrawable value = null;
-
-        if (mImageCache != null) {
-            value = mImageCache.getBitmapFromMemCache(url);
-        }
-
+        BitmapDrawable value = this.getBitmapFromMemCache(url);
         if (value != null) {
             // Bitmap found in memory cache
             imageView.setImageDrawable(value);
@@ -319,7 +333,7 @@ public abstract class UrlImageWorker {
             // the cache
             if (mImageCache != null && !isCancelled() && getAttachedImageView() != null
                     && !mExitTasksEarly) {
-                bitmap = mImageCache.getBitmapFromDiskCache(mUrl);
+                bitmap = getBitmapFromDiskCache(mUrl);
             }
 
             // If the bitmap was not found in the cache and this task has not been cancelled by
@@ -337,9 +351,7 @@ public abstract class UrlImageWorker {
             // bitmap to our cache as it might be used again in the future
             if (bitmap != null) {
                 drawable = new BitmapDrawable(mResources, bitmap);
-                if (mImageCache != null) {
-                    mImageCache.addBitmapToCache(mUrl, drawable);
-                }
+                addBitmapToCache(mUrl, drawable);
             } else {
                 bitmap = BitmapFactory.decodeResource(mResources, R.drawable.error_photo);
                 drawable = new BitmapDrawable(mResources, bitmap);

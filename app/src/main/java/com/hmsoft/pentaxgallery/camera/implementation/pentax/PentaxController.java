@@ -169,9 +169,10 @@ public class PentaxController implements CameraController {
         return HttpHelper.bindToWifi();
     }
 
-    public ImageMetaData getImageInfo(ImageData imageData) {
+    public ImageMetaData getImageInfo(ImageData imageData) {        
         ImageMetaData imageMetaData;
         synchronized (imageData) {
+            imageData.readMetadata();
             imageMetaData = imageData.getMetaData();
             if (imageMetaData == null) {
                 try {

@@ -99,9 +99,10 @@ public class DownloadService extends IntentService {
         String statusMessage = "";
         int fileLength = 0;
 
-        if(errorCount >= 3) {
-            Bundle resultData = new Bundle();
-            resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
+        Bundle resultData = new Bundle();
+        resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
+      
+        if(errorCount >= 3) {            
             resultData.putInt(EXTRA_DOWNLOAD_STATUS, DOWNLOAD_STATUS_TOO_MANY_ERRORS);
             receiver.send(DOWNLOAD_FINISHED, resultData);
             errorCount = 0;
@@ -144,8 +145,7 @@ public class DownloadService extends IntentService {
 
                     int progress = (int) (total * 100 / fileLength);
                     if (progress > lastProgress) {
-                        // publishing the progress....
-                        Bundle resultData = new Bundle();
+                        // publishing the progress....                        
                         resultData.putInt(EXTRA_PROGRESS, progress);
                         resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
                         receiver.send(UPDATE_PROGRESS, resultData);
@@ -185,8 +185,7 @@ public class DownloadService extends IntentService {
         if (status != DOWNLOAD_STATUS_SUCCESS) {
             downloadFile.delete();
         }
-
-        Bundle resultData = new Bundle();
+        
         resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
         resultData.putInt(EXTRA_DOWNLOAD_STATUS, status);
         resultData.putString(EXTRA_DOWNLOAD_STATUS_MESSAGE, statusMessage);

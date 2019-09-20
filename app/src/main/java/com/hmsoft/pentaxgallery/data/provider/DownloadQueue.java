@@ -170,7 +170,7 @@ public class DownloadQueue {
             builder.setContentTitle(context.getString(R.string.download_notification_title))
                    .setContentText(String.format("%s (%d)", imageData.fileName, sDownloadQueue.size()))
                    .setOngoing(true)                   
-                   .setLargeIcon(imageData.getData() instanceof Bitmap ? (Bitmap)imageData.getData() : null)                    
+                   .setLargeIcon(imageData.getThumbBitmap())
                    .setProgress(100, progress, progress == 0);
 
             notificationManager.cancel(DONE_NOTIFICATION_ID);
@@ -322,13 +322,29 @@ public class DownloadQueue {
     }
 
     public static DownloadEntry addDownloadQueue(ImageData imageData) {
+        return addDownloadQueue(imageData, false);
+    }
+  
+    public static DownloadEntry addDownloadQueue(ImageData imageData, boolean atTheBeggining) {
         if (sDownloadQueue == null) {
             sDownloadQueue = new ArrayList<DownloadEntry>();
         }
 
-        if (!isInDownloadQueue(imageData)) {
-            DownloadEntry downloadEntry = new DownloadEntry(imageData);
-            sDownloadQueue.add(downloadEntry);
+        DownloadEntry downloadEntry = findDownloadEntry(imageData);
+        if(downloadEntry == null) {
+            downloadEntry = new DownloadEntry(imageData);
+        } else if(atTheBeggining) {
+            sDownloadQueue.remove(downloadEntry);
+        } else {
+            downloadEntry = null;
+        } 
+      
+        if (downloadEntry != null) {            
+            if(atTheBeggining) {
+              sDownloadQueue.add(0, downloadEntry);
+            } else {
+              sDownloadQueue.add(downloadEntry);
+            }
             processDownloadQueue();
             return downloadEntry;
         }

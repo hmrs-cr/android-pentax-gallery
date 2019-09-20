@@ -908,7 +908,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 public void onImageLoaded(boolean success) {
                     Drawable drawable = imageView.getDrawable();
                     if (success && drawable instanceof BitmapDrawable) {
-                        imageData.setData(((BitmapDrawable) drawable).getBitmap());
+                        imageData.setThumbBitmap(((BitmapDrawable) drawable).getBitmap());
                     }
                 }
             });

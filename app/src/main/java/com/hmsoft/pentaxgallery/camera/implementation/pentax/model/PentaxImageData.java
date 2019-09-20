@@ -16,11 +16,15 @@
 
 package com.hmsoft.pentaxgallery.camera.implementation.pentax.model;
 
+import android.media.ExifInterface;
+
 import com.hmsoft.pentaxgallery.camera.implementation.pentax.UrlHelper;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
+import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.util.DefaultSettings;
 
 import java.io.File;
+import java.io.IOException;
 
 public class PentaxImageData extends ImageData {
 
@@ -29,6 +33,20 @@ public class PentaxImageData extends ImageData {
     public PentaxImageData(String directory, String fileName) {
         super(directory, fileName);
         updateExistsOnLocasStorage();
+    }
+  
+    @Override
+    public ImageMetaData readMetadata() {
+        if(existsOnLocalStorage()) {
+            ExifInterface exifInterface = null;
+            try {
+                exifInterface = new ExifInterface(getLocalPath().getAbsolutePath());
+                setMetaData(new PentaxImageMetaData(getLocalPath(), exifInterface));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return getMetaData();
     }
 
     @Override
@@ -54,7 +72,7 @@ public class PentaxImageData extends ImageData {
         if(mLocalPath == null) {
             String location = DefaultSettings.getsInstance().getStringValue(DefaultSettings.DOWNLOAD_LOCATION);
 
-            if (!fileName.toLowerCase().endsWith(".jpg")) {
+            if (isRaw) {
                 location += " (RAW)";
             }
 

@@ -17,6 +17,8 @@
 package com.hmsoft.pentaxgallery.camera.model;
 
 
+import android.graphics.Bitmap;
+
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.util.Logger;
 
@@ -32,6 +34,8 @@ public abstract class ImageData {
     public final String fullPath;
     public final String uniqueFileName;
   
+    public final boolean isRaw;
+  
     protected ImageMetaData mMetaData;
     protected StorageData mStorageData;
 
@@ -40,7 +44,7 @@ public abstract class ImageData {
     public final String flaggedCacheKey;
 
     private boolean mIsFlagged;
-    private Object mData;
+    private Bitmap mThumbBitmap;
 
     public ImageData(String directory, String fileName) {
         this.directory = directory;
@@ -48,6 +52,7 @@ public abstract class ImageData {
         this.fullPath = directory + "/" + fileName;
         this.uniqueFileName = directory + "-" + fileName;
         this.flaggedCacheKey = uniqueFileName.substring(0, uniqueFileName.lastIndexOf('.')) + ".flagged";
+        this.isRaw = !fileName.toLowerCase().endsWith(".jpg");
     }
 
     public boolean match(String text) {
@@ -62,12 +67,12 @@ public abstract class ImageData {
         return fullPath;
     }
 
-    public void setData(Object data) {
-        mData = data;
+    public void setThumbBitmap(Bitmap bitmap) {
+        mThumbBitmap = bitmap;
     }
 
-    public Object getData() {
-        return  mData;
+    public Bitmap getThumbBitmap() {
+        return mThumbBitmap;
     }
 
     public abstract String getViewUrl();
@@ -77,11 +82,8 @@ public abstract class ImageData {
     public abstract String getDownloadUrl();
 
     public abstract File getLocalPath();
-
-    public boolean existsOnLocalStorage(boolean ignoreCached) {
-        updateExistsOnLocasStorage();
-        return existsOnLocalStorage();
-    }
+  
+    public abstract ImageMetaData readMetadata();
 
     public boolean existsOnLocalStorage() {
         if(mExistsOnLocalStorage == null) {
@@ -102,7 +104,7 @@ public abstract class ImageData {
   
     public void setMetaData(ImageMetaData metaData) {
         if(BuildConfig.DEBUG) {
-            if (metaData != null && metaData.fileName != null && !metaData.fileName.equals(fileName)) {
+            if (metaData != null && metaData.fileName != null && !metaData.fileName.contains(fileName)) {
                 throw new RuntimeException(String.format("%s != %s", metaData.fileName, fileName));
             }
         }

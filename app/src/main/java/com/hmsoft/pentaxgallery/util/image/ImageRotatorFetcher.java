@@ -15,7 +15,7 @@ public class ImageRotatorFetcher extends ImageFetcher {
         super(context, imageSize);
     }
 
-    private Bitmap rotateBitmap(Bitmap bitmap, int orientation) {
+    protected Bitmap rotateBitmap(Bitmap bitmap, int orientation) {
 
         float degrees = 0;
         switch (orientation) {
@@ -49,8 +49,6 @@ public class ImageRotatorFetcher extends ImageFetcher {
                 bitmap = rotateBitmap(bitmap, metaData.orientation);
             }
         }
-
-        imageData.setData(bitmap);
 
         return bitmap;
     }

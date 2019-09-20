@@ -37,6 +37,24 @@ public class ImageMetaData extends BaseResponse {
     public final String shutterSpeed;
     public final String latlng;
       
+    
+    public ImageMetaData(String directory, String fileName, boolean captured, int orientation, 
+                         String cameraModel, String dateTime, String aperture, String iso, String xv,
+                        String shutterSpeed, String latlng) {
+        super(200, null);
+        this.directory = directory;
+        this.fileName = fileName;
+        this.captured = captured;
+        this.orientation = orientation;
+        this.cameraModel = cameraModel;
+        this.dateTime = dateTime;
+        this.aperture = aperture;
+        this.iso = iso;
+        this.xv = xv;
+        this.shutterSpeed = shutterSpeed;
+        this.latlng = latlng;
+    }
+  
     public ImageMetaData(String jsonData) throws JSONException {
         this(new JSONObject(new JSONTokener(jsonData)));
     }
