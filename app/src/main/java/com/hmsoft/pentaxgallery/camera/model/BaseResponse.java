@@ -25,6 +25,8 @@ public class BaseResponse {
     public final int errCode;
     public final String errMsg;
     public final boolean success;
+  
+    private JSONObject mJSONObject;
 
     public BaseResponse(String response) throws JSONException {
         this(new JSONTokener(response));
@@ -36,11 +38,17 @@ public class BaseResponse {
 
     public BaseResponse(JSONObject jsonObject) {
         this(jsonObject.optInt("errCode"), jsonObject.optString("errMsg"));
+        mJSONObject = jsonObject;
     }
 
     public BaseResponse(int errCode, String errMsg) {
         this.errCode = errCode;
         this.errMsg = errMsg;
         success = errCode == 200;
+        mJSONObject = null;
+    }
+  
+    public JSONObject getJSONObject() {
+        return mJSONObject;
     }
 }

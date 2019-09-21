@@ -35,7 +35,6 @@ import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.Html;
-import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -59,6 +58,7 @@ import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.ControllerFactory;
+import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
 import com.hmsoft.pentaxgallery.camera.model.FilteredImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
@@ -996,50 +996,66 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         }
 
         private CameraData connectCamera() {
-            CameraData cameraData = Images.getCameraData();
-            mCameraConnected = cameraData != null;
+            CameraData cameraData = null;
+            mCameraConnected = false;
 
-            debug(mCameraConnected ? "Got camera data: " + cameraData.getDisplayName() : "No camera data");
+            int retryes = 3;
+            int ci = 0;
+            while (!mCameraConnected) {
 
-            int retryes = BuildConfig.DEBUG ? 1 : 2;
-            while(!mCameraConnected && retryes-- > 0) {
-
-                if(ControllerFactory.DefaultController.connectToCamera()) {
-                    debug("Binded to WiFi!");
-                    cameraData = ControllerFactory.DefaultController.getDeviceInfo(true);
-                    mCameraConnected = cameraData != null;
-                    debug(mCameraConnected ? "Got camera data from device: " + cameraData.getDisplayName() : "No camera data from device");
+                if (ControllerFactory.DefaultController.connectToCamera()) {
+                    BaseResponse response = ControllerFactory.DefaultController.ping();
+                    if (response != null && response.success) {
+                        cameraData = ControllerFactory.DefaultController.getDeviceInfo(true);
+                    }
+                } else {
+                    Logger.warning(TAG, "Could not bind to WiFi");
                 }
 
-                if (!mCameraConnected) {
-                    cameraData = ControllerFactory.DefaultController.getDeviceInfo(false);
+                if (cameraData == null) {
 
-                    String ssid = null;
-                    String key = null;
-
-                    if (cameraData != null) {
-                        ssid = cameraData.ssid;
-                        key = cameraData.key;
-                        debug("Got camera data from cache: " + ssid);
-                    } else {
-                        CameraData defaultCameraData = ControllerFactory.DefaultController.getDefaultCameraData();
-                        ssid = defaultCameraData.ssid;
-                        key = defaultCameraData.key;
-                        debug("Got default camera data: " + ssid);
+                    if(retryes-- == 0) {
+                        Logger.warning(TAG, "Too many failed attempts to connect");
+                        break;
                     }
 
-                    if(!TextUtils.isEmpty(ssid) && !TextUtils.isEmpty(key)) {
-                        // Try to connect to camera WiFi
-                        WifiHelper.turnWifiOn(MyApplication.ApplicationContext, 1500);
-                        boolean success = WifiHelper.connectToWifi(MyApplication.ApplicationContext, ssid, key);
-                        if (!success) {
-                            debug("Failed to connect to wifi");
+                    List<CameraData> cameras = CameraData.getRegisteredCameras();
+                    if (cameras != null && cameras.size() > 0) {
+                        WifiHelper.turnWifiOn(MyApplication.ApplicationContext, 1000);
+
+                        if(ci == cameras.size()) {
+                            Logger.warning(TAG, "All registered cameras failed to connect");
+                            break;
                         }
+
+                        cameraData = cameras.get(ci++);
+                        if(BuildConfig.DEBUG) Logger.debug(TAG, "Attempting to connect to " + cameraData.ssid);
+
+                        boolean success = WifiHelper.connectToWifi(MyApplication.ApplicationContext,
+                                cameraData.ssid, cameraData.key);
+                        if (!success) {
+                            Logger.warning(TAG, "Could not connect to " + cameraData.ssid);
+                            cameraData = null;
+                        } else {
+                            Logger.warning(TAG, "Connected to " + cameraData.ssid);
+                        }
+                    } else {
+                        Logger.warning(TAG, "No previously connected cameras found.");
+                        break;
                     }
                 }
+
+                mCameraConnected = cameraData != null;
             }
+
+            if(cameraData == null) {
+                cameraData = ControllerFactory.DefaultController.getDeviceInfo(false);
+                if(BuildConfig.DEBUG) Logger.debug(TAG, "Camera data from cache: " + cameraData);
+            }
+
             return cameraData;
         }
+
 
         @Override
         protected ImageListData doInBackground(Object... params) {
@@ -1048,7 +1064,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
             DefaultSettings.getsInstance().load();
 
-            CameraData cameraData = connectCamera();
+
+
+            CameraData cameraData =  connectCamera();
             int activeStorageIndex = -1;
             if(cameraData != null) {
                 for (StorageData storage : cameraData.storages) {
@@ -1064,6 +1082,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
             Images.setCameraData(cameraData);
             Images.setCurrentStorageIndex(storageIndex);
+            if(cameraData != null && mCameraConnected) {
+                cameraData.saveData();
+            }
 
             ImageListData imageListResponse = ControllerFactory.DefaultController.getImageList(Images.getCurrentStorage(), mCameraConnected || ignoreCache);
 

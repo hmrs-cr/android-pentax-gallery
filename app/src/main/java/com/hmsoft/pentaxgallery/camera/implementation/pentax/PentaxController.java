@@ -16,8 +16,6 @@
 
 package com.hmsoft.pentaxgallery.camera.implementation.pentax;
 
-import android.util.Log;
-
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.camera.controller.CameraController;
 import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
@@ -210,11 +208,4 @@ public class PentaxController implements CameraController {
         });
     }
 
-    public CameraData getDefaultCameraData() {
-
-        String ssid = "PENTAX_69C93F";
-        String key = "A469C93F";
-
-        return new CameraData(ssid, key);
-    }
 }

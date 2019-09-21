@@ -209,7 +209,7 @@ public class WifiHelper {
                 return true;
             }
             TaskExecutor.sleep(500L);
-        } while (++c < 30);
+        } while (++c < 20);
 
         Logger.error(TAG, "Failed to connect to " + ssid);
         return false;
