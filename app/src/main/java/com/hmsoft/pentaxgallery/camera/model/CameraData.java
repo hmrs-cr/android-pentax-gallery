@@ -185,7 +185,6 @@ public class CameraData extends BaseResponse {
             }
         }
 
-        Logger.debug("Sorting", "" + result.size());
         Collections.sort(result, new Comparator<CameraData>() {
             @Override
             public int compare(CameraData o1, CameraData o2) {
@@ -195,11 +194,7 @@ public class CameraData extends BaseResponse {
                 if(o2 == null || o2.dateAdded == null) {
                     return 0;
                 }
-                int r = o2.dateAdded.compareTo(o1.dateAdded);
-
-
-                Logger.debug("Sorting", o1.dateAdded + " " + o2.dateAdded + " = " + r);
-                return  r;
+                return o2.dateAdded.compareTo(o1.dateAdded);
             }
         });
 
