@@ -78,7 +78,6 @@ public abstract class ImageResizer extends UrlImageWorker {
         setImageSize(size, size);
     }
 
-
     /**
      * Decode and sample down a bitmap from a file input stream to the requested width and height.
      *
@@ -156,22 +155,6 @@ public abstract class ImageResizer extends UrlImageWorker {
             while ((halfHeight / inSampleSize) > reqHeight
                     && (halfWidth / inSampleSize) > reqWidth) {
                 inSampleSize *= 2;
-            }
-
-            // This offers some additional logic in case the image has a strange
-            // aspect ratio. For example, a panorama may have a much larger
-            // width than height. In these cases the total pixels might still
-            // end up being too large to fit comfortably in memory, so we should
-            // be more aggressive with sample down the image (=larger inSampleSize).
-
-            long totalPixels = width * height / inSampleSize;
-
-            // Anything more than 2x the requested pixels we'll sample down further
-            final long totalReqPixelsCap = reqWidth * reqHeight * 2;
-
-            while (totalPixels > totalReqPixelsCap) {
-                inSampleSize *= 2;
-                totalPixels /= 2;
             }
         }
         return inSampleSize;
