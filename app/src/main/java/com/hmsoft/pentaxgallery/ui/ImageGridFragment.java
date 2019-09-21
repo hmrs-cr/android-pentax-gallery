@@ -535,9 +535,11 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 DownloadQueue.addDownloadQueue(imageData);
             }
             DownloadQueue.inBatchDownload = true;
+            showView(true, R.id.view_downloads_only);
+        } else {
+            Toast.makeText(this.getActivity(), R.string.no_new_images_to_transfer, Toast.LENGTH_LONG).show();
         }
         DownloadQueue.processDownloadQueue();
-        showView(true, R.id.view_downloads_only);
     }
 
     private List<ImageData> getDownloadList() {

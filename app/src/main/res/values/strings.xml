@@ -44,4 +44,5 @@
     <string name="donwload_done_notification_title">All pictures transferred</string>
     <string name="download_done_notification_title">Transfer done.</string>
     <string name="download_done_notification_text">%d images transferred</string>
+    <string name="no_new_images_to_transfer">No new images to transfer.</string>
 </resources>
