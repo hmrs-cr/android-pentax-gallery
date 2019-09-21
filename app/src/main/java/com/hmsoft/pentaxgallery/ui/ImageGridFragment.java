@@ -514,12 +514,12 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     /*package*/ void downloadJpgs(boolean forceRefresh) {
 
-        final List<ImageData> enqueue = getDownloadList();
+        List<ImageData> enqueue = getDownloadList();
         if(enqueue == null || enqueue.size() == 0 || forceRefresh) {
             syncPictureList(Images.getCurrentStorageIndex(), true, false, new OnRefreshDoneListener() {
                 @Override
                 public void onRefreshDone() {
-                    addToDownloadQueue(enqueue);
+                    addToDownloadQueue(getDownloadList());
                 }
             });
         } else {

@@ -88,7 +88,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
         final int height = displayMetrics.heightPixels;
         final int width = displayMetrics.widthPixels;
 
-        final int longest = (height > width ? height : width);
+        final int longest = (height > width ? height : width) / 2;
 
         ImageCache.ImageCacheParams cacheParams =
                 new ImageCache.ImageCacheParams(this, IMAGE_CACHE_DIR);
