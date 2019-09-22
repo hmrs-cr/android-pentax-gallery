@@ -529,7 +529,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     private void addToDownloadQueue(List<ImageData> enqueue) {
         if (enqueue != null && enqueue.size() > 0) {
-            Toast.makeText(this.getActivity(), "Downloading " + enqueue.size() + " pictures", Toast.LENGTH_LONG).show();
+            Toast.makeText(this.getActivity(), "Transferring " + enqueue.size() + " pictures", Toast.LENGTH_LONG).show();
             DownloadQueue.inBatchDownload = false;
             for (ImageData imageData : enqueue) {
                 DownloadQueue.addDownloadQueue(imageData);
@@ -628,7 +628,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     }
 
     private void syncPictureList(boolean ignoreCache) {
-        syncPictureList(0, ignoreCache, true);
+        syncPictureList(-1, ignoreCache, true);
     }
 
     private void syncPictureList(int storageIndex, boolean ignoreCache, boolean showProgressBar) {
@@ -981,7 +981,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         void onRefreshDone();
     }
 
-    private  class ImageListTask extends AsyncTask<Object, Void, ImageListData> {
+    private  class ImageListTask extends AsyncTask<Object, Object, ImageListData> {
+
+        private static final int PROGRESS_CONNECTED = 0;
 
         private OnRefreshDoneListener refreshDoneListener;
 
@@ -1053,11 +1055,26 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             if(cameraData == null) {
                 cameraData = ControllerFactory.DefaultController.getDeviceInfo(false);
                 if(BuildConfig.DEBUG) Logger.debug(TAG, "Camera data from cache: " + cameraData);
+            } else {
+                publishProgress(PROGRESS_CONNECTED, cameraData);
             }
 
             return cameraData;
         }
 
+
+        @Override
+        protected void onProgressUpdate(Object... values) {
+            int progressType = (int)values[0];
+            switch (progressType) {
+                case PROGRESS_CONNECTED:
+                    CameraData cameraData = (CameraData)values[1];
+                    Toast.makeText(ImageGridFragment.this.getContext(),
+                            String.format("Connected to %s (%s)", cameraData.model, cameraData.serialNo),
+                            Toast.LENGTH_SHORT).show();
+                    break;
+            }
+        }
 
         @Override
         protected ImageListData doInBackground(Object... params) {
@@ -1066,11 +1083,12 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
             DefaultSettings.getsInstance().load();
 
-
-
             CameraData cameraData =  connectCamera();
+
             int activeStorageIndex = -1;
-            if(cameraData != null) {
+            if(params.length > 1 && (int) params[1] >= 0) {
+                activeStorageIndex = (int) params[1];
+            } else if(cameraData != null) {
                 for (StorageData storage : cameraData.storages) {
                     activeStorageIndex++;
                     if (storage.active) {
@@ -1079,8 +1097,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 }
             }
 
-            int storageIndex = params.length > 1 ? (int) params[1] : Math.max(activeStorageIndex, 0);
-
+            int storageIndex = Math.max(activeStorageIndex, 0);
 
             Images.setCameraData(cameraData);
             Images.setCurrentStorageIndex(storageIndex);
