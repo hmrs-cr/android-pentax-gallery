@@ -42,14 +42,26 @@ public class Images {
         setFilter(null);
     }
 
-    public static void setFilter(String filter) {
-        if(filter != null && filter.length() > 0) {
+    public static void setFilter(FilteredImageList.ImageFilter filter) {
+        if(filter != null) {
             StorageData storageData = getCurrentStorage();
-            if(BuildConfig.DEBUG) Logger.debug(TAG, "Filter:"+filter);
             sFilteredImageList = new FilteredImageList(storageData.getImageList(), filter);
             sFilteredImageList.setStorageData(storageData);
         } else {
-            if(BuildConfig.DEBUG) Logger.debug(TAG, "No Filter Filter");
+            if(BuildConfig.DEBUG) Logger.debug(TAG, "No Filter set");
+            sFilteredImageList = null;
+        }
+    }
+
+    public static void setFilterText(String filter) {
+        if(filter != null) {
+            StorageData storageData = getCurrentStorage();
+            if(BuildConfig.DEBUG) Logger.debug(TAG, "Filter:"+filter);
+            sFilteredImageList = new FilteredImageList(storageData.getImageList());
+            sFilteredImageList.setStorageData(storageData);
+            sFilteredImageList.setFilter(filter);
+        } else {
+            if(BuildConfig.DEBUG) Logger.debug(TAG, "No Filter set");
             sFilteredImageList = null;
         }
     }
@@ -114,7 +126,7 @@ public class Images {
         if(showDownloadedOnly) {
             sShowDownloadQueueOnly = false;
             sShowFlaggedOnly = false;
-            setFilter(FilteredImageList.FILTER_DOWNLOADED);
+            setFilter(FilteredImageList.DownloadedFilter);
 
         } else if(!sShowFlaggedOnly){
             sFilteredImageList = null;
@@ -130,7 +142,7 @@ public class Images {
         if(showFlaggedOnly) {
             sShowDownloadQueueOnly = false;
             sShowDownloadedOnly = false;
-            setFilter(FilteredImageList.FILTER_FLAGGED);
+            setFilter(FilteredImageList.FlaggedFilter);
 
         } else if(!sShowDownloadedOnly){
             sFilteredImageList = null;

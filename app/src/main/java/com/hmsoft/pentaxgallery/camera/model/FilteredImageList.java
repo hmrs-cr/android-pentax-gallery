@@ -18,17 +18,46 @@ package com.hmsoft.pentaxgallery.camera.model;
 
 public class FilteredImageList extends ImageList {
 
-    public static final String FILTER_DOWNLOADED = "____FILTER_DOWNLOADED";
-    public static final String FILTER_FLAGGED = "____FILTER_FLAGGED";
+    public interface ImageFilter {
+        boolean passFilter(ImageData imageData);
+    }
+
+    public static final ImageFilter DownloadedFilter = new ImageFilter() {
+        @Override
+        public boolean passFilter(ImageData imageData) {
+            return imageData.existsOnLocalStorage();
+        }
+    };
+
+    public static final ImageFilter FlaggedFilter = new ImageFilter() {
+        @Override
+        public boolean passFilter(ImageData imageData) {
+            return imageData.isFlagged();
+        }
+    };
+
+    public static final ImageFilter RawFilter = new ImageFilter() {
+        @Override
+        public boolean passFilter(ImageData imageData) {
+            return imageData.isRaw;
+        }
+    };
+
+    public static final ImageFilter JpgFilter = new ImageFilter() {
+        @Override
+        public boolean passFilter(ImageData imageData) {
+            return !imageData.isRaw;
+        }
+    };
 
     private final ImageList mOriginalImageList;
-    private String mFilter;
+    private ImageFilter mFilter;
 
     public FilteredImageList(ImageList imageList) {
         mOriginalImageList = imageList;
     }
 
-    public FilteredImageList(ImageList imageList, String filter) {
+    public FilteredImageList(ImageList imageList, ImageFilter filter) {
         mOriginalImageList = imageList;
         setFilter(filter);
     }
@@ -38,23 +67,29 @@ public class FilteredImageList extends ImageList {
         setFilter(mFilter);
     }
 
-    public void setFilter(String filter) {
-        mImageList.clear();
+    public void setFilter(ImageFilter filter) {
         mFilter = filter;
-        if(filter == null || filter.length() == 0) {
+        mImageList.clear();
+        if(filter == null) {
             mImageList.addAll(mOriginalImageList.mImageList);
         } else {
-            boolean downloadedOnly = FILTER_DOWNLOADED.equals(filter);
-            boolean flaggedOnly = FILTER_FLAGGED.equals(filter);
             for (int c = 0; c < mOriginalImageList.length(); c++) {
                 ImageData imageData = mOriginalImageList.getImage(c);
-                if ((downloadedOnly && imageData.existsOnLocalStorage()) ||
-                    (flaggedOnly && imageData.isFlagged()) ||
-                    imageData.match(filter)) {
+                if(filter.passFilter(imageData)) {
                     mImageList.add(imageData);
                 }
             }
         }
+    }
+
+    public void setFilter(final String filter) {
+        ImageFilter textFilter = new ImageFilter() {
+            @Override
+            public boolean passFilter(ImageData imageData) {
+                return imageData.match(filter);
+            }
+        };
+        setFilter(textFilter);
     }
 
     @Override

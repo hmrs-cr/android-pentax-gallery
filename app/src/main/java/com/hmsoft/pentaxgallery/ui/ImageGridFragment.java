@@ -668,7 +668,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         mSearchView.setQuery("", false);
         mSearchView.setIconified(true);
         if(Images.getImageList() != null) {
-            Images.setFilter(query);
+            Images.setFilterText(query);
             mAdapter.notifyDataSetChanged();
             updateMenuItems();
         }
