@@ -698,7 +698,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     @Override
     public void onRefresh() {
         Images.setCameraData(null);
-        Images.setCurrentStorageIndex(0);
         syncPictureList(Images.getCurrentStorageIndex(), true, false);
     }
 
@@ -1070,7 +1069,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 case PROGRESS_CONNECTED:
                     CameraData cameraData = (CameraData)values[1];
                     Toast.makeText(ImageGridFragment.this.getContext(),
-                            String.format("Connected to %s (%s)", cameraData.model, cameraData.serialNo),
+                            String.format(getString(R.string.connected_to), cameraData.model, cameraData.serialNo),
                             Toast.LENGTH_SHORT).show();
                     break;
             }
@@ -1105,7 +1104,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 cameraData.saveData();
             }
 
-            ImageListData imageListResponse = ControllerFactory.DefaultController.getImageList(Images.getCurrentStorage(), mCameraConnected || ignoreCache);
+            ImageListData imageListResponse = ControllerFactory.DefaultController.getImageList(Images.getCurrentStorage(),
+                    mCameraConnected || ignoreCache);
 
             if (imageListResponse != null) {
                 DownloadQueue.loadFromCache(imageListResponse.dirList, ignoreCache);

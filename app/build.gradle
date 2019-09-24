@@ -16,7 +16,7 @@ def versionStringBase = "${versionMajor}.${versionMinor}.${verCode}-${buildTime(
 
 
 android {
-    compileSdkVersion 27
+    compileSdkVersion 28
     defaultConfig {
         applicationId "com.hmsoft." + APP_NAME.toLowerCase()
         minSdkVersion 16

@@ -139,7 +139,13 @@ public class Images {
     }
 
     public static StorageData getCurrentStorage() {
-        return sCameraData != null ? sCameraData.storages.get(sCurrentStorageIndex) : StorageData.DefaultStorage;
+        if(sCameraData != null) {
+            if(sCurrentStorageIndex < 0 || sCurrentStorageIndex >= sCameraData.storages.size()) {
+                sCurrentStorageIndex = 0;
+            }
+            return  sCameraData.storages.get(sCurrentStorageIndex);
+        }
+        return StorageData.DefaultStorage;
     }
 
     public static int getCurrentStorageIndex() {

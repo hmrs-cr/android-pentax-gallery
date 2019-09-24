@@ -55,7 +55,7 @@ public final class UrlHelper {
     }
 
     public static String getThumbUrl(ImageData imageData) {
-        if(imageData.fileName.toLowerCase().endsWith(".jpg")) {
+        if(!imageData.isRaw) {
             return appendStorageParam(getDownloadUrl(imageData, true) + "?size=thumb", imageData.getStorageData());
         }
         return getViewUrl(imageData);
