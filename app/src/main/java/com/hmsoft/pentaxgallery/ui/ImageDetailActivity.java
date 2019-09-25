@@ -48,11 +48,9 @@ import com.hmsoft.pentaxgallery.camera.Camera;
 import com.hmsoft.pentaxgallery.camera.CameraFactory;
 import com.hmsoft.pentaxgallery.camera.controller.CameraController;
 import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
-import com.hmsoft.pentaxgallery.camera.model.FilteredImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
-import com.hmsoft.pentaxgallery.data.model.DownloadEntry;
-import com.hmsoft.pentaxgallery.data.provider.DownloadQueue;
+import com.hmsoft.pentaxgallery.service.DownloadService;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 import com.hmsoft.pentaxgallery.util.cache.CacheUtils;
 import com.hmsoft.pentaxgallery.util.image.ImageCache;
@@ -64,7 +62,7 @@ import java.util.Date;
 public class ImageDetailActivity extends FragmentActivity implements OnClickListener,
         GestureDetector.OnGestureListener,
         GestureDetector.OnDoubleTapListener, ViewPager.OnPageChangeListener,
-        DownloadQueue.OnDowloadFinishedListener,
+        DownloadService.Queue.OnDowloadFinishedListener,
         CameraController.OnAsyncCommandExecutedListener {
 
     private static final String IMAGE_CACHE_DIR = "images";
@@ -149,7 +147,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
         super.onResume();
         mImageFetcher.setExitTasksEarly(false);
         updateUiElements();
-        DownloadQueue.setOnDowloadFinishedListener(this);
+        DownloadService.Queue.setOnDowloadFinishedListener(this);
     }
 
     @Override
@@ -181,7 +179,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
                 return;
             }
 
-            DownloadEntry downloadEntry = DownloadQueue.findDownloadEntry(imageData);
+            DownloadService.Queue.DownloadEntry downloadEntry = DownloadService.Queue.findDownloadEntry(imageData);
 
             boolean isInDownloadQueue = downloadEntry != null;
             boolean isDownloading = isInDownloadQueue && downloadEntry.getDownloadId() > 0;
@@ -310,14 +308,14 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
     private void downloadNow() {
         int i = mPager.getCurrentItem();
         ImageData imageData = mCamera.getImageList().getImage(i);
-        DownloadQueue.download(imageData);
+        DownloadService.Queue.download(imageData);
         updateUiElements();
     }
 
     private void cancelDownload() {
         int i = mPager.getCurrentItem();
         ImageData imageData = mCamera.getImageList().getImage(i);
-        DownloadQueue.removeFromDownloadQueue(imageData);
+        DownloadService.Queue.removeFromDownloadQueue(imageData);
         updateUiElements();
     }
 
@@ -352,7 +350,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
     private void download() {
         int i = mPager.getCurrentItem();
         ImageData imageData = mCamera.getImageList().getImage(i);
-        DownloadQueue.addDownloadQueue(imageData);
+        DownloadService.Queue.addDownloadQueue(imageData);
         updateUiElements();
     }
 
@@ -450,7 +448,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
             ActionBar actionBar = getActionBar();
             if (actionBar != null) {
                 actionBar.setTitle(imageData.fileName);
-                DownloadEntry downloadEntry = DownloadQueue.findDownloadEntry(imageData);
+                DownloadService.Queue.DownloadEntry downloadEntry = DownloadService.Queue.findDownloadEntry(imageData);
                 String subtitle = null;
                 if (downloadEntry != null) {
                     subtitle = getString(R.string.in_download_queue);
@@ -464,7 +462,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
                 }
                 actionBar.setSubtitle(subtitle);
             } else {
-                if (mCamera.hasFilter(FilteredImageList.DownloadQueueFilter) && mCamera.imageCount() == 0) {
+                if (mCamera.hasFilter(DownloadService.Queue.DownloadQueueFilter) && mCamera.imageCount() == 0) {
                     finish();
                 }
             }

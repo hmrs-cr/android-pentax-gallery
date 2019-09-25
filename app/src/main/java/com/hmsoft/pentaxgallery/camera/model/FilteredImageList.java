@@ -16,8 +16,6 @@
 
 package com.hmsoft.pentaxgallery.camera.model;
 
-import com.hmsoft.pentaxgallery.data.provider.DownloadQueue;
-
 public class FilteredImageList extends ImageList {
 
     public static abstract class ImageFilter {
@@ -26,18 +24,6 @@ public class FilteredImageList extends ImageList {
             return null;
         }
     }
-  
-    public static final ImageFilter DownloadQueueFilter = new ImageFilter() {
-        @Override
-        public boolean passFilter(ImageData imageData) {
-            return imageData.inDownloadQueue();
-        }
-
-        @Override
-        public ImageList getImageList() {
-            return DownloadQueue.getImageList();
-        }
-    };
 
     public static final ImageFilter DownloadedFilter = new ImageFilter() {
         @Override

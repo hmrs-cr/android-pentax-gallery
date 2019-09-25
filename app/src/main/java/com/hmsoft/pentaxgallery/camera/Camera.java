@@ -1,5 +1,7 @@
 package com.hmsoft.pentaxgallery.camera;
 
+import android.support.annotation.WorkerThread;
+
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.camera.controller.CameraController;
@@ -11,7 +13,7 @@ import com.hmsoft.pentaxgallery.camera.model.ImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageListData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
-import com.hmsoft.pentaxgallery.data.provider.DownloadQueue;
+import com.hmsoft.pentaxgallery.service.DownloadService;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.WifiHelper;
 import com.hmsoft.pentaxgallery.util.cache.CacheUtils;
@@ -32,7 +34,8 @@ public class Camera {
     public Camera(CameraController controller) {
         this.mController = controller;
     }
-  
+
+    @WorkerThread
     public CameraData connect() {
       CameraData cameraData = null;
       mCameraConnected = false;
@@ -112,13 +115,14 @@ public class Camera {
       
       return cameraData;
     }
-  
+
+    @WorkerThread
     public ImageList loadImageList(boolean ignoreCache) {
         ImageListData imageListResponse = mController.getImageList(getCurrentStorage(),
                 mCameraConnected || ignoreCache);
 
         if (imageListResponse != null) {
-            DownloadQueue.loadFromCache(imageListResponse.dirList, ignoreCache);
+            DownloadService.Queue.loadFromCache(imageListResponse.dirList, ignoreCache);
             for(int c = 0; c < imageListResponse.dirList.length(); c++) {
                 ImageData imageData = imageListResponse.dirList.getImage(c);
                 imageData.setIsFlagged(CacheUtils.keyExists(imageData.flaggedCacheKey));
@@ -176,7 +180,7 @@ public class Camera {
         }
         return StorageData.DefaultStorage;
     }
-  
+
     public ImageList getImageList() {        
 
         if(isFiltered()) {
