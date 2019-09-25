@@ -20,7 +20,6 @@ import android.app.Application;
 import android.os.PowerManager;
 
 import com.hmsoft.pentaxgallery.service.DownloadService;
-import com.hmsoft.pentaxgallery.service.WifiIntentReceiver;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 
@@ -47,7 +46,5 @@ public class MyApplication extends Application {
         TaskExecutor.init();
         DownloadService.Queue.createNotificationChannel();
         super.onCreate();
-
-        WifiIntentReceiver.register(this);
     }   
 }
