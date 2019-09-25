@@ -18,6 +18,7 @@ package com.hmsoft.pentaxgallery.camera.implementation.pentax;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.camera.controller.CameraController;
+import com.hmsoft.pentaxgallery.camera.implementation.pentax.model.PentaxImageListData;
 import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
@@ -111,7 +112,7 @@ public class PentaxController implements CameraController {
                 CacheUtils.saveString(cacheKey, response);
             }
             try {
-                return new ImageListData(response);
+                return new PentaxImageListData(response);
             } catch (JSONException e) {
                 e.printStackTrace();
             }

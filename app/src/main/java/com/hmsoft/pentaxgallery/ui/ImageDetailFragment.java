@@ -25,9 +25,7 @@ import android.support.v4.view.GestureDetectorCompat;
 import android.view.ContextMenu;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
@@ -37,10 +35,9 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 
 import com.hmsoft.pentaxgallery.R;
-
-import com.hmsoft.pentaxgallery.camera.model.ImageList;
+import com.hmsoft.pentaxgallery.camera.CameraFactory;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
-import com.hmsoft.pentaxgallery.data.provider.Images;
+import com.hmsoft.pentaxgallery.camera.model.ImageList;
 import com.hmsoft.pentaxgallery.util.image.ImageFetcher;
 
 
@@ -89,7 +86,7 @@ public class ImageDetailFragment extends Fragment implements ImageFetcher.OnImag
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        ImageList imageList = Images.getImageList();
+        ImageList imageList =  CameraFactory.DefaultCamera.getImageList();
         if(imageList != null) {
             Bundle argumnets = getArguments();
             mImageData = imageList.getImage(argumnets.getInt(IMAGE_DATA_INDEX));

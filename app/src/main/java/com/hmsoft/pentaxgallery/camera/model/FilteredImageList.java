@@ -16,11 +16,28 @@
 
 package com.hmsoft.pentaxgallery.camera.model;
 
+import com.hmsoft.pentaxgallery.data.provider.DownloadQueue;
+
 public class FilteredImageList extends ImageList {
 
-    public interface ImageFilter {
-        boolean passFilter(ImageData imageData);
+    public static abstract class ImageFilter {
+        public abstract boolean  passFilter(ImageData imageData);
+        public ImageList getImageList() {
+            return null;
+        }
     }
+  
+    public static final ImageFilter DownloadQueueFilter = new ImageFilter() {
+        @Override
+        public boolean passFilter(ImageData imageData) {
+            return imageData.inDownloadQueue();
+        }
+
+        @Override
+        public ImageList getImageList() {
+            return DownloadQueue.getImageList();
+        }
+    };
 
     public static final ImageFilter DownloadedFilter = new ImageFilter() {
         @Override
@@ -62,9 +79,15 @@ public class FilteredImageList extends ImageList {
         setFilter(filter);
     }
 
-
     public void rebuildFilter() {
         setFilter(mFilter);
+    }
+
+    public ImageList getList() {
+        if(mFilter != null && mFilter.getImageList() != null) {
+            return mFilter.getImageList();
+        }
+        return this;
     }
 
     public void setFilter(ImageFilter filter) {
@@ -73,10 +96,12 @@ public class FilteredImageList extends ImageList {
         if(filter == null) {
             mImageList.addAll(mOriginalImageList.mImageList);
         } else {
-            for (int c = 0; c < mOriginalImageList.length(); c++) {
-                ImageData imageData = mOriginalImageList.getImage(c);
-                if(filter.passFilter(imageData)) {
-                    mImageList.add(imageData);
+            if(filter.getImageList() == null) {
+                for (int c = 0; c < mOriginalImageList.length(); c++) {
+                    ImageData imageData = mOriginalImageList.getImage(c);
+                    if (filter.passFilter(imageData)) {
+                        mImageList.add(imageData);
+                    }
                 }
             }
         }
@@ -90,6 +115,10 @@ public class FilteredImageList extends ImageList {
             }
         };
         setFilter(textFilter);
+    }
+  
+    public boolean hasFilter(ImageFilter filter) {
+        return mFilter == filter;
     }
 
     @Override

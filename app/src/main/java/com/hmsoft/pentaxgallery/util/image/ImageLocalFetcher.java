@@ -3,11 +3,10 @@ package com.hmsoft.pentaxgallery.util.image;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
-import android.util.Log;
 import android.widget.ImageView;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
-import com.hmsoft.pentaxgallery.camera.ControllerFactory;
+import com.hmsoft.pentaxgallery.camera.CameraFactory;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.util.Logger;
@@ -86,7 +85,7 @@ public class ImageLocalFetcher extends ImageRotatorFetcher {
                       mImageHeight, getImageCache());
             
               if(bitmap != null && imageData != null) {
-                  ImageMetaData metaData = ControllerFactory.DefaultController.getImageInfo(imageData);
+                  ImageMetaData metaData =  CameraFactory.DefaultCamera.getImageInfo(imageData);
                   if(metaData != null) {
                       bitmap = rotateBitmap(bitmap, metaData.orientation);
                   }

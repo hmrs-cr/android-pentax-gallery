@@ -341,7 +341,8 @@ public class DownloadQueue {
             downloadEntry = null;
         } 
       
-        if (downloadEntry != null) {            
+        if (downloadEntry != null) {
+            imageData.setIsInDownloadQueue(true);
             if(atTheBeginning) {
               sDownloadQueue.add(0, downloadEntry);
             } else {
@@ -356,14 +357,11 @@ public class DownloadQueue {
     public static void removeFromDownloadQueue(ImageData imageData) {
 
         DownloadEntry downloadEntry = findDownloadEntry(imageData);
+        imageData.setIsInDownloadQueue(false);
         if (downloadEntry != null) {
             DownloadService.cancelDownload(downloadEntry.getDownloadId());
             remove(downloadEntry, true);
         }
-    }
-
-    public static boolean isInDownloadQueue(ImageData imageData) {
-        return findDownloadEntry(imageData) != null;
     }
 
     public static void processDownloadQueue() {
@@ -408,6 +406,9 @@ public class DownloadQueue {
 
     private static void cancelAll() {
         DownloadService.cancelCurrentDownload();
+        for(DownloadEntry downloadEntry : sDownloadQueue) {
+            downloadEntry.getImageData().setIsInDownloadQueue(false);
+        }
         sDownloadQueue.clear();
         doDowloadFinished(null, -1, true);        
     } 
@@ -415,50 +416,13 @@ public class DownloadQueue {
     private static void remove(DownloadEntry downloadEntry, boolean canceled) {
         sDownloadQueue.remove(downloadEntry);
         downloadEntry.getImageData().updateExistsOnLocasStorage();
+        downloadEntry.getImageData().setIsInDownloadQueue(false);
         doDowloadFinished(downloadEntry.mImageData, downloadEntry.getDownloadId(), canceled);
     }
 
     public static ImageList getImageList() {
         return sIageList;
     }
-
-    /*private static class DownloadFinishedReceiver extends BroadcastReceiver {
-
-
-        private int getStatus(Context context, long id) {
-            DownloadManager downloadManager = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-            Cursor c = downloadManager.query(new DownloadManager.Query().setFilterById(id));
-
-            int status = -1;
-            //int reason = -1;
-
-            if (c.moveToNext()) {
-                int i = c.getColumnIndex(DownloadManager.COLUMN_STATUS);
-                if (i > -1) {
-                    status = c.getInt(i);
-                }
-
-                /*i = c.getColumnIndex(DownloadManager.COLUMN_REASON);
-                if (i > -1) {
-                    reason = c.getInt(i);
-                }-*-/
-            }
-
-            return status;
-        }
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0);
-            DownloadEntry downloadEntry = DownloadQueue.findDownloadEntry(id);
-            if (downloadEntry != null) {
-                if(getStatus(context, id) == DownloadManager.STATUS_SUCCESSFUL) {
-                    DownloadQueue.remove(downloadEntry, false);
-                }
-                DownloadQueue.processDownloadQueue();
-            }
-        }
-    }*/
 
     private static class DownloadQueueImageList extends ImageList {
 

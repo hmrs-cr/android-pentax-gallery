@@ -43,6 +43,7 @@ public abstract class ImageData {
 
     public final String flaggedCacheKey;
 
+    private boolean mIsDownloadQueue;
     private boolean mIsFlagged;
     private Bitmap mThumbBitmap;
 
@@ -126,5 +127,13 @@ public abstract class ImageData {
 
     public void setIsFlagged(boolean mIsFlagged) {
         this.mIsFlagged = mIsFlagged;
+    }
+
+    public boolean inDownloadQueue() {
+        return mIsDownloadQueue;
+    }
+
+    public void setIsInDownloadQueue(boolean isDownloadQueue) {
+        this.mIsDownloadQueue = isDownloadQueue;
     }
 }
