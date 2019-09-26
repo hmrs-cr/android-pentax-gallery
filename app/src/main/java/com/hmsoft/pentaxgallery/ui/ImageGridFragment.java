@@ -58,6 +58,8 @@ import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.Camera;
 import com.hmsoft.pentaxgallery.camera.CameraFactory;
+import com.hmsoft.pentaxgallery.camera.controller.CameraController;
+import com.hmsoft.pentaxgallery.camera.model.CameraChange;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
 import com.hmsoft.pentaxgallery.camera.model.FilteredImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
@@ -88,7 +90,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         DownloadService.OnDowloadFinishedListener,
         SearchView.OnQueryTextListener,
         ActionBar.OnNavigationListener,
-        SwipeRefreshLayout.OnRefreshListener {
+        SwipeRefreshLayout.OnRefreshListener,
+        CameraController.OnCameraChangeListener {
     private static final String TAG = "ImageGridFragment";
     private static final String IMAGE_CACHE_DIR = "thumbs";
 
@@ -105,6 +108,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     private SearchView mSearchView;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private Camera mCamera = CameraFactory.DefaultCamera;
+    private boolean mNeedUpdateImageList;
 
     /**
      * Empty constructor as per the Fragment documentation
@@ -253,6 +257,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     @Override
     public void onDestroy() {
+        mCamera.getController().setCameraChangeListener(null);
         super.onDestroy();
         mImageFetcher.closeCache();
         CacheUtils.close();
@@ -521,10 +526,12 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     /*package*/ void downloadJpgs(boolean forceRefresh) {
 
         List<ImageData> enqueue = getDownloadList();
-        if(enqueue == null || enqueue.size() == 0 || forceRefresh) {
+        Logger.debug(TAG, "mNeedUpdateImageList:"+mNeedUpdateImageList);
+        if((mNeedUpdateImageList && (enqueue == null || enqueue.size() == 0)) || forceRefresh) {
             syncPictureList(mCamera.getCurrentStorageIndex(), true, false, new OnRefreshDoneListener() {
                 @Override
                 public void onRefreshDone() {
+                    showView(true,-1);
                     addToDownloadQueue(getDownloadList());
                 }
             });
@@ -707,6 +714,18 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         syncPictureList(mCamera.getCurrentStorageIndex(), true, false);
     }
 
+    @Override
+    public void onCameraChange(CameraChange change) {
+        if(change.isChanged(CameraChange.CHANGED_STORAGE)) {
+            if(change.filepath != null && change.filepath.length() > 0) {
+                mCamera.addImageToStorage(change.storage, change.filepath);
+                mAdapter.notifyDataSetChanged();
+            } else {
+                mNeedUpdateImageList = true;
+            }
+        }
+        if(BuildConfig.DEBUG) Logger.debug(TAG, change.toString());
+    }
 
 
     /**
@@ -1056,11 +1075,16 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             updateActionBarTitle();
             updateMenuItems();
 
+            if(mCamera.isConnected()) {
+                mCamera.getController().setCameraChangeListener(ImageGridFragment.this);
+            }
+
             mSwipeRefreshLayout.setRefreshing(false);
             mProgressBar.setVisibility(View.GONE);
             mAdapter.notifyDataSetChanged();
 
             if(imageList != null) {
+                mNeedUpdateImageList = false;
                 String msg = String.format(getString(R.string.pictures_loaded), mCamera.imageCount(), from);
                 Toast.makeText(ImageGridFragment.this.getContext(),  msg, Toast.LENGTH_LONG).show();
                 mSwipeRefreshLayout.setVisibility(View.VISIBLE);

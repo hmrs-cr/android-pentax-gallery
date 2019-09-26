@@ -16,10 +16,6 @@
 
 package com.hmsoft.pentaxgallery.camera.model;
 
-import com.hmsoft.pentaxgallery.camera.implementation.pentax.model.PentaxImageData;
-import com.hmsoft.pentaxgallery.camera.model.ImageData;
-import com.hmsoft.pentaxgallery.camera.model.StorageData;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -60,6 +56,11 @@ public abstract class ImageList {
     private boolean addImage(String dirName, String fileName) {
         ImageData imageData = createImageData(dirName, fileName);
         return mImageList.add(imageData);
+    }
+
+    public void insertImage(String dirName, String fileName) {
+        ImageData imageData = createImageData(dirName, fileName);
+        mImageList.add(0, imageData);
     }
 
     protected abstract ImageData createImageData(String dirName, String fileName);

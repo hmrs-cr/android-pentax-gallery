@@ -25,7 +25,9 @@ public final class UrlHelper {
 
     private UrlHelper() { }
 
+
     protected final static String URL_BASE = "http://192.168.0.1/v1";
+    protected final static String URL_WEBSOCKET = "ws://192.168.0.1/v1/changes";
     protected final static String URL_PHOTOS = URL_BASE + "/photos";
     protected final static String URL_DOWNLOAD = URL_PHOTOS + "/";
     protected final static String URL_DEVICE_INFO = URL_BASE + "/props";
@@ -33,12 +35,12 @@ public final class UrlHelper {
     protected final static String URL_PING = URL_BASE + "/ping";
     protected final static String STORAGE_PARAM = "storage=";
 
-
     private static String appendStorageParam(String url, StorageData storage) {
         if(!url.contains(STORAGE_PARAM) && storage != null && storage.name != null && !storage.name.equals("")) {
             url += url.contains("?") ? "&" : "?";
             url += STORAGE_PARAM + storage.name;
         }
+
         return url;
     }
 

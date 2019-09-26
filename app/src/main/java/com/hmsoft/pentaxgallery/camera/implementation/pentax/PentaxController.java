@@ -20,6 +20,7 @@ import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.camera.controller.CameraController;
 import com.hmsoft.pentaxgallery.camera.implementation.pentax.model.PentaxImageListData;
 import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
+import com.hmsoft.pentaxgallery.camera.model.CameraChange;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageListData;
@@ -33,12 +34,21 @@ import com.hmsoft.pentaxgallery.util.cache.CacheUtils;
 
 import org.json.JSONException;
 
+import java.io.EOFException;
 import java.net.HttpURLConnection;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.WebSocket;
+import okhttp3.WebSocketListener;
 
 public class PentaxController implements CameraController {
 
     private final static String METADATA_CACHE_KEY = ".metadata";
     private final static String IMAGELIST_CACHE_KEY = "image_list_";
+
+    private static final int NORMAL_CLOSURE_STATUS = 1000;
 
     private final int connectTimeOut;
     private final int readTimeOut;
@@ -69,6 +79,49 @@ public class PentaxController implements CameraController {
         return HttpHelper.getStringResponse(UrlHelper.URL_PING, HttpHelper.RequestMethod.GET);
     }
 
+    private WebSocket cameraWebSocket;
+    private OnCameraChangeListener cameraChangeListener;
+    private WebSocketListener webSocketListener =  new WebSocketListener() {
+        private static final String TAG = "CameraWebSocketClient";
+
+        @Override
+        public void onOpen(WebSocket webSocket, Response response) {
+            if(Logger.DEBUG) Logger.debug(TAG, "onOpen: " + response);
+        }
+
+        @Override
+        public void onMessage(WebSocket webSocket, final String response) {
+            if(Logger.DEBUG) Logger.debug(TAG, "onMessage: " + response);
+            if(cameraChangeListener != null) {
+                TaskExecutor.executeOnUIThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            cameraChangeListener.onCameraChange(new CameraChange(response));
+                        } catch (JSONException e) {
+                            Logger.warning(TAG, "onMessage", e);
+                        }
+                    }
+                });
+            }
+        }
+
+        @Override
+        public void onClosing(WebSocket webSocket, int code, String reason) {
+            webSocket.close(NORMAL_CLOSURE_STATUS, null);
+            if(Logger.DEBUG) Logger.debug(TAG, "onOpen: " + reason);
+        }
+
+        @Override
+        public void onFailure(WebSocket webSocket, Throwable error, Response response) {
+            if(error instanceof EOFException) {
+                cameraWebSocket = null;
+                webSocket.close(NORMAL_CLOSURE_STATUS, null);
+            } else {
+                Logger.warning(TAG, response != null ? response.toString() : "", error);
+            }
+        }
+    };
 
     public  CameraData getDeviceInfo(boolean ignoreCache) {
 
@@ -207,6 +260,22 @@ public class PentaxController implements CameraController {
                 TaskExecutor.executeOnUIThread(new CameraController.AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, imageMetaData));
             }
         });
+    }
+
+    public void setCameraChangeListener(OnCameraChangeListener onCameraChangeListener) {
+        if (this.cameraWebSocket != null) {
+            this.cameraWebSocket.close(NORMAL_CLOSURE_STATUS, null);
+            this.cameraWebSocket = null;
+        }
+
+        this.cameraChangeListener = onCameraChangeListener;
+        if (onCameraChangeListener != null) {
+            Request request = new Request.Builder().url(UrlHelper.URL_WEBSOCKET).build();
+
+            OkHttpClient client = new OkHttpClient();
+            this.cameraWebSocket = client.newWebSocket(request, this.webSocketListener);
+            client.dispatcher().executorService().shutdown();
+        }
     }
 
 }

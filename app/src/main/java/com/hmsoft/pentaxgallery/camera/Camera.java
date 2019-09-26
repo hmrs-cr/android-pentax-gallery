@@ -16,6 +16,7 @@ import com.hmsoft.pentaxgallery.camera.model.StorageData;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.WifiHelper;
 
+import java.io.File;
 import java.util.List;
 
 public class Camera {
@@ -28,7 +29,7 @@ public class Camera {
     private CameraData mCameraData;
     private int mCurrentStorageIndex;
     private FilteredImageList mFilteredImageList = null;
-  
+
     public Camera(CameraController controller) {
         this.mController = controller;
     }
@@ -223,5 +224,19 @@ public class Camera {
 
     public CameraController getController() {
         return mController;
+    }
+
+    public void addImageToStorage(String storage, String filepath) {
+        if(mCameraData != null) {
+            for (StorageData storageData : mCameraData.storages) {
+                if(storageData.name.equals(storage)) {
+                    File file = new File(filepath);
+                    String dirName = file.getParent();
+                    String fileName = file.getName();
+                    storageData.getImageList().insertImage(dirName, fileName);
+                    break;
+                }
+            }
+        }
     }
 }

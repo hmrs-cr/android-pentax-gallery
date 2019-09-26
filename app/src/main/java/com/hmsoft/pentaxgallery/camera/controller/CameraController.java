@@ -17,6 +17,7 @@
 package com.hmsoft.pentaxgallery.camera.controller;
 
 import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
+import com.hmsoft.pentaxgallery.camera.model.CameraChange;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageListData;
@@ -27,6 +28,10 @@ public interface CameraController {
 
     interface OnAsyncCommandExecutedListener {
         void onAsyncCommandExecuted(BaseResponse response);
+    }
+
+    interface OnCameraChangeListener {
+        void onCameraChange(CameraChange change);
     }
 
     class AsyncCommandExecutedListenerRunnable implements Runnable {
@@ -63,5 +68,5 @@ public interface CameraController {
     ImageMetaData getImageInfo(ImageData imageData);
     void getImageInfo(final ImageData imageData, final CameraController.OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
 
-
+    void setCameraChangeListener(OnCameraChangeListener onCameraChangeListener);
 }
