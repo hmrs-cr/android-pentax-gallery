@@ -226,7 +226,7 @@ public class Camera {
         return mController;
     }
 
-    public void addImageToStorage(String storage, String filepath) {
+    public boolean addImageToStorage(String storage, String filepath) {
         if(mCameraData != null) {
             for (StorageData storageData : mCameraData.storages) {
                 if(storageData.name.equals(storage)) {
@@ -234,9 +234,10 @@ public class Camera {
                     String dirName = file.getParent();
                     String fileName = file.getName();
                     storageData.getImageList().insertImage(dirName, fileName);
-                    break;
+                    return true;
                 }
             }
         }
+        return false;
     }
 }

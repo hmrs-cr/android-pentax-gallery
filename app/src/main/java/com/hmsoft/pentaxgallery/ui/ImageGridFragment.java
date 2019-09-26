@@ -717,12 +717,14 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     @Override
     public void onCameraChange(CameraChange change) {
         if(change.isChanged(CameraChange.CHANGED_STORAGE)) {
+            boolean added = false;
             if(change.filepath != null && change.filepath.length() > 0) {
-                mCamera.addImageToStorage(change.storage, change.filepath);
-                mAdapter.notifyDataSetChanged();
-            } else {
-                mNeedUpdateImageList = true;
+                added = mCamera.addImageToStorage(change.storage, change.filepath);
+                if(added) {
+                    mAdapter.notifyDataSetChanged();
+                }
             }
+            mNeedUpdateImageList = !added;
         }
         if(BuildConfig.DEBUG) Logger.debug(TAG, change.toString());
     }
