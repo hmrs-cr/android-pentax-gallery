@@ -59,14 +59,13 @@ public class DownloadService extends IntentService {
     public static final int DOWNLOAD_FINISHED = 1000;
     public static final int UPDATE_PROGRESS = 1001;
 
-
     public static final int DOWNLOAD_STATUS_SUCCESS = 0;
     public static final int DOWNLOAD_STATUS_CANCELED = 1;
     public static final int DOWNLOAD_STATUS_ERROR = 2;
     public static final int DOWNLOAD_STATUS_TOO_MANY_ERRORS = 3;
 
     private static final String ACTION_DOWNLOAD = "com.hmsoft.pentaxgallery.service.action.DOWNLOAD";
-    public static final String EXTRA_PROGRESS = "com.hmsoft.pentaxgallery.service.extra.PROGRESS";;
+    public static final String EXTRA_PROGRESS = "com.hmsoft.pentaxgallery.service.extra.PROGRESS";
     public static final String EXTRA_DOWNLOAD_ID = "com.hmsoft.pentaxgallery.service.extra.DOWNLOAD_ID";
     public static final String EXTRA_DOWNLOAD_STATUS = "com.hmsoft.pentaxgallery.service.extra.DOWNLOAD_STATUS";
     public static final String EXTRA_DOWNLOAD_STATUS_MESSAGE = "com.hmsoft.pentaxgallery.service.extra.DOWNLOAD_STATUS_MESSAGE";
@@ -77,9 +76,41 @@ public class DownloadService extends IntentService {
 
     private static final String EXTRA_URL = "com.hmsoft.pentaxgallery.service.extra.URL";
     private static final String EXTRA_DESTINATION_PATH = "com.hmsoft.pentaxgallery.service.extra.DESTINATION_PATH";
+  
+    public interface OnDowloadFinishedListener {
+        void onDownloadProgress(ImageData imageData, long donloadId, int progress);
+        void onDownloadFinished(ImageData imageData, long donloadId, int remainingDownloads, 
+                                boolean wasCanceled);        
+    }
+  
+    public static final FilteredImageList.ImageFilter DownloadQueueFilter = new FilteredImageList.ImageFilter() {
+        @Override
+        public boolean passFilter(ImageData imageData) {
+            return imageData.inDownloadQueue();
+        }
+
+        @Override
+        public ImageList getImageList() {
+            return Queue.getImageList();
+        }
+    };
 
     public DownloadService() {
         super("DownloadService");
+    }    
+
+    @Override
+    protected void onHandleIntent(Intent intent) {
+        if (intent != null) {
+            final String action = intent.getAction();
+            if (ACTION_DOWNLOAD.equals(action)) {
+                final String url = intent.getStringExtra(EXTRA_URL);
+                final String destination = intent.getStringExtra(EXTRA_DESTINATION_PATH);
+                final int downloadId = intent.getIntExtra(EXTRA_DOWNLOAD_ID, -1);
+                ResultReceiver receiver = (ResultReceiver) intent.getParcelableExtra("receiver");
+                handleActionDownload(url, destination, downloadId, receiver);
+            }
+        }
     }
 
     public static int download(Context context, String url, String destinationPath) {
@@ -101,21 +132,72 @@ public class DownloadService extends IntentService {
     public synchronized static void cancelDownload(int downloadId) {
         shouldCancelId = downloadId;
     }
+  
+    public static void createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Context context = MyApplication.ApplicationContext;
+            String name = context.getString(R.string.download_notification_channel_name);
+            String description = context.getString(R.string.download_notification_channel_desc);
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel(Queue.CHANNEL_ID, name, importance);
+            channel.setDescription(description);
+            channel.setSound(null,null);
+            channel.enableLights(false);
+            channel.enableVibration(false);
 
-    @Override
-    protected void onHandleIntent(Intent intent) {
-        if (intent != null) {
-            final String action = intent.getAction();
-            if (ACTION_DOWNLOAD.equals(action)) {
-                final String url = intent.getStringExtra(EXTRA_URL);
-                final String destination = intent.getStringExtra(EXTRA_DESTINATION_PATH);
-                final int downloadId = intent.getIntExtra(EXTRA_DOWNLOAD_ID, -1);
-                ResultReceiver receiver = (ResultReceiver) intent.getParcelableExtra("receiver");
-                handleActionDownload(url, destination, downloadId, receiver);
-            }
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = MyApplication.ApplicationContext.getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
         }
     }
+    
+    public static void setOnDowloadFinishedListener(OnDowloadFinishedListener onDowloadFinishedListener) {
+        Queue.onDowloadFinishedListener = onDowloadFinishedListener;
+    }
+    
+    public static DownloadEntry findDownloadEntry(ImageData imageData) {
+        return Queue.findDownloadEntry(imageData);
+    }
+    
+    public static void download(ImageData imageData) {
+        DownloadEntry downloadEntry = findDownloadEntry(imageData);
+        if (downloadEntry != null) {
+            Queue.download(downloadEntry);
+        }
+    }
+    
+    public static void removeFromDownloadQueue(ImageData imageData) {
+        DownloadEntry downloadEntry = findDownloadEntry(imageData);
+        imageData.setIsInDownloadQueue(false);
+        if (downloadEntry != null) {
+            cancelDownload(downloadEntry.getDownloadId());
+            Queue.remove(downloadEntry, true);
+        }
+    }
+    
+    public static DownloadEntry addDownloadQueue(ImageData imageData) {
+       return Queue.addDownloadQueue(imageData, Queue.inBatchDownload);
+    }
+    
+    public static void saveQueueToCache() {
+        Queue.saveToCache();    
+    }
+    
+    public static void processDownloadQueue() {
+        Queue.processDownloadQueue();
+    }
+    
+    public static void setInBatchDownload(boolean inBatchDownload) {
+        Queue.inBatchDownload = inBatchDownload;
+    }
 
+    public static void loadQueueFromCache(ImageList sourceImageList, boolean forceLoad) {
+        Queue.loadFromCache(sourceImageList, forceLoad);
+    }
+    
     private void handleActionDownload(String downloadUrl, String destination, int downloadId, ResultReceiver receiver) {
         boolean canceled = false;
         int status;
@@ -214,8 +296,8 @@ public class DownloadService extends IntentService {
         resultData.putString(EXTRA_DOWNLOAD_STATUS_MESSAGE, statusMessage);
         receiver.send(DOWNLOAD_FINISHED, resultData);
     }
-
-    public static class Queue {
+    
+    private static class Queue {
 
         private static final String CACHE_KEY = "downloadQueue.cache";
 
@@ -229,33 +311,7 @@ public class DownloadService extends IntentService {
         private static List<DownloadEntry> sDownloadQueue;
         private final static ImageList sIageList = new DownloadQueueImageList();
         private static final String[] sFileToScan = new String[1];
-
-        private static PowerManager.WakeLock sWackeLock;
-
-        private static int downloadCount = 0;
-
-        public static boolean inBatchDownload;
-
-        private static OnDowloadFinishedListener onDowloadFinishedListener;
-
-        public interface OnDowloadFinishedListener {
-            void onDownloadFinished(ImageData imageData, long donloadId, int remainingDownloads, boolean wasCanceled);
-            void onDownloadProgress(ImageData imageData, long donloadId, int progress);
-        }
-
-        public static final FilteredImageList.ImageFilter DownloadQueueFilter = new FilteredImageList.ImageFilter() {
-            @Override
-            public boolean passFilter(ImageData imageData) {
-                return imageData.inDownloadQueue();
-            }
-
-            @Override
-            public ImageList getImageList() {
-                return Queue.getImageList();
-            }
-        };
-
-        public static ResultReceiver DownloadResultReceiver = new DownloadReceiver(new Handler());
+        private static int downloadCount = 0;               
 
         private static class DownloadReceiver extends ResultReceiver {
 
@@ -307,28 +363,83 @@ public class DownloadService extends IntentService {
                     }
                 }
             }
-        }
+        }        
+        
+        private static class DownloadQueueImageList extends ImageList {
 
-        public static void createNotificationChannel() {
-            // Create the NotificationChannel, but only on API 26+ because
-            // the NotificationChannel class is new and not in the support library
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Context context = MyApplication.ApplicationContext;
-                String name = context.getString(R.string.download_notification_channel_name);
-                String description = context.getString(R.string.download_notification_channel_desc);
-                int importance = NotificationManager.IMPORTANCE_DEFAULT;
-                NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
-                channel.setDescription(description);
-                channel.setSound(null,null);
-                channel.enableLights(false);
-                channel.enableVibration(false);
+            @Override
+            protected ImageData createImageData(String dirName, String fileName) {
+                return null;
+            }
 
-                // Register the channel with the system; you can't change the importance
-                // or other notification behaviors after this
-                NotificationManager notificationManager = MyApplication.ApplicationContext.getSystemService(NotificationManager.class);
-                notificationManager.createNotificationChannel(channel);
+            @Override
+            public ImageData getImage(int index) {
+                if (sDownloadQueue == null) {
+                    return null;
+                }
+                if(index < sDownloadQueue.size()) {
+                    return sDownloadQueue.get(index).mImageData;
+                }
+                return null;
+            }
+
+            @Override
+            public int length() {
+                if (sDownloadQueue == null) {
+                    return 0;
+                }
+                return sDownloadQueue.size();
             }
         }
+        
+        private static PowerManager.WakeLock sWackeLock;
+        
+        private static OnDowloadFinishedListener onDowloadFinishedListener;
+
+        private static void doDownloadProgress(ImageData imageData, long donloadId, int progress) {
+            if(onDowloadFinishedListener != null) {
+                onDowloadFinishedListener.onDownloadProgress(imageData, donloadId, progress);
+            }
+        }
+
+        private static void doDowloadFinished(ImageData imageData, long donloadId, boolean wasCanceled) {
+            if(!wasCanceled) {
+                imageData.updateExistsOnLocasStorage();
+            }
+            if(onDowloadFinishedListener != null) {
+                onDowloadFinishedListener.onDownloadFinished(imageData, donloadId, sDownloadQueue.size(), wasCanceled);
+            }
+
+            if(sDownloadQueue.size() == 0) {
+                inBatchDownload = false;
+                if(sWackeLock != null) {
+                    sWackeLock.release();
+                    sWackeLock = null;
+                    if(BuildConfig.DEBUG) Logger.debug(TAG, "WakeLock released");
+                }
+                downloadNotification(null, donloadId > 0 ? 0 : -1);
+            }
+        }
+
+        private static void cancelAll() {
+            cancelCurrentDownload();
+            for(DownloadEntry downloadEntry : sDownloadQueue) {
+                downloadEntry.getImageData().setIsInDownloadQueue(false);
+            }
+            sDownloadQueue.clear();
+            doDowloadFinished(null, -1, true);
+        }
+
+        /*private*/ static void remove(DownloadEntry downloadEntry, boolean canceled) {
+            sDownloadQueue.remove(downloadEntry);
+            downloadEntry.getImageData().updateExistsOnLocasStorage();
+            downloadEntry.getImageData().setIsInDownloadQueue(false);
+            doDowloadFinished(downloadEntry.mImageData, downloadEntry.getDownloadId(), canceled);
+        }
+              
+        /*public*/ static boolean inBatchDownload;        
+        
+        public static ResultReceiver DownloadResultReceiver = new DownloadReceiver(new Handler());
 
         public static void downloadNotification(ImageData imageData, int progress) {
             Context context = MyApplication.ApplicationContext;
@@ -368,7 +479,7 @@ public class DownloadService extends IntentService {
             }
         }
 
-        public static void loadFromCache(ImageList sourceImageList, boolean forceLoad) {
+        /*public*/ static void loadFromCache(ImageList sourceImageList, boolean forceLoad) {
             if(sourceImageList == null || sourceImageList.length() == 0) {
                 return;
             }
@@ -397,7 +508,7 @@ public class DownloadService extends IntentService {
             }
         }
 
-        public static void saveToCache() {
+        /*public*/ static void saveToCache() {
             JSONArray jsonArray = new JSONArray();
             if(sDownloadQueue != null) {
                 for (DownloadEntry downloadEntry : sDownloadQueue) {
@@ -410,40 +521,33 @@ public class DownloadService extends IntentService {
             CacheUtils.saveString(CACHE_KEY, jsonArray.toString());
         }
 
-        public static void setOnDowloadFinishedListener(OnDowloadFinishedListener onDowloadFinishedListener) {
-            Queue.onDowloadFinishedListener = onDowloadFinishedListener;
-        }
-
-        private static void doDownloadProgress(ImageData imageData, long donloadId, int progress) {
-            if(onDowloadFinishedListener != null) {
-                onDowloadFinishedListener.onDownloadProgress(imageData, donloadId, progress);
-            }
-        }
-
-        private static void doDowloadFinished(ImageData imageData, long donloadId, boolean wasCanceled) {
-            if(!wasCanceled) {
-                imageData.updateExistsOnLocasStorage();
-            }
-            if(onDowloadFinishedListener != null) {
-                onDowloadFinishedListener.onDownloadFinished(imageData, donloadId, sDownloadQueue.size(), wasCanceled);
-            }
-
-            if(sDownloadQueue.size() == 0) {
-                inBatchDownload = false;
-                if(sWackeLock != null) {
-                    sWackeLock.release();
-                    sWackeLock = null;
-                    if(BuildConfig.DEBUG) Logger.debug(TAG, "WakeLock released");
-                }
-                downloadNotification(null, donloadId > 0 ? 0 : -1);
-            }
-        }
-
         public static DownloadEntry getNextDownload() {
             return findDownloadEntry(0);
         }
 
-        public static DownloadEntry findDownloadEntry(ImageData imageData) {
+        /*private*/ static void download(DownloadEntry downloadEntry) {
+
+            ImageData imageData = downloadEntry.getImageData();
+            String url = imageData.getDownloadUrl();
+
+            Context context = MyApplication.ApplicationContext;
+
+            downloadNotification(imageData, 0);
+
+            File parentDir = imageData.getLocalPath().getParentFile();
+            parentDir.mkdirs();
+
+            int id = DownloadService.download(context, url, imageData.getLocalPath().getAbsolutePath());
+            downloadEntry.setDownloadId(id);
+
+            if(sWackeLock == null) {
+                sWackeLock = MyApplication.acquireWakeLock();
+            }
+
+            if(BuildConfig.DEBUG) Logger.debug(TAG, "Starting download: " + imageData.fileName + ", ID: " + id);
+        }
+        
+        /*public*/ static DownloadEntry findDownloadEntry(ImageData imageData) {
             if (sDownloadQueue == null) {
                 return null;
             }
@@ -499,10 +603,6 @@ public class DownloadService extends IntentService {
             return false;
         }
 
-        public static DownloadEntry addDownloadQueue(ImageData imageData) {
-            return addDownloadQueue(imageData, Queue.inBatchDownload);
-        }
-
         public static DownloadEntry addDownloadQueue(ImageData imageData, boolean atTheBeginning) {
             if (sDownloadQueue == null) {
                 sDownloadQueue = new ArrayList<DownloadEntry>();
@@ -528,17 +628,7 @@ public class DownloadService extends IntentService {
                 return downloadEntry;
             }
             return null;
-        }
-
-        public static void removeFromDownloadQueue(ImageData imageData) {
-
-            DownloadEntry downloadEntry = findDownloadEntry(imageData);
-            imageData.setIsInDownloadQueue(false);
-            if (downloadEntry != null) {
-                cancelDownload(downloadEntry.getDownloadId());
-                remove(downloadEntry, true);
-            }
-        }
+        }        
 
         public static void processDownloadQueue() {
             if (!isDownloading()) {
@@ -549,128 +639,56 @@ public class DownloadService extends IntentService {
                     Logger.debug(TAG, "No next download found");
                 }
             }
-        }
-
-        public static void download(ImageData imageData) {
-            DownloadEntry downloadEntry = findDownloadEntry(imageData);
-            if (downloadEntry != null) {
-                download(downloadEntry);
-            }
-        }
-
-        private static void download(DownloadEntry downloadEntry) {
-
-            ImageData imageData = downloadEntry.getImageData();
-            String url = imageData.getDownloadUrl();
-
-            Context context = MyApplication.ApplicationContext;
-
-            downloadNotification(imageData, 0);
-
-            File parentDir = imageData.getLocalPath().getParentFile();
-            parentDir.mkdirs();
-
-            int id = DownloadService.download(context, url, imageData.getLocalPath().getAbsolutePath());
-            downloadEntry.setDownloadId(id);
-
-            if(sWackeLock == null) {
-                sWackeLock = MyApplication.acquireWakeLock();
-            }
-
-            if(BuildConfig.DEBUG) Logger.debug(TAG, "Starting download: " + imageData.fileName + ", ID: " + id);
-        }
-
-        private static void cancelAll() {
-            cancelCurrentDownload();
-            for(DownloadEntry downloadEntry : sDownloadQueue) {
-                downloadEntry.getImageData().setIsInDownloadQueue(false);
-            }
-            sDownloadQueue.clear();
-            doDowloadFinished(null, -1, true);
-        }
-
-        private static void remove(DownloadEntry downloadEntry, boolean canceled) {
-            sDownloadQueue.remove(downloadEntry);
-            downloadEntry.getImageData().updateExistsOnLocasStorage();
-            downloadEntry.getImageData().setIsInDownloadQueue(false);
-            doDowloadFinished(downloadEntry.mImageData, downloadEntry.getDownloadId(), canceled);
-        }
+        }       
 
         public static ImageList getImageList() {
             return sIageList;
         }
+    }
+    
+    public static class DownloadEntry {
 
-        private static class DownloadQueueImageList extends ImageList {
+        public static final String DOWNLOAD_ID = "downloadId";
+        public static final String UNIQUE_FILE_NAME = "uniqueFileName";
 
-            @Override
-            protected ImageData createImageData(String dirName, String fileName) {
+        public final ImageData mImageData;
+        public int mDownloadId;
+        private int mProgress;
+
+        public DownloadEntry(ImageData imageData)  {
+            mImageData = imageData;
+        }
+
+        public ImageData getImageData() {
+        return mImageData;
+      }
+
+        public int getDownloadId() {
+          return mDownloadId;
+        }
+
+        public void setDownloadId(int downloadId) {
+            mDownloadId = downloadId;
+        }
+
+        public JSONObject toJSONbject() {
+            JSONObject jsonObject = new JSONObject();
+            try {
+                jsonObject.put(DOWNLOAD_ID, mDownloadId);
+                jsonObject.put(UNIQUE_FILE_NAME, mImageData.uniqueFileName);
+                return jsonObject;
+            } catch (JSONException e) {
+                e.printStackTrace();
                 return null;
-            }
-
-            @Override
-            public ImageData getImage(int index) {
-                if (sDownloadQueue == null) {
-                    return null;
-                }
-                if(index < sDownloadQueue.size()) {
-                    return sDownloadQueue.get(index).mImageData;
-                }
-                return null;
-            }
-
-            @Override
-            public int length() {
-                if (sDownloadQueue == null) {
-                    return 0;
-                }
-                return sDownloadQueue.size();
             }
         }
 
-        public static class DownloadEntry {
+        public int getProgress() {
+            return mProgress;
+        }
 
-            public static final String DOWNLOAD_ID = "downloadId";
-            public static final String UNIQUE_FILE_NAME = "uniqueFileName";
-
-            public final ImageData mImageData;
-            public int mDownloadId;
-            private int mProgress;
-
-            public DownloadEntry(ImageData imageData)  {
-                mImageData = imageData;
-            }
-
-            public ImageData getImageData() {
-            return mImageData;
-          }
-
-            public int getDownloadId() {
-              return mDownloadId;
-            }
-
-            public void setDownloadId(int downloadId) {
-                mDownloadId = downloadId;
-            }
-
-            public JSONObject toJSONbject() {
-                JSONObject jsonObject = new JSONObject();
-                try {
-                    jsonObject.put(DOWNLOAD_ID, mDownloadId);
-                    jsonObject.put(UNIQUE_FILE_NAME, mImageData.uniqueFileName);
-                    return jsonObject;
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    return null;
-                }
-            }
-
-            public int getProgress() {
-                return mProgress;
-            }
-
-            public void setProgress(int progress) {
-                mProgress = progress;
-            }
+        public void setProgress(int progress) {
+            mProgress = progress;
         }
     }
 }

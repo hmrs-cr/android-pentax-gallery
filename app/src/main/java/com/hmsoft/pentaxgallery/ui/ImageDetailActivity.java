@@ -62,7 +62,7 @@ import java.util.Date;
 public class ImageDetailActivity extends FragmentActivity implements OnClickListener,
         GestureDetector.OnGestureListener,
         GestureDetector.OnDoubleTapListener, ViewPager.OnPageChangeListener,
-        DownloadService.Queue.OnDowloadFinishedListener,
+        DownloadService.OnDowloadFinishedListener,
         CameraController.OnAsyncCommandExecutedListener {
 
     private static final String IMAGE_CACHE_DIR = "images";
@@ -147,7 +147,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
         super.onResume();
         mImageFetcher.setExitTasksEarly(false);
         updateUiElements();
-        DownloadService.Queue.setOnDowloadFinishedListener(this);
+        DownloadService.setOnDowloadFinishedListener(this);
     }
 
     @Override
@@ -179,7 +179,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
                 return;
             }
 
-            DownloadService.Queue.DownloadEntry downloadEntry = DownloadService.Queue.findDownloadEntry(imageData);
+            DownloadService.DownloadEntry downloadEntry = DownloadService.findDownloadEntry(imageData);
 
             boolean isInDownloadQueue = downloadEntry != null;
             boolean isDownloading = isInDownloadQueue && downloadEntry.getDownloadId() > 0;
@@ -308,14 +308,14 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
     private void downloadNow() {
         int i = mPager.getCurrentItem();
         ImageData imageData = mCamera.getImageList().getImage(i);
-        DownloadService.Queue.download(imageData);
+        DownloadService.download(imageData);
         updateUiElements();
     }
 
     private void cancelDownload() {
         int i = mPager.getCurrentItem();
         ImageData imageData = mCamera.getImageList().getImage(i);
-        DownloadService.Queue.removeFromDownloadQueue(imageData);
+        DownloadService.removeFromDownloadQueue(imageData);
         updateUiElements();
     }
 
@@ -350,7 +350,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
     private void download() {
         int i = mPager.getCurrentItem();
         ImageData imageData = mCamera.getImageList().getImage(i);
-        DownloadService.Queue.addDownloadQueue(imageData);
+        DownloadService.addDownloadQueue(imageData);
         updateUiElements();
     }
 
@@ -448,7 +448,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
             ActionBar actionBar = getActionBar();
             if (actionBar != null) {
                 actionBar.setTitle(imageData.fileName);
-                DownloadService.Queue.DownloadEntry downloadEntry = DownloadService.Queue.findDownloadEntry(imageData);
+                DownloadService.DownloadEntry downloadEntry = DownloadService.findDownloadEntry(imageData);
                 String subtitle = null;
                 if (downloadEntry != null) {
                     subtitle = getString(R.string.in_download_queue);
@@ -462,7 +462,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
                 }
                 actionBar.setSubtitle(subtitle);
             } else {
-                if (mCamera.hasFilter(DownloadService.Queue.DownloadQueueFilter) && mCamera.imageCount() == 0) {
+                if (mCamera.hasFilter(DownloadService.DownloadQueueFilter) && mCamera.imageCount() == 0) {
                     finish();
                 }
             }

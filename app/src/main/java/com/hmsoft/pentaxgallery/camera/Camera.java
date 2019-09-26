@@ -13,10 +13,8 @@ import com.hmsoft.pentaxgallery.camera.model.ImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageListData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
-import com.hmsoft.pentaxgallery.service.DownloadService;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.WifiHelper;
-import com.hmsoft.pentaxgallery.util.cache.CacheUtils;
 
 import java.util.List;
 
@@ -120,14 +118,6 @@ public class Camera {
     public ImageList loadImageList(boolean ignoreCache) {
         ImageListData imageListResponse = mController.getImageList(getCurrentStorage(),
                 mCameraConnected || ignoreCache);
-
-        if (imageListResponse != null) {
-            DownloadService.Queue.loadFromCache(imageListResponse.dirList, ignoreCache);
-            for(int c = 0; c < imageListResponse.dirList.length(); c++) {
-                ImageData imageData = imageListResponse.dirList.getImage(c);
-                imageData.setIsFlagged(CacheUtils.keyExists(imageData.flaggedCacheKey));
-            }
-        }
       
         if(imageListResponse != null) {
           setImageList(imageListResponse.dirList);

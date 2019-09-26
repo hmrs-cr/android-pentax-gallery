@@ -85,7 +85,7 @@ import java.util.List;
  */
 public class ImageGridFragment extends Fragment implements AdapterView.OnItemClickListener,
         AdapterView.OnItemLongClickListener,
-        DownloadService.Queue.OnDowloadFinishedListener,
+        DownloadService.OnDowloadFinishedListener,
         SearchView.OnQueryTextListener,
         ActionBar.OnNavigationListener,
         SwipeRefreshLayout.OnRefreshListener {
@@ -230,7 +230,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         } else {
             mProgressBar.setVisibility(View.GONE);
         }
-        DownloadService.Queue.setOnDowloadFinishedListener(this);
+        DownloadService.setOnDowloadFinishedListener(this);
         updateActionBarTitle();
     }
 
@@ -241,7 +241,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
             @Override
             public void run() {
-                DownloadService.Queue.saveToCache();
+                DownloadService.saveQueueToCache();
             }
         });
 
@@ -380,7 +380,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             selectNonDownloadedItem.setVisible(false);
 
 
-            boolean isShowDownloadQueueOnly = mCamera.hasFilter(DownloadService.Queue.DownloadQueueFilter);
+            boolean isShowDownloadQueueOnly = mCamera.hasFilter(DownloadService.DownloadQueueFilter);
             boolean isShowDownloadedOnly = mCamera.hasFilter(FilteredImageList.DownloadedFilter);
             boolean isFlaggedOnly = mCamera.hasFilter(FilteredImageList.FlaggedFilter);
             boolean isFilterd = false;
@@ -407,7 +407,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             shareItem.setVisible(isFilterd && isFlaggedOnly);
 
             MenuItem searchItem = mMenu.findItem(R.id.search);
-            searchItem.setVisible(!mCamera.hasFilter(DownloadService.Queue.DownloadQueueFilter) &&
+            searchItem.setVisible(!mCamera.hasFilter(DownloadService.DownloadQueueFilter) &&
                                   !mCamera.hasFilter(FilteredImageList.FlaggedFilter));
 
 
@@ -467,7 +467,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 mAdapter.notifyDataSetChanged();
                 return true;
             case R.id.proccess_download_queue:
-                DownloadService.Queue.processDownloadQueue();
+                DownloadService.processDownloadQueue();
                 return true;
             case R.id.about:
                 showAboutDialog();
@@ -499,7 +499,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         if(show) {
             switch (itemId) {
                 case R.id.view_downloads_only:
-                    mCamera.setImageFilter(DownloadService.Queue.DownloadQueueFilter);
+                    mCamera.setImageFilter(DownloadService.DownloadQueueFilter);
                     break;
                 case R.id.view_downloaded_only:
                     mCamera.setImageFilter(FilteredImageList.DownloadedFilter);
@@ -536,16 +536,16 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     private void addToDownloadQueue(List<ImageData> enqueue) {
         if (enqueue != null && enqueue.size() > 0) {
             Toast.makeText(this.getActivity(), "Transferring " + enqueue.size() + " pictures", Toast.LENGTH_LONG).show();
-            DownloadService.Queue.inBatchDownload = false;
+            DownloadService.setInBatchDownload(false);
             for (ImageData imageData : enqueue) {
-                DownloadService.Queue.addDownloadQueue(imageData);
+                DownloadService.addDownloadQueue(imageData);
             }
-            DownloadService.Queue.inBatchDownload = true;
+            DownloadService.setInBatchDownload(true);
             showView(true, R.id.view_downloads_only);
         } else {
             Toast.makeText(this.getActivity(), R.string.no_new_images_to_transfer, Toast.LENGTH_LONG).show();
         }
-        DownloadService.Queue.processDownloadQueue();
+        DownloadService.processDownloadQueue();
     }
 
     private List<ImageData> getDownloadList() {
@@ -556,7 +556,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             for (int c = imageList.length() - 1; c >= 0; c--) {
                 ImageData imageData = imageList.getImage(c);
                 if (!imageData.isRaw && !imageData.existsOnLocalStorage()) {
-                    DownloadService.Queue.DownloadEntry downloadEntry = DownloadService.Queue.findDownloadEntry(imageData);
+                    DownloadService.DownloadEntry downloadEntry = DownloadService.findDownloadEntry(imageData);
                     if (downloadEntry == null) {
                         enqueue.add(imageData);
                     }
@@ -593,7 +593,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     private void downloadSelected() {
         List<ImageData> selectedImages = mAdapter.getSelectedItems();
         for(ImageData imageData : selectedImages) {
-            DownloadService.Queue.addDownloadQueue(imageData);
+            DownloadService.addDownloadQueue(imageData);
         }
 
         Toast.makeText (getActivity(), String.format(getString(R.string.added_to_download_queue), selectedImages.size()), Toast.LENGTH_LONG).show();
@@ -969,7 +969,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
                 if(mAdapter.isInSelectMode()) {
                     actionBar.setSubtitle(String.format("%d SELECTED", mAdapter.getSelectedItems().size()));
-                } else if(mCamera.hasFilter(DownloadService.Queue.DownloadQueueFilter)) {
+                } else if(mCamera.hasFilter(DownloadService.DownloadQueueFilter)) {
                     actionBar.setSubtitle(String.format("DOWNLOAD QUEUE (%d)", mCamera.imageCount()));
                 } else if(mCamera.hasFilter(FilteredImageList.DownloadedFilter)) {
                     actionBar.setSubtitle(String.format("%s (%d/%s) - Downloaded", storageData.name, mCamera.imageCount(), storageData.format).toUpperCase());
@@ -1029,7 +1029,17 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
               mCamera.setCurrentStorageIndex((int) params[1]);
            }
 
-            return mCamera.loadImageList(ignoreCache);
+           ImageList imageList = mCamera.loadImageList(ignoreCache);
+
+            if (imageList != null) {
+                DownloadService.loadQueueFromCache(imageList, ignoreCache);
+                for(int c = 0; c < imageList.length(); c++) {
+                    ImageData imageData = imageList.getImage(c);
+                    imageData.setIsFlagged(CacheUtils.keyExists(imageData.flaggedCacheKey));
+                }
+            }
+
+           return imageList;
         }
 
         @Override

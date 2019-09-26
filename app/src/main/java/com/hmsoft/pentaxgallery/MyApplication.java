@@ -44,7 +44,7 @@ public class MyApplication extends Application {
     public void onCreate() {
         ApplicationContext = this;
         TaskExecutor.init();
-        DownloadService.Queue.createNotificationChannel();
+        DownloadService.createNotificationChannel();
         super.onCreate();
     }   
 }
