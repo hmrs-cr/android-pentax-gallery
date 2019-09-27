@@ -18,6 +18,7 @@ public class DefaultSettings {
     public static String THUMB_THREAD_NUMBER = "thumb_thread_number";
     public static String DEFAULT_CONNECT_TIME_OUT = "default_connect_time_out";
     public static String DEFAULT_READ_TIME_OUT = "default_read_time_out";
+    public static String AUTO_DOWNLOAD_JPGS = "auto_download_jpgs";
 
     private static DefaultSettings sInstance;
 
@@ -73,6 +74,7 @@ public class DefaultSettings {
             mProperties.setProperty(THUMB_THREAD_NUMBER, "1");
             mProperties.setProperty(DEFAULT_CONNECT_TIME_OUT, "3");
             mProperties.setProperty(DEFAULT_READ_TIME_OUT, "30");
+            mProperties.setProperty(AUTO_DOWNLOAD_JPGS, Boolean.toString(false));            
 
             try {
                 FileOutputStream outputStream = new FileOutputStream(getSettingFile());
@@ -101,7 +103,8 @@ public class DefaultSettings {
     }
 
     public boolean getBoolValue(String key) {
-        return getIntValue(key) > 0;
+        String value = getStringValue(key);
+        return Boolean.parseBoolean(value);
     }
 
 

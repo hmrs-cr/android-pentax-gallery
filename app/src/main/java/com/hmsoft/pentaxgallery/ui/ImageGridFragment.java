@@ -719,8 +719,13 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         if(change.isChanged(CameraChange.CHANGED_STORAGE)) {
             boolean added = false;
             if(change.filepath != null && change.filepath.length() > 0) {
-                added = mCamera.addImageToStorage(change.storage, change.filepath);
+                ImageData imageData = mCamera.addImageToStorage(change.storage, change.filepath);
+                added = imageData != null;
                 if(added) {
+                    if (!imageData.isRaw &&
+                        DefaultSettings.getsInstance().getBoolValue(DefaultSettings.AUTO_DOWNLOAD_JPGS)) {
+                            DownloadService.addDownloadQueue(imageData);
+                    }
                     mAdapter.notifyDataSetChanged();
                 }
             }

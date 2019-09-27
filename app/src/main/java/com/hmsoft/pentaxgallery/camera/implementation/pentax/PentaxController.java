@@ -109,14 +109,21 @@ public class PentaxController implements CameraController {
         @Override
         public void onClosing(WebSocket webSocket, int code, String reason) {
             webSocket.close(NORMAL_CLOSURE_STATUS, null);
-            if(Logger.DEBUG) Logger.debug(TAG, "onOpen: " + reason);
+            if(Logger.DEBUG) Logger.debug(TAG, "onClosing: " + reason);
+        }
+      
+        @Override
+        public void onClosed(WebSocket webSocket, int code, String reason) {
+            cameraWebSocket = null;
+            if(Logger.DEBUG) Logger.debug(TAG, "onClosed: " + reason);
         }
 
         @Override
         public void onFailure(WebSocket webSocket, Throwable error, Response response) {
-            if(error instanceof EOFException) {
-                cameraWebSocket = null;
-                webSocket.close(NORMAL_CLOSURE_STATUS, null);
+          cameraWebSocket = null;
+          webSocket.close(NORMAL_CLOSURE_STATUS, null);  
+          if(error instanceof EOFException) {
+                
             } else {
                 Logger.warning(TAG, response != null ? response.toString() : "", error);
             }
