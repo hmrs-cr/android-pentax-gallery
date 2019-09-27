@@ -46,4 +46,6 @@
     <string name="download_done_notification_text">%d images transferred</string>
     <string name="no_new_images_to_transfer">No new images to transfer.</string>
     <string name="connected_to">Connected to %s (%s)</string>
+    <string name="raw_only">RAW only</string>
+    <string name="jpg_only">JPG only</string>
 </resources>

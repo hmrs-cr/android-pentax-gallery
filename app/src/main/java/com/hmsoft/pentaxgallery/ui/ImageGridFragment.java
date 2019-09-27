@@ -388,6 +388,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             boolean isShowDownloadQueueOnly = mCamera.hasFilter(DownloadService.DownloadQueueFilter);
             boolean isShowDownloadedOnly = mCamera.hasFilter(FilteredImageList.DownloadedFilter);
             boolean isFlaggedOnly = mCamera.hasFilter(FilteredImageList.FlaggedFilter);
+            boolean isShowRawOnly = mCamera.hasFilter(FilteredImageList.RawFilter);
+            boolean isShowJpgOnly = mCamera.hasFilter(FilteredImageList.JpgFilter);
             boolean isFilterd = false;
 
             MenuItem downloadFilterItem = mMenu.findItem(R.id.downloadFilter);
@@ -401,6 +403,12 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
             MenuItem downloadsOnlyItem = mMenu.findItem(R.id.view_downloads_only);
             downloadsOnlyItem.setChecked(isShowDownloadQueueOnly);
+
+            MenuItem jpgsOnlyItem = mMenu.findItem(R.id.view_jpg_only);
+            jpgsOnlyItem.setChecked(isShowJpgOnly);
+
+            MenuItem rawOnlyItem = mMenu.findItem(R.id.view_raw_only);
+            rawOnlyItem.setChecked(isShowRawOnly);
 
             MenuItem dowloadedOnlyItem = mMenu.findItem(R.id.view_downloaded_only);
             dowloadedOnlyItem.setChecked(isShowDownloadedOnly);
@@ -455,6 +463,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             case R.id.view_downloaded_only:
             case R.id.view_downloads_only:
             case R.id.view_flagged_only:
+            case R.id.view_jpg_only:
+            case R.id.view_raw_only:
                 item.setChecked(!item.isChecked());
                 showView(item.isChecked(), itemId);
                 return true;
@@ -512,6 +522,12 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 case R.id.view_flagged_only:
                     mCamera.setImageFilter(FilteredImageList.FlaggedFilter);
                     break;
+                case R.id.view_raw_only:
+                    mCamera.setImageFilter(FilteredImageList.RawFilter);
+                    break;
+                case R.id.view_jpg_only:
+                    mCamera.setImageFilter(FilteredImageList.JpgFilter);
+                    break;
             }
         }
         mAdapter.notifyDataSetChanged();
@@ -556,6 +572,10 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     }
 
     private List<ImageData> getDownloadList() {
+        if(mCamera.isFiltered() && !mCamera.hasFilter(FilteredImageList.JpgFilter)) {
+            showView(false, -1);
+        }
+
         ImageList imageList = mCamera.getImageList();
         List<ImageData> enqueue = new ArrayList<>();
 
