@@ -58,10 +58,9 @@ public abstract class ImageList {
         return mImageList.add(imageData);
     }
 
-    public ImageData insertImage(String dirName, String fileName) {
+    public void insertImage(String dirName, String fileName) {
         ImageData imageData = createImageData(dirName, fileName);
         mImageList.add(0, imageData);
-        return imageData;
     }
 
     protected abstract ImageData createImageData(String dirName, String fileName);
