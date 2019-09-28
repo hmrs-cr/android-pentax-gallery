@@ -42,7 +42,6 @@ import android.view.View.OnClickListener;
 import android.view.WindowManager.LayoutParams;
 import android.widget.Toast;
 
-import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.Camera;
 import com.hmsoft.pentaxgallery.camera.CameraFactory;
@@ -320,27 +319,22 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
 
         int i = mPager.getCurrentItem();
         ImageData imageData = mCamera.getImageList().getImage(i);
-        String fileName = imageData.fileName.toUpperCase().replace(".DNG", "").replace(".JPG", "");
 
-        String[] projection = new String[] {
-                MediaStore.Images.Media.DATA,
-        };
-
-        Cursor cursor = MediaStore.Images.Media.query(
-                getApplicationContext().getContentResolver(),
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                projection,
-                MediaStore.Images.Media.DISPLAY_NAME + " like '%" + fileName + "%' OR " + MediaStore.Images.Media.DATA + " like '%" + fileName + "%'",
-                MediaStore.Images.Media.DATE_TAKEN  + " DESC");
-
+        Cursor cursor = imageData.getMediaStoreCursor();
         if(cursor != null && cursor.getCount() > 0 && cursor.moveToFirst()) {
-            String galleryFileName = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA));
+            String id = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media._ID));
+
+            Uri uri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
             Intent intent = new Intent();
             intent.setAction(Intent.ACTION_VIEW);
-            intent.setDataAndType(Uri.parse("file://" + galleryFileName), "image/*");
-            MyApplication.ApplicationContext.startActivity(intent);
+            intent.setDataAndType(uri, "image/*");
+            startActivity(intent);
         } else {
-            Toast.makeText(getApplicationContext(), String.format(getString(R.string.not_found_in_gallery), fileName), Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), String.format(getString(R.string.not_found_in_gallery), imageData.fileName), Toast.LENGTH_LONG).show();
+        }
+
+        if(cursor != null) {
+            cursor.close();
         }
     }
 
