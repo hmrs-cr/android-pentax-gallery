@@ -234,9 +234,6 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
             case R.id.pic_info:
                 showInfoDialog();
                 return true;
-            case R.id.open_url:
-                openUrl();
-                return true;
             case R.id.flag:
                 toggleFlag(item);
                 return true;
@@ -363,7 +360,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
         MenuItem shareItem = menu.findItem(R.id.share);
         shareItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         MenuItem infoItem = menu.findItem(R.id.pic_info);
-        infoItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        infoItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         MenuItem flagItem = menu.findItem(R.id.flag);
         flagItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         flagItem.setCheckable(true);

@@ -231,7 +231,6 @@ public class PentaxController implements CameraController {
     public ImageMetaData getImageInfo(ImageData imageData) {        
         ImageMetaData imageMetaData;
         synchronized (imageData) {
-            imageData.readMetadata();
             imageMetaData = imageData.getMetaData();
             if (imageMetaData == null) {
                 try {
@@ -248,6 +247,8 @@ public class PentaxController implements CameraController {
                             if (imageMetaData.errCode == HttpURLConnection.HTTP_OK) {
                                 CacheUtils.saveString(cacheKey, response);
                             }
+                        } else  {
+                            imageMetaData = imageData.readMetadata();
                         }
                     }
                 } catch (JSONException e) {

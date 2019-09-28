@@ -32,12 +32,6 @@
         app:showAsAction="never"/>
 
     <item
-        android:id="@+id/open_url"
-        android:title="@string/open_url"
-        app:showAsAction="never"/>
-
-
-    <item
         android:id="@+id/share"
         android:title="@string/share"
         android:icon="@drawable/ic_share_white_24dp"
