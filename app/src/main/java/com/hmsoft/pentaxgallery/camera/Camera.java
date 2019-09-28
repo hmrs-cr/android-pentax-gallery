@@ -67,8 +67,20 @@ public class Camera {
                       Logger.warning(TAG, "All registered cameras failed to connect");
                       break;
                   }
-
+                  
+                  if(ci == 0) {                    
+                     WifiHelper.startWifiScan(MyApplication.ApplicationContext);
+                     WifiHelper.waitForScanResultsAvailable(7500);
+                  }
+                
                   cameraData = cameras.get(ci++);
+                
+                  if(!WifiHelper.isWifiInRange(cameraData.ssid)) {
+                      if(BuildConfig.DEBUG) Logger.debug(TAG, cameraData.ssid + " not in range.");
+                      cameraData = null;
+                      continue;
+                  }
+                
                   if(BuildConfig.DEBUG) Logger.debug(TAG, "Attempting to connect to " + cameraData.ssid);
 
                   boolean success = WifiHelper.connectToWifi(MyApplication.ApplicationContext,
