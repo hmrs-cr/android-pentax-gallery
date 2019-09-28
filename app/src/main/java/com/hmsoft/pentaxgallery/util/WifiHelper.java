@@ -17,12 +17,18 @@
 package com.hmsoft.pentaxgallery.util;
 
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.wifi.ScanResult;
 import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 
+import com.hmsoft.pentaxgallery.BuildConfig;
+import com.hmsoft.pentaxgallery.MyApplication;
 
 import java.util.List;
 
@@ -30,6 +36,71 @@ public class WifiHelper {
     private static final String TAG = "WifiHelper";
     private WifiHelper() {}
 
+    private static List<ScanResult> sLatestScanResults = null;
+    private static boolean sScanResultsAvailable = false;
+  
+    private static BroadcastReceiver wifiScanReceiver = new BroadcastReceiver() {
+      @Override
+      public void onReceive(Context context, Intent intent) {
+          boolean success = intent.getBooleanExtra(
+                             WifiManager.EXTRA_RESULTS_UPDATED, false);
+          if (success) {
+              updateScanResults(context);
+          }
+          setScanResultsAvailable(true);
+      }
+    };  
+  
+    private static synchronized void setScanResultsAvailable(boolean available) {
+        sScanResultsAvailable = available;
+    }
+  
+    private static synchronized boolean areScanResultsAvailable() {
+        return sScanResultsAvailable;
+    }
+  
+    public static void waitForScanResultsAvailable(long timeOut) {
+        int c = 0;
+        final int sleepms = 200;
+        
+        while(!areScanResultsAvailable() && (c++ * sleepms) <  timeOut) {
+            TaskExecutor.sleep(sleepms);
+        }
+      
+        if(BuildConfig.DEBUG) Logger.debug(TAG, "Scan results " + (areScanResultsAvailable() ? "" : "NOT ") +
+                                           "available after " + ((c-1)*sleepms) + "ms");
+    }
+  
+    private static synchronized void updateScanResults(Context context) {
+        final WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        
+        if(wifiManager == null) {
+            return ;
+        }
+        sLatestScanResults = wifiManager.getScanResults();
+    }
+  
+    public static boolean startWifiScan(Context context) {
+       final WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        
+        if(wifiManager == null) {
+            return false;
+        }
+      
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
+        context.registerReceiver(wifiScanReceiver, intentFilter);
+        setScanResultsAvailable(false);
+        return wifiManager.startScan();
+    }
+  
+    public static synchronized List<ScanResult> getLatestScanResults() {
+        if(sLatestScanResults == null) {
+            updateScanResults(MyApplication.ApplicationContext);
+        }
+        return sLatestScanResults;
+    }
+  
     public static void turnWifiOn(Context context, long waitTime) {
         final WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         
@@ -215,5 +286,13 @@ public class WifiHelper {
         return false;
     }
 
+    public static boolean isWifiInRange(String ssid) {
+        for(ScanResult scanResult : getLatestScanResults()) {
+            if(scanResult.SSID != null && scanResult.SSID.equalsIgnoreCase(ssid)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
 }
