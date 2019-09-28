@@ -319,8 +319,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         MenuItem searchItem = menu.findItem(R.id.search);
         searchItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         searchItem.setActionView(R.layout.search_view);
-        MenuItem clearSearchItem = menu.findItem(R.id.clear_search);
-        clearSearchItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         MenuItem proccessDownloadQueueItem = menu.findItem(R.id.proccess_download_queue);
         proccessDownloadQueueItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
 
@@ -390,10 +388,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             boolean isFlaggedOnly = mCamera.hasFilter(FilteredImageList.FlaggedFilter);
             boolean isShowRawOnly = mCamera.hasFilter(FilteredImageList.RawFilter);
             boolean isShowJpgOnly = mCamera.hasFilter(FilteredImageList.JpgFilter);
-            boolean isFilterd = false;
 
             MenuItem downloadFilterItem = mMenu.findItem(R.id.downloadFilter);
-            downloadFilterItem.setVisible(!isFilterd);
+            downloadFilterItem.setVisible(true);
 
             MenuItem downloadJpgs = mMenu.findItem(R.id.download_jpgs);
             downloadJpgs.setVisible(!isShowDownloadQueueOnly);
@@ -413,11 +410,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             MenuItem dowloadedOnlyItem = mMenu.findItem(R.id.view_downloaded_only);
             dowloadedOnlyItem.setChecked(isShowDownloadedOnly);
 
-            MenuItem clearSearchItem = mMenu.findItem(R.id.clear_search);
-            clearSearchItem.setVisible(isFilterd && !isShowDownloadQueueOnly);
-
             MenuItem shareItem = mMenu.findItem(R.id.share);
-            shareItem.setVisible(isFilterd && isFlaggedOnly);
+            shareItem.setVisible(isFlaggedOnly);
 
             MenuItem searchItem = mMenu.findItem(R.id.search);
             searchItem.setVisible(!mCamera.hasFilter(DownloadService.DownloadQueueFilter) &&
@@ -474,12 +468,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 int currentStorageIndex = mCamera.getCurrentStorageIndex();
                 int newStorageIndex = itemId == R.id.sync_images_1 ? 0 : 1;
                 syncPictureList(newStorageIndex, currentStorageIndex == newStorageIndex, true);
-                return true;
-            case R.id.clear_search:
-                mCamera.setImageFilter(null);
-                updateMenuItems();
-                updateActionBarTitle();
-                mAdapter.notifyDataSetChanged();
                 return true;
             case R.id.proccess_download_queue:
                 DownloadService.processDownloadQueue();
@@ -599,7 +587,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
         Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
         sharingIntent.setType("text/plain");
-        sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, "Subject Here");
+        sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, R.string.flagged_images);
         sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, text);
         startActivity(Intent.createChooser(sharingIntent, getResources().getString(R.string.share_in)));
     }

@@ -21,7 +21,6 @@
     <string name="share_in">Share in...</string>
     <string name="download_again">Download again</string>
     <string name="picture_number">Picture Number</string>
-    <string name="clear_search">Clear Search</string>
     <string name="about">About...</string>
     <string name="not_found">%s not found.</string>
     <string name="process_downloads">Process Downloads</string>
@@ -48,4 +47,5 @@
     <string name="connected_to">Connected to %s (%s)</string>
     <string name="raw_only">RAW only</string>
     <string name="jpg_only">JPG only</string>
+    <string name="flagged_images">Flagged images</string>
 </resources>
