@@ -16,8 +16,12 @@
 
 package com.hmsoft.pentaxgallery.camera.implementation.pentax.model;
 
+import android.database.Cursor;
 import android.media.ExifInterface;
+import android.net.Uri;
+import android.provider.MediaStore;
 
+import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.camera.implementation.pentax.UrlHelper;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
@@ -29,6 +33,7 @@ import java.io.IOException;
 public class PentaxImageData extends ImageData {
 
     private File mLocalPath;
+    private Uri mLocalUri = null;
 
     public PentaxImageData(String directory, String fileName) {
         super(directory, fileName);
@@ -47,6 +52,37 @@ public class PentaxImageData extends ImageData {
             }
         }
         return getMetaData();
+    }
+
+    private static final String orderByMediaStoreCursor = MediaStore.Images.Media.DATE_TAKEN  + " DESC";
+    private static final String[] projectionMediaStoreCursor = new String[] {
+            MediaStore.Images.Media._ID,
+    };
+
+    private Cursor getMediaStoreCursor() {
+        Cursor cursor = MediaStore.Images.Media.query(
+                MyApplication.ApplicationContext.getContentResolver(),
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                projectionMediaStoreCursor,
+                MediaStore.Images.Media.DISPLAY_NAME + " = '" + this.uniqueFileName + "'",
+                orderByMediaStoreCursor);
+
+        return cursor;
+    }
+
+    @Override
+    public Uri getLocalStorageUri() {
+        if(mLocalUri == null) {
+            Cursor cursor = getMediaStoreCursor();
+            if(cursor != null && cursor.getCount() > 0 && cursor.moveToFirst()) {
+                String id = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media._ID));
+                mLocalUri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
+            }
+            if(cursor != null) {
+                cursor.close();
+            }
+        }
+        return mLocalUri;
     }
 
     @Override

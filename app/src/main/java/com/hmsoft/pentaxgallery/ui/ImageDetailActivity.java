@@ -21,10 +21,8 @@ package com.hmsoft.pentaxgallery.ui;
 
 import android.app.ActionBar;
 import android.content.Intent;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
@@ -296,7 +294,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
         ImageData imageData = mCamera.getImageList().getImage(i);
         Intent shareIntent = new Intent();
         shareIntent.setAction(Intent.ACTION_SEND);
-        shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(imageData.getLocalPath()));
+        shareIntent.putExtra(Intent.EXTRA_STREAM, imageData.getLocalStorageUri());
         shareIntent.setType("image/*");
         startActivity(Intent.createChooser(shareIntent, getString(R.string.share_in)));
     }
@@ -320,21 +318,14 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
         int i = mPager.getCurrentItem();
         ImageData imageData = mCamera.getImageList().getImage(i);
 
-        Cursor cursor = imageData.getMediaStoreCursor();
-        if(cursor != null && cursor.getCount() > 0 && cursor.moveToFirst()) {
-            String id = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media._ID));
-
-            Uri uri = Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
+        Uri uri = imageData.getLocalStorageUri();
+        if(uri != null) {
             Intent intent = new Intent();
             intent.setAction(Intent.ACTION_VIEW);
             intent.setDataAndType(uri, "image/*");
             startActivity(intent);
         } else {
             Toast.makeText(getApplicationContext(), String.format(getString(R.string.not_found_in_gallery), imageData.fileName), Toast.LENGTH_LONG).show();
-        }
-
-        if(cursor != null) {
-            cursor.close();
         }
     }
 

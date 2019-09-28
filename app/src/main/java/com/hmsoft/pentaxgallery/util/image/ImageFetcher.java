@@ -19,9 +19,9 @@
 
 package com.hmsoft.pentaxgallery.util.image;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.os.Build;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
@@ -55,6 +55,7 @@ public class ImageFetcher extends ImageResizer {
     private final Object mHttpDiskCacheLock = new Object();
     private static final int DISK_CACHE_INDEX = 0;
     private boolean mCancel;
+    protected ContentResolver mContentResolver;
 
     /**
      * Initialize providing a target image width and height for the processing images.
@@ -81,6 +82,7 @@ public class ImageFetcher extends ImageResizer {
 
     private void init(Context context) {
         mHttpCacheDir = CacheUtils.getDiskCacheDir(context, HTTP_CACHE_DIR);
+        mContentResolver = context.getContentResolver();
     }
 
     @Override
@@ -247,10 +249,10 @@ public class ImageFetcher extends ImageResizer {
 
         if (fileInputStream == null && fileDescriptor == null && imageData.existsOnLocalStorage()) {
             try {
-                if(BuildConfig.DEBUG) Logger.debug(TAG, "Loading picture from " + imageData.getLocalPath());
-                fileInputStream = new FileInputStream(imageData.getLocalPath());
-                fileDescriptor = fileInputStream.getFD();
+                if(BuildConfig.DEBUG) Logger.debug(TAG, "Loading picture from " + imageData.getLocalStorageUri());
+                fileDescriptor = mContentResolver.openFileDescriptor(imageData.getLocalStorageUri(), "r").getFileDescriptor();
             } catch (IOException e) {
+                if(BuildConfig.DEBUG) Logger.warning(TAG, "ERROR: Loading picture from " + imageData.getLocalStorageUri(), e);
                 e.printStackTrace();
             }
         }
@@ -280,7 +282,7 @@ public class ImageFetcher extends ImageResizer {
      * @return true if successful, false otherwise
      */
     public boolean downloadUrlToStream(String urlString, OutputStream outputStream) {
-        disableConnectionReuseIfNecessary();
+
         HttpURLConnection urlConnection = null;
         BufferedOutputStream out = null;
         BufferedInputStream in = null;
@@ -317,18 +319,6 @@ public class ImageFetcher extends ImageResizer {
             } catch (final IOException e) {}
         }
         return false;
-    }
-
-
-    /**
-     * Workaround for bug pre-Froyo, see here for more info:
-     * http://android-developers.blogspot.com/2011/09/androids-http-clients.html
-     */
-    public static void disableConnectionReuseIfNecessary() {
-        // HTTP connection reuse which was buggy pre-froyo
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.FROYO) {
-            System.setProperty("http.keepAlive", "false");
-        }
     }
 
     public boolean isCancel() {

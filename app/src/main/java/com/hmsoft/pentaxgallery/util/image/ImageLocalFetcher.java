@@ -3,6 +3,7 @@ package com.hmsoft.pentaxgallery.util.image;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.os.ParcelFileDescriptor;
 import android.widget.ImageView;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
@@ -11,8 +12,6 @@ import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.util.Logger;
 
-import java.io.FileDescriptor;
-import java.io.FileInputStream;
 import java.io.IOException;
 
 public class ImageLocalFetcher extends ImageRotatorFetcher {
@@ -63,25 +62,18 @@ public class ImageLocalFetcher extends ImageRotatorFetcher {
     }
 
     protected Bitmap loadFromLocalFile(ImageData imageData) {
-        FileDescriptor fileDescriptor = null;
-        FileInputStream fileInputStream = null;
+        ParcelFileDescriptor fileDescriptor = null;
         try {
-                if(BuildConfig.DEBUG) Logger.debug(TAG, "Loading picture from " + imageData.getLocalPath());
-                fileInputStream = new FileInputStream(imageData.getLocalPath());
-                fileDescriptor = fileInputStream.getFD();
+                if(BuildConfig.DEBUG) Logger.debug(TAG, "Loading picture from " + imageData.getLocalStorageUri());
+                fileDescriptor = mContentResolver.openFileDescriptor(imageData.getLocalStorageUri(), "r");
             } catch (IOException e) {
-                if (fileInputStream != null) {
-                    try {
-                        fileInputStream.close();
-                    } catch (IOException ignored) {}
-                }
-                fileInputStream = null;
+                if(BuildConfig.DEBUG) Logger.warning(TAG, "ERROR: Loading picture from " + imageData.getLocalStorageUri(), e);
                 e.printStackTrace();
             }
         
           Bitmap bitmap = null;
           if (fileDescriptor != null) {
-              bitmap = decodeSampledBitmapFromDescriptor(fileDescriptor, mImageWidth,
+              bitmap = decodeSampledBitmapFromDescriptor(fileDescriptor.getFileDescriptor(), mImageWidth,
                       mImageHeight, getImageCache());
             
               if(bitmap != null && imageData != null) {
@@ -91,10 +83,10 @@ public class ImageLocalFetcher extends ImageRotatorFetcher {
                   }
               }
           }
-          if (fileInputStream != null) {
+          if (fileDescriptor != null) {
               try {
-                  fileInputStream.close();
-              } catch (IOException e) {}
+                  fileDescriptor.close();
+              } catch (IOException ignored) {}
             }
       
         return bitmap;

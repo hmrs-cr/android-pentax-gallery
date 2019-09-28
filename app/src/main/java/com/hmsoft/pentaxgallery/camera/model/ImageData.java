@@ -17,12 +17,10 @@
 package com.hmsoft.pentaxgallery.camera.model;
 
 
-import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.provider.MediaStore;
+import android.net.Uri;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
-import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.util.Logger;
 
 import java.io.File;
@@ -50,10 +48,7 @@ public abstract class ImageData {
     private boolean mIsFlagged;
     private Bitmap mThumbBitmap;
 
-    private static final String orderByMediaStoreCursor = MediaStore.Images.Media.DATE_TAKEN  + " DESC";
-    private static final String[] projectionMediaStoreCursor = new String[] {
-            MediaStore.Images.Media._ID,
-    };
+
 
     public ImageData(String directory, String fileName) {
         this.directory = directory;
@@ -94,23 +89,23 @@ public abstract class ImageData {
   
     public abstract ImageMetaData readMetadata();
 
+    public abstract Uri getLocalStorageUri();
+
     public boolean existsOnLocalStorage() {
         if(mExistsOnLocalStorage == null) {
             updateExistsOnLocasStorage();
         }
-        return mExistsOnLocalStorage.booleanValue();
+        return mExistsOnLocalStorage;
     }
 
     public void updateExistsOnLocasStorage() {
-        File localPath = getLocalPath();
-        mExistsOnLocalStorage  = localPath != null && localPath.exists() && localPath.isFile();
+        /*File localPath = getLocalPath();
+        mExistsOnLocalStorage  = localPath != null && localPath.exists() && localPath.isFile();*/
 
-        /*
+
         // TODO: Use this approach when targeting most recent Android API levels.
-        Cursor cursor = getMediaStoreCursor();
-        mExistsOnLocalStorage  = cursor != null && cursor.getCount() > 0;
-        cursor.close();
-         */
+        mExistsOnLocalStorage  = getLocalStorageUri() != null;
+
         if(BuildConfig.DEBUG) Logger.debug(TAG, "mExistsOnLocalStorage: " + uniqueFileName + ": " +mExistsOnLocalStorage);
     }
 
@@ -150,16 +145,5 @@ public abstract class ImageData {
 
     public void setIsInDownloadQueue(boolean isDownloadQueue) {
         this.mIsDownloadQueue = isDownloadQueue;
-    }
-
-    public Cursor getMediaStoreCursor() {
-        Cursor cursor = MediaStore.Images.Media.query(
-                MyApplication.ApplicationContext.getContentResolver(),
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                projectionMediaStoreCursor,
-                MediaStore.Images.Media.DISPLAY_NAME + " = '" + this.uniqueFileName + "'",
-                orderByMediaStoreCursor);
-
-        return cursor;
     }
 }
