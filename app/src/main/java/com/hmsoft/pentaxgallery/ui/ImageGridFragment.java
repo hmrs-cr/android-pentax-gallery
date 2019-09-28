@@ -447,12 +447,18 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
+        int itemId = item.getItemId();
+
+        if(itemId == R.id.about) {
+            showAboutDialog();
+            return true;
+        }
+
         if(mCamera.getImageList() == null) {
             if(BuildConfig.DEBUG) Logger.debug(TAG, "No images loaded yet.");
             return false;
         }
 
-        int itemId = item.getItemId();
         switch (itemId) {
             case R.id.view_downloaded_only:
             case R.id.view_downloads_only:
@@ -471,9 +477,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 return true;
             case R.id.proccess_download_queue:
                 DownloadService.processDownloadQueue();
-                return true;
-            case R.id.about:
-                showAboutDialog();
                 return true;
             case R.id.download_selected:
                 downloadSelected();
@@ -560,17 +563,19 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     }
 
     private List<ImageData> getDownloadList() {
-        if(mCamera.isFiltered() && !mCamera.hasFilter(FilteredImageList.JpgFilter)) {
+        if(mCamera.isFiltered() && !mCamera.hasFilter(FilteredImageList.JpgFilter) &&
+                !mCamera.hasFilter(FilteredImageList.FlaggedFilter)) {
             showView(false, -1);
         }
 
+        boolean includeRaw = mCamera.hasFilter(FilteredImageList.FlaggedFilter);
         ImageList imageList = mCamera.getImageList();
         List<ImageData> enqueue = new ArrayList<>();
 
         if(imageList != null) {
             for (int c = imageList.length() - 1; c >= 0; c--) {
                 ImageData imageData = imageList.getImage(c);
-                if (!imageData.isRaw && !imageData.existsOnLocalStorage()) {
+                if ((includeRaw || !imageData.isRaw) && !imageData.existsOnLocalStorage()) {
                     DownloadService.DownloadEntry downloadEntry = DownloadService.findDownloadEntry(imageData);
                     if (downloadEntry == null) {
                         enqueue.add(imageData);

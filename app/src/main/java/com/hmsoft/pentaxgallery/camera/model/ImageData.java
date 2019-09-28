@@ -20,7 +20,6 @@ package com.hmsoft.pentaxgallery.camera.model;
 import android.graphics.Bitmap;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
-import com.hmsoft.pentaxgallery.util.Logger;
 
 import java.io.File;
 
@@ -95,8 +94,7 @@ public abstract class ImageData {
 
     public void updateExistsOnLocasStorage() {
         File localPath = getLocalPath();
-        mExistsOnLocalStorage  = Boolean.valueOf(localPath != null && localPath.exists() && localPath.isFile());
-        if(BuildConfig.DEBUG) Logger.debug(TAG, "mExistsOnLocalStorage: " + uniqueFileName + ": " +mExistsOnLocalStorage);
+        mExistsOnLocalStorage  = localPath != null && localPath.exists() && localPath.isFile();
     }
 
     public ImageMetaData getMetaData() {

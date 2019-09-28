@@ -104,7 +104,7 @@ public class FilteredImageList extends ImageList {
     }
   
     public boolean hasFilter(ImageFilter filter) {
-        return mFilter == filter;
+        return mFilter != null && mFilter.equals(filter);
     }
 
     @Override
