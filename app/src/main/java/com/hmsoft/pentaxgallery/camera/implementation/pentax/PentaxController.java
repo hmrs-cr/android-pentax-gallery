@@ -234,7 +234,7 @@ public class PentaxController implements CameraController {
             imageMetaData = imageData.getMetaData();
             if (imageMetaData == null) {
                 try {
-                    String cacheKey = imageData.directory + "_" + imageData.fileName + METADATA_CACHE_KEY;
+                    String cacheKey = imageData.uniqueFileName + METADATA_CACHE_KEY;
                     String response = CacheUtils.getString(cacheKey);
                     if (response != null) {
                         imageMetaData = new ImageMetaData(response);

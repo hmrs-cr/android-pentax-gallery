@@ -22,9 +22,11 @@ import android.widget.Toast;
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.R;
+import com.hmsoft.pentaxgallery.camera.CameraFactory;
 import com.hmsoft.pentaxgallery.camera.model.FilteredImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageList;
+import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.ui.ImageGridActivity;
 import com.hmsoft.pentaxgallery.util.DefaultSettings;
 import com.hmsoft.pentaxgallery.util.Logger;
@@ -40,7 +42,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
 
@@ -73,6 +78,8 @@ public class DownloadService extends IntentService {
     public static final String EXTRA_DOWNLOAD_STATUS = "com.hmsoft.pentaxgallery.service.extra.DOWNLOAD_STATUS";
     public static final String EXTRA_DOWNLOAD_STATUS_MESSAGE = "com.hmsoft.pentaxgallery.service.extra.DOWNLOAD_STATUS_MESSAGE";
     public static final String EXTRA_LOCAL_URI = "com.hmsoft.pentaxgallery.service.extra.LOCAL_URI";
+
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
     private static int downloadId = 0;
 
@@ -110,9 +117,26 @@ public class DownloadService extends IntentService {
                 final String url = intent.getStringExtra(EXTRA_DOWNLOAD_URL);
                 final int downloadId = intent.getIntExtra(EXTRA_DOWNLOAD_ID, -1);
                 ResultReceiver receiver = (ResultReceiver) intent.getParcelableExtra("receiver");
+
+
+                if(BuildConfig.DEBUG) {
+                    Logger.debug(TAG, "Download start: " + downloadId);
+                }
+
                 handleActionDownload(url, downloadId, receiver);
+
+                if(BuildConfig.DEBUG) {
+                    Logger.debug(TAG, "Download end: " + downloadId);
+                }
             }
         }
+    }
+
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        if(BuildConfig.DEBUG) Logger.debug(TAG,  "onCreate");
     }
 
     @Override
@@ -134,7 +158,7 @@ public class DownloadService extends IntentService {
         intent.putExtra("receiver", Queue.DownloadResultReceiver);
         intent.putExtra(EXTRA_DOWNLOAD_ID, ++downloadId);
         context.startService(intent);
-        if(BuildConfig.DEBUG) Logger.debug(TAG, "Download started: " + downloadId);
+        if(BuildConfig.DEBUG) Logger.debug(TAG, "Download added to service: " + downloadId);
         return downloadId;
     }
 
@@ -203,7 +227,7 @@ public class DownloadService extends IntentService {
     }
     
     public static void processDownloadQueue() {
-        Queue.processDownloadQueue();
+        int added = Queue.processAllDownloadQueue();
     }
     
     public static void setInBatchDownload(boolean inBatchDownload) {
@@ -232,6 +256,10 @@ public class DownloadService extends IntentService {
 
         Bundle resultData = new Bundle();
         resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
+
+        resultData.putInt(EXTRA_PROGRESS, 0);
+        receiver.send(UPDATE_PROGRESS, resultData);
+
         Uri uri = null;
 
         if (errorCount >= 3) {
@@ -261,6 +289,7 @@ public class DownloadService extends IntentService {
 
 
             ImageData imageData  = downloadEntry.getImageData();
+            ImageMetaData imageMetaData = CameraFactory.DefaultCamera.getImageInfo(imageData);
 
             uri = imageData.getLocalStorageUri();
             if(uri == null) {
@@ -270,13 +299,22 @@ public class DownloadService extends IntentService {
                 values.put(MediaStore.Images.Media.DESCRIPTION, imageData.uniqueFileName);
                 values.put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis());
                 values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
-                /* TODO: Add orientation */
-                /* TODO: Add size */
+                values.put(MediaStore.Images.Media.SIZE, fileLength);
+                if(imageMetaData != null) {
+                    try {
+                        Date date = dateFormat.parse(imageMetaData.dateTime);
+                        values.put(MediaStore.Images.Media.ORIENTATION, imageMetaData.orientationDegrees);
+                        values.put(MediaStore.Images.Media.DATE_TAKEN, date.getTime());
+                        MediaStore.Images.Media.
+                    } catch (ParseException e) {
+                        Logger.warning(TAG, "Error parsing date: " + imageMetaData.dateTime, e);
+                    }
+                }
 
                 if (Build.VERSION.SDK_INT < /*Build.VERSION_CODES.Q*/ 29) {
                     values.put(MediaStore.MediaColumns.DATA, imageData.getLocalPath().getAbsolutePath());
                 } else {
-                    /* TODO: Add parent folders */
+                    //MediaStore.MediaColumns.RELATIVE_PATH
                 }
 
                 uri = cr.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
@@ -304,10 +342,10 @@ public class DownloadService extends IntentService {
                     }
 
                     total += count;
-
                     int progress = (int) (total * 100 / fileLength);
                     if (progress > lastProgress) {
                         // publishing the progress....
+                        resultData = new Bundle();
                         resultData.putInt(EXTRA_PROGRESS, progress);
                         resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
                         receiver.send(UPDATE_PROGRESS, resultData);
@@ -413,7 +451,7 @@ public class DownloadService extends IntentService {
 
                         downloadNotification(downloadEntry.getImageData(), 100);
                         Queue.remove(downloadEntry, false);
-                        Queue.processDownloadQueue();
+                        Queue.processAllDownloadQueue();
                     }
                 }
             }
@@ -595,8 +633,6 @@ public class DownloadService extends IntentService {
 
             Context context = MyApplication.ApplicationContext;
 
-            downloadNotification(imageData, 0);
-
             int id = DownloadService.download(context, url);
             downloadEntry.setDownloadId(id);
 
@@ -686,18 +722,22 @@ public class DownloadService extends IntentService {
                 return downloadEntry;
             }
             return null;
-        }        
+        }
 
-        public static void processDownloadQueue() {
+        public static int processAllDownloadQueue() {
+            int count = 0;
             if (!isDownloading()) {
-                DownloadEntry downloadEntry = getNextDownload();
-                if (downloadEntry != null) {
+                DownloadEntry downloadEntry = null;
+                 while((downloadEntry = getNextDownload()) != null) {
                     download(downloadEntry);
-                }  else if(BuildConfig.DEBUG) {
-                    Logger.debug(TAG, "No next download found");
+                    count++;
+                }
+                if(BuildConfig.DEBUG) {
+                    Logger.debug(TAG, "Downloads added: " + count);
                 }
             }
-        }       
+            return count;
+        }
 
         public static ImageList getImageList() {
             return sIageList;
@@ -711,7 +751,7 @@ public class DownloadService extends IntentService {
 
         public final ImageData mImageData;
         public int mDownloadId;
-        private int mProgress;
+        private int mProgress = -1;
 
         public DownloadEntry(ImageData imageData)  {
             mImageData = imageData;

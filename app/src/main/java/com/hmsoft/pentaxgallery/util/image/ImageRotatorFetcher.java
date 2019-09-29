@@ -3,7 +3,6 @@ package com.hmsoft.pentaxgallery.util.image;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
-import android.media.ExifInterface;
 
 import com.hmsoft.pentaxgallery.camera.CameraFactory;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
@@ -15,20 +14,7 @@ public class ImageRotatorFetcher extends ImageFetcher {
         super(context, imageSize);
     }
 
-    protected Bitmap rotateBitmap(Bitmap bitmap, int orientation) {
-
-        float degrees = 0;
-        switch (orientation) {
-            case ExifInterface.ORIENTATION_ROTATE_270:
-                degrees = 270;
-                break;
-            case ExifInterface.ORIENTATION_ROTATE_90:
-                degrees = 90;
-                break;
-            case ExifInterface.ORIENTATION_ROTATE_180:
-                degrees = 180;
-                break;
-        }
+    protected Bitmap rotateBitmap(Bitmap bitmap, float degrees) {
 
         if(degrees > 0) {
             Matrix matrix = new Matrix();
@@ -46,7 +32,7 @@ public class ImageRotatorFetcher extends ImageFetcher {
         if(bitmap != null && imageData != null) {
             ImageMetaData metaData = CameraFactory.DefaultCamera.getImageInfo(imageData);
             if(metaData != null) {
-                bitmap = rotateBitmap(bitmap, metaData.orientation);
+                bitmap = rotateBitmap(bitmap, metaData.orientationDegrees);
             }
         }
 

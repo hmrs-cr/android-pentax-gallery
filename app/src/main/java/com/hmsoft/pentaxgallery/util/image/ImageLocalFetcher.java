@@ -79,7 +79,7 @@ public class ImageLocalFetcher extends ImageRotatorFetcher {
               if(bitmap != null && imageData != null) {
                   ImageMetaData metaData =  CameraFactory.DefaultCamera.getImageInfo(imageData);
                   if(metaData != null) {
-                      bitmap = rotateBitmap(bitmap, metaData.orientation);
+                      bitmap = rotateBitmap(bitmap, metaData.orientationDegrees);
                   }
               }
           }

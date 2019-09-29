@@ -310,6 +310,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
         int i = mPager.getCurrentItem();
         ImageData imageData = mCamera.getImageList().getImage(i);
         DownloadService.removeFromDownloadQueue(imageData);
+        mPager.getAdapter().notifyDataSetChanged();
         updateUiElements();
     }
 
@@ -434,7 +435,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
                 String subtitle = null;
                 if (downloadEntry != null) {
                     subtitle = getString(R.string.in_download_queue);
-                    if (downloadEntry.getDownloadId() != 0) {
+                    if (downloadEntry.getProgress() >= 0) {
                         subtitle = getString(R.string.downloading) + " (" + downloadEntry.getProgress() + "%)";
                     }
                 } else {
