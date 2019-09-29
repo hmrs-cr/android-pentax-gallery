@@ -93,12 +93,12 @@ public abstract class ImageData {
 
     public boolean existsOnLocalStorage() {
         if(mExistsOnLocalStorage == null) {
-            updateExistsOnLocasStorage();
+            updateExistsOnLocalStorage();
         }
         return mExistsOnLocalStorage;
     }
 
-    public void updateExistsOnLocasStorage() {
+    public void updateExistsOnLocalStorage() {
         /*File localPath = getLocalPath();
         mExistsOnLocalStorage  = localPath != null && localPath.exists() && localPath.isFile();*/
 
