@@ -18,16 +18,13 @@
 package com.hmsoft.pentaxgallery.camera.implementation.pentax.model;
 
 
-import android.media.ExifInterface;
-
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 
 import java.io.File;
 
+import androidx.exifinterface.media.ExifInterface;
+
 public class PentaxImageMetaData extends ImageMetaData {
-
-
-    public static final String TAG_SHUTTER_SPEED_VALUE = "ShutterSpeedValue";
 
     private ExifInterface mExifInterface = null;
 
@@ -43,10 +40,10 @@ public class PentaxImageMetaData extends ImageMetaData {
             exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, 0),
             "Pentax",
             exifInterface.getAttribute(ExifInterface.TAG_DATETIME),
-            exifInterface.getAttribute(ExifInterface.TAG_APERTURE),
-            exifInterface.getAttribute(ExifInterface.TAG_ISO),
+            exifInterface.getAttribute(ExifInterface.TAG_APERTURE_VALUE),
+            exifInterface.getAttribute(ExifInterface.TAG_ISO_SPEED),
             "xv",
-            exifInterface.getAttribute(TAG_SHUTTER_SPEED_VALUE),
+            exifInterface.getAttribute(ExifInterface.TAG_SHUTTER_SPEED_VALUE),
             "" /*latlng*/
         );
 

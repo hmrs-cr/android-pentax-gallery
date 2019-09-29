@@ -17,8 +17,8 @@
 package com.hmsoft.pentaxgallery.camera.implementation.pentax.model;
 
 import android.database.Cursor;
-import android.media.ExifInterface;
 import android.net.Uri;
+import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 
 import com.hmsoft.pentaxgallery.MyApplication;
@@ -29,6 +29,8 @@ import com.hmsoft.pentaxgallery.util.DefaultSettings;
 
 import java.io.File;
 import java.io.IOException;
+
+import androidx.exifinterface.media.ExifInterface;
 
 public class PentaxImageData extends ImageData {
 
@@ -45,8 +47,10 @@ public class PentaxImageData extends ImageData {
         if(existsOnLocalStorage()) {
             ExifInterface exifInterface = null;
             try {
-                exifInterface = new ExifInterface(getLocalPath().getAbsolutePath());
+                ParcelFileDescriptor fd = MyApplication.ApplicationContext.getContentResolver().openFileDescriptor(getLocalStorageUri(), "r");
+                exifInterface = new ExifInterface(fd.getFileDescriptor());
                 setMetaData(new PentaxImageMetaData(getLocalPath(), exifInterface));
+                fd.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
