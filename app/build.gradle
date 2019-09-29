@@ -22,7 +22,7 @@ android {
     defaultConfig {
         applicationId "com.hmsoft." + APP_NAME.toLowerCase()
         minSdkVersion 21
-        targetSdkVersion 23
+        targetSdkVersion 28
         versionName versionStringBase
         versionCode verCode
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -60,4 +60,5 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    implementation 'androidx.exifinterface:exifinterface:1.1.0-alpha01'
 }

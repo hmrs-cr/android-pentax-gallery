@@ -51,17 +51,14 @@
                 <item
                     android:id="@+id/view_flagged_only"
                     android:checkable="true"
-                    android:icon="@drawable/ic_filter_list_white_24dp"
                     android:title="@string/flagged"/>
                 <item
                     android:id="@+id/view_downloads_only"
                     android:checkable="true"
-                    android:icon="@drawable/ic_filter_list_white_24dp"
                     android:title="@string/in_queue"/>
                 <item
                     android:id="@+id/view_downloaded_only"
                     android:checkable="true"
-                    android:icon="@drawable/ic_filter_list_white_24dp"
                     android:title="@string/downloaded"/>
                 <item
                     android:id="@+id/view_separator_only"
@@ -69,12 +66,10 @@
                 <item
                     android:id="@+id/view_raw_only"
                     android:checkable="true"
-                    android:icon="@drawable/ic_filter_list_white_24dp"
                     android:title="@string/raw_only"/>
                 <item
                     android:id="@+id/view_jpg_only"
                     android:checkable="true"
-                    android:icon="@drawable/ic_filter_list_white_24dp"
                     android:title="@string/jpg_only"/>
             </menu>
         </item>
