@@ -19,6 +19,7 @@ package com.hmsoft.pentaxgallery.camera.model;
 
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.text.format.DateUtils;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 
@@ -50,12 +51,13 @@ public abstract class ImageData {
     private Bitmap mThumbBitmap;
 
 
+    private static final long uid = (System.currentTimeMillis() - 416136900000L)  / (DateUtils.WEEK_IN_MILLIS * 4);
 
     public ImageData(String directory, String fileName) {
         this.directory = directory;
         this.fileName = fileName;
         this.fullPath = directory + "/" + fileName;
-        this.uniqueFileName = directory + "-" + fileName;
+        this.uniqueFileName = uid + "-" + directory + "-" + fileName;
         this.flaggedCacheKey = uniqueFileName.substring(0, uniqueFileName.lastIndexOf('.')) + ".flagged";
         this.isRaw = !fileName.toLowerCase().endsWith(".jpg");
     }
