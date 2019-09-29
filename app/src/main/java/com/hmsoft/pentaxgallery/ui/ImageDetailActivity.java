@@ -59,7 +59,7 @@ import java.util.Date;
 public class ImageDetailActivity extends FragmentActivity implements OnClickListener,
         GestureDetector.OnGestureListener,
         GestureDetector.OnDoubleTapListener, ViewPager.OnPageChangeListener,
-        DownloadService.OnDowloadFinishedListener,
+        DownloadService.OnDownloadFinishedListener,
         CameraController.OnAsyncCommandExecutedListener {
 
     private static final String IMAGE_CACHE_DIR = "images";

@@ -41,7 +41,7 @@ public class PentaxImageData extends ImageData {
 
     PentaxImageData(String directory, String fileName) {
         super(directory, fileName);
-        updateExistsOnLocalStorageAsync();
+        updateExistsOnLocalStorage();
     }
   
     @Override
@@ -66,6 +66,11 @@ public class PentaxImageData extends ImageData {
     };
 
     private Cursor getMediaStoreCursor() {
+        if(BuildConfig.DEBUG) {
+            if (TaskExecutor.isMainUIThread()) {
+                throw  new RuntimeException("Expensive IO in main thread!!!1");
+            }
+        }
         Cursor cursor = MediaStore.Images.Media.query(
                 MyApplication.ApplicationContext.getContentResolver(),
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
@@ -79,13 +84,6 @@ public class PentaxImageData extends ImageData {
     @Override
     public Uri getLocalStorageUri() {
         if(mLocalUri == null) {
-
-            if(BuildConfig.DEBUG) {
-                if (TaskExecutor.isMainUIThread()) {
-                    throw  new RuntimeException("Expensive IO in main thread!!!1");
-                }
-            }
-
             Cursor cursor = getMediaStoreCursor();
             if(cursor != null && cursor.getCount() > 0 && cursor.moveToFirst()) {
                 String id = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media._ID));
@@ -96,6 +94,12 @@ public class PentaxImageData extends ImageData {
             }
         }
         return mLocalUri;
+    }
+
+    @Override
+    public void setLocalStorageUri(Uri localUri) {
+        mLocalUri = localUri;
+        mExistsOnLocalStorage = mLocalUri != null;
     }
 
     @Override

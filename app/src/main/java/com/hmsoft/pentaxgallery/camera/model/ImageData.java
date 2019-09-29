@@ -24,8 +24,6 @@ import android.text.format.DateUtils;
 import com.hmsoft.pentaxgallery.BuildConfig;
 
 import java.io.File;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 public abstract class ImageData {
 
@@ -94,29 +92,13 @@ public abstract class ImageData {
 
     public abstract Uri getLocalStorageUri();
 
-
-    private static Executor threadExecutor;
+    public abstract void setLocalStorageUri(Uri localUri);
 
     public boolean existsOnLocalStorage() {
         if(mExistsOnLocalStorage == null) {
             updateExistsOnLocalStorage();
         }
         return mExistsOnLocalStorage;
-    }
-
-    public void updateExistsOnLocalStorageAsync() {
-        synchronized (ImageData.class) {
-            if (threadExecutor == null) {
-                threadExecutor = Executors.newSingleThreadExecutor();
-            }
-        }
-
-        threadExecutor.execute(new Runnable() {
-            @Override
-            public void run() {
-                updateExistsOnLocalStorage();
-            }
-        });
     }
 
     public void updateExistsOnLocalStorage() {

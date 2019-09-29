@@ -8,7 +8,6 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -36,7 +35,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -45,6 +43,8 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
+
+import androidx.annotation.Nullable;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
@@ -72,15 +72,15 @@ public class DownloadService extends IntentService {
     public static final String EXTRA_DOWNLOAD_ID = "com.hmsoft.pentaxgallery.service.extra.DOWNLOAD_ID";
     public static final String EXTRA_DOWNLOAD_STATUS = "com.hmsoft.pentaxgallery.service.extra.DOWNLOAD_STATUS";
     public static final String EXTRA_DOWNLOAD_STATUS_MESSAGE = "com.hmsoft.pentaxgallery.service.extra.DOWNLOAD_STATUS_MESSAGE";
+    public static final String EXTRA_LOCAL_URI = "com.hmsoft.pentaxgallery.service.extra.LOCAL_URI";
 
     private static int downloadId = 0;
 
     private static int errorCount = 0;
 
-    private static final String EXTRA_URL = "com.hmsoft.pentaxgallery.service.extra.URL";
-    private static final String EXTRA_DESTINATION_PATH = "com.hmsoft.pentaxgallery.service.extra.DESTINATION_PATH";
-  
-    public interface OnDowloadFinishedListener {
+    private static final String EXTRA_DOWNLOAD_URL = "com.hmsoft.pentaxgallery.service.extra.DOWNLOAD_URL";
+
+    public interface OnDownloadFinishedListener {
         void onDownloadProgress(ImageData imageData, long donloadId, int progress);
         void onDownloadFinished(ImageData imageData, long donloadId, int remainingDownloads, 
                                 boolean wasCanceled);        
@@ -107,20 +107,30 @@ public class DownloadService extends IntentService {
         if (intent != null) {
             final String action = intent.getAction();
             if (ACTION_DOWNLOAD.equals(action)) {
-                final String url = intent.getStringExtra(EXTRA_URL);
-                final String destination = intent.getStringExtra(EXTRA_DESTINATION_PATH);
+                final String url = intent.getStringExtra(EXTRA_DOWNLOAD_URL);
                 final int downloadId = intent.getIntExtra(EXTRA_DOWNLOAD_ID, -1);
                 ResultReceiver receiver = (ResultReceiver) intent.getParcelableExtra("receiver");
-                handleActionDownload(url, destination, downloadId, receiver);
+                handleActionDownload(url, downloadId, receiver);
             }
         }
     }
 
-    public static int download(Context context, String url, String destinationPath) {
+    @Override
+    public void onStart(@Nullable Intent intent, int startId) {
+        super.onStart(intent, startId);
+        if(BuildConfig.DEBUG) Logger.debug(TAG,  "onStart");
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if(BuildConfig.DEBUG) Logger.debug(TAG,  "onDestroy");
+    }
+
+    public static int download(Context context, String url) {
         Intent intent = new Intent(context, DownloadService.class);
         intent.setAction(ACTION_DOWNLOAD);
-        intent.putExtra(EXTRA_URL, url);
-        intent.putExtra(EXTRA_DESTINATION_PATH, destinationPath);
+        intent.putExtra(EXTRA_DOWNLOAD_URL, url);
         intent.putExtra("receiver", Queue.DownloadResultReceiver);
         intent.putExtra(EXTRA_DOWNLOAD_ID, ++downloadId);
         context.startService(intent);
@@ -157,7 +167,7 @@ public class DownloadService extends IntentService {
         }
     }
     
-    public static void setOnDowloadFinishedListener(OnDowloadFinishedListener onDowloadFinishedListener) {
+    public static void setOnDowloadFinishedListener(OnDownloadFinishedListener onDowloadFinishedListener) {
         Queue.onDowloadFinishedListener = onDowloadFinishedListener;
     }
     
@@ -176,7 +186,10 @@ public class DownloadService extends IntentService {
         DownloadEntry downloadEntry = findDownloadEntry(imageData);
         imageData.setIsInDownloadQueue(false);
         if (downloadEntry != null) {
-            cancelDownload(downloadEntry.getDownloadId());
+            int downloadId = downloadEntry.getDownloadId();
+            if(downloadId > 0) {
+                cancelDownload(downloadEntry.getDownloadId());
+            }
             Queue.remove(downloadEntry, true);
         }
     }
@@ -201,42 +214,17 @@ public class DownloadService extends IntentService {
         Queue.loadFromCache(sourceImageList, forceLoad);
     }
 
+    private void handleActionDownload(String downloadUrl, int downloadId, ResultReceiver receiver) {
 
-    public static void addImageToLocalStorage(final Context context, ImageData imageData,
-                                              InputStream input, ResultReceiver progressReceiber) {
-
-        ContentValues values = new ContentValues();
-
-
-        values.put(MediaStore.Images.Media.TITLE, imageData.uniqueFileName);
-        values.put(MediaStore.Images.Media.DISPLAY_NAME, imageData.uniqueFileName);
-        values.put(MediaStore.Images.Media.DESCRIPTION, imageData.uniqueFileName);
-        values.put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis());
-        values.put(MediaStore.Images.Media.MIME_TYPE, imageData.isRaw ? "image/x-adobe-dng" : "image/jpeg");
-
-        if (Build.VERSION.SDK_INT < /*Build.VERSION_CODES.Q*/ 29) {
-            values.put(MediaStore.MediaColumns.DATA, imageData.getLocalPath().getAbsolutePath());
-        }
-
-        Uri url = null;
-        ContentResolver cr = context.getContentResolver();
-        try {
-            url = cr.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-            OutputStream output = context.getContentResolver().openOutputStream(url);
-        } catch (Exception e) {
-            if (url != null) {
-                cr.delete(url, null, null);
-                url = null;
+        DownloadEntry downloadEntry = Queue.findDownloadEntry(downloadId);
+        if(downloadEntry == null) {
+            if(BuildConfig.DEBUG) {
+                Logger.debug(TAG, "No download with id " + downloadId + " found");
+                return;
             }
-            Logger.warning(TAG, "Error saving image.", e);
         }
-    }
 
-    private class DownloadCanceledException extends Exception {
 
-    }
-
-    private void handleActionDownload(String downloadUrl, String destination, int downloadId, ResultReceiver receiver) {
         boolean canceled = false;
         int status;
         String statusMessage = "";
@@ -244,131 +232,119 @@ public class DownloadService extends IntentService {
 
         Bundle resultData = new Bundle();
         resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
+        Uri uri = null;
+
+        if (errorCount >= 3) {
+            resultData.putInt(EXTRA_DOWNLOAD_STATUS, DOWNLOAD_STATUS_TOO_MANY_ERRORS);
+            receiver.send(DOWNLOAD_FINISHED, resultData);
+            errorCount = 0;
+            return;
+        }
+
+        Context context = MyApplication.ApplicationContext;
+        ContentResolver cr = context.getContentResolver();
+
         try {
-            if (errorCount >= 3) {
-                resultData.putInt(EXTRA_DOWNLOAD_STATUS, DOWNLOAD_STATUS_TOO_MANY_ERRORS);
-                receiver.send(DOWNLOAD_FINISHED, resultData);
-                errorCount = 0;
-                return;
-            }
+            cancelDownload(-1);
+            //create url and connect
+            URL url = new URL(downloadUrl);
+            URLConnection connection = url.openConnection();
 
-            Uri uri = null;
-            Context context = MyApplication.ApplicationContext;
-            ContentResolver cr = context.getContentResolver();
+            DefaultSettings settings = DefaultSettings.getsInstance();
+            int connectTimeOut = settings.getIntValue(DefaultSettings.DEFAULT_CONNECT_TIME_OUT);
+            connection.setConnectTimeout(connectTimeOut * 500);
 
-            try {
-                cancelDownload(-1);
-                //create url and connect
-                URL url = new URL(downloadUrl);
-                URLConnection connection = url.openConnection();
+            connection.connect();
 
-                DefaultSettings settings = DefaultSettings.getsInstance();
-                int connectTimeOut = settings.getIntValue(DefaultSettings.DEFAULT_CONNECT_TIME_OUT);
-                connection.setConnectTimeout(connectTimeOut * 500);
+            // this will be useful so that you can show a typical 0-100% progress bar
+            fileLength = connection.getContentLength();
 
-                connection.connect();
 
-                // this will be useful so that you can show a typical 0-100% progress bar
-                fileLength = connection.getContentLength();
+            ImageData imageData  = downloadEntry.getImageData();
 
-                ImageData imageData = Queue.findDownloadEntry(downloadId).getImageData();
-
+            uri = imageData.getLocalStorageUri();
+            if(uri == null) {
                 ContentValues values = new ContentValues();
                 values.put(MediaStore.Images.Media.TITLE, imageData.uniqueFileName);
                 values.put(MediaStore.Images.Media.DISPLAY_NAME, imageData.uniqueFileName);
                 values.put(MediaStore.Images.Media.DESCRIPTION, imageData.uniqueFileName);
                 values.put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis());
-                values.put(MediaStore.Images.Media.MIME_TYPE, imageData.isRaw ? "image/x-adobe-dng" : "image/jpeg");
+                values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+                /* TODO: Add orientation */
+                /* TODO: Add size */
 
                 if (Build.VERSION.SDK_INT < /*Build.VERSION_CODES.Q*/ 29) {
                     values.put(MediaStore.MediaColumns.DATA, imageData.getLocalPath().getAbsolutePath());
                 } else {
-
+                    /* TODO: Add parent folders */
                 }
 
                 uri = cr.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-
-                // download the file
-                InputStream input = new BufferedInputStream(connection.getInputStream());
-                OutputStream output = context.getContentResolver().openOutputStream(uri);
-
-                byte data[] = new byte[1024];
-                long total = 0;
-                int lastProgress = 0;
-                int count;
-                try {
-                    while ((count = input.read(data)) != -1) {
-
-                        if (shouldCancelId == downloadId || shouldCancelId == 0) {
-                            if (uri != null) {
-                                cr.delete(uri, null, null);
-                                uri = null;
-                            }
-                            canceled = true;
-                            break;
-                        }
-
-                        total += count;
-
-                        int progress = (int) (total * 100 / fileLength);
-                        if (progress > lastProgress) {
-                            // publishing the progress....
-                            resultData.putInt(EXTRA_PROGRESS, progress);
-                            resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
-                            receiver.send(UPDATE_PROGRESS, resultData);
-                            lastProgress = progress;
-                        }
-
-                        output.write(data, 0, count);
-                    }
-                    status = DOWNLOAD_STATUS_SUCCESS;
-                    errorCount = 0;
-                } finally {
-                    // close streams
-                    output.flush();
-                    output.close();
-                    input.close();
-
-                    if (canceled) {
-                        status = DOWNLOAD_STATUS_CANCELED;
-                    }
+                if (uri == null) {
+                    Logger.warning(TAG, "Failed to insert image in gallery " + imageData.fileName);
                 }
             }
-            catch (IOException e) {
-                if (uri != null) {
-                    cr.delete(uri, null, null);
-                    uri = null;
+
+            /* TODO: Fix raw image download */
+
+            // download the file
+            InputStream input = new BufferedInputStream(connection.getInputStream());
+            OutputStream output = context.getContentResolver().openOutputStream(uri);
+
+            byte[] data = new byte[1024];
+            long total = 0;
+            int lastProgress = 0;
+            int count;
+            try {
+                while ((count = input.read(data)) != -1) {
+
+                    if (shouldCancelId == downloadId || shouldCancelId == 0) {
+                        canceled = true;
+                        break;
+                    }
+
+                    total += count;
+
+                    int progress = (int) (total * 100 / fileLength);
+                    if (progress > lastProgress) {
+                        // publishing the progress....
+                        resultData.putInt(EXTRA_PROGRESS, progress);
+                        resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
+                        receiver.send(UPDATE_PROGRESS, resultData);
+                        lastProgress = progress;
+                    }
+
+                    output.write(data, 0, count);
                 }
+                status = DOWNLOAD_STATUS_SUCCESS;
+                errorCount = 0;
+            } finally {
+                // close streams
+                output.flush();
+                output.close();
+                input.close();
 
-                Logger.error(TAG, "Error downloading file", e);
-                status = DOWNLOAD_STATUS_ERROR;
-                statusMessage = e.getLocalizedMessage();
-                errorCount++;
+                if (canceled) {
+                    status = DOWNLOAD_STATUS_CANCELED;
+                }
             }
+        } catch (IOException e) {
+            Logger.warning(TAG, "Error downloading file", e);
+            status = DOWNLOAD_STATUS_ERROR;
+            statusMessage = e.getLocalizedMessage();
+            errorCount++;
+        }
 
-            File downloadFile = new File(destination);
-            if (BuildConfig.DEBUG)
-                Logger.debug(TAG, "Camera Size:" + fileLength + " - Downloaded size: " + downloadFile.length());
-
-            /*if (status == DOWNLOAD_STATUS_SUCCESS && fileLength != downloadFile.length()) {
-                status = DOWNLOAD_STATUS_ERROR;
-                statusMessage = "Corrupted file.";
-            }*/
-
-            if (status != DOWNLOAD_STATUS_SUCCESS) {
-                downloadFile.delete();
-            }
-
-        } finally {
-            DownloadEntry entry = Queue.findDownloadEntry(downloadId);
-            if (entry != null) {
-                entry.getImageData().updateExistsOnLocalStorage();
-            }
+        if (status != DOWNLOAD_STATUS_SUCCESS && uri != null) {
+            cr.delete(uri, null, null);
         }
 
         resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
         resultData.putInt(EXTRA_DOWNLOAD_STATUS, status);
         resultData.putString(EXTRA_DOWNLOAD_STATUS_MESSAGE, statusMessage);
+        if (uri != null) {
+            resultData.putString(EXTRA_LOCAL_URI, uri.toString());
+        }
         receiver.send(DOWNLOAD_FINISHED, resultData);
     }
     
@@ -385,8 +361,8 @@ public class DownloadService extends IntentService {
         private static Hashtable<Integer, DownloadEntry> sDownloadQueueDict = null;
         private static List<DownloadEntry> sDownloadQueue;
         private final static ImageList sIageList = new DownloadQueueImageList();
-        private static final String[] sFileToScan = new String[1];
-        private static int downloadCount = 0;               
+        private static int downloadCount = 0;
+        private static int errorCount = 0;
 
         private static class DownloadReceiver extends ResultReceiver {
 
@@ -418,12 +394,15 @@ public class DownloadService extends IntentService {
                         int status = resultData.getInt(EXTRA_DOWNLOAD_STATUS);
 
                         if(status == DOWNLOAD_STATUS_SUCCESS) {
-                            sFileToScan[0] = downloadEntry.getImageData().getLocalPath().getAbsolutePath();
-                            MediaScannerConnection.scanFile(context, sFileToScan, null, null);
-                            downloadCount++;
+                            Queue.downloadCount++;
+                            String localUri = resultData.getString(EXTRA_LOCAL_URI);
+                            if(localUri != null && localUri.length() > 0) {
+                                downloadEntry.getImageData().setLocalStorageUri(Uri.parse(localUri));
+                            }
                         } else if(status == DOWNLOAD_STATUS_ERROR) {
                             String message = resultData.getString(EXTRA_DOWNLOAD_STATUS_MESSAGE);
                             Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+                            Queue.errorCount++;
                         } else if(status == DOWNLOAD_STATUS_CANCELED) {
                             Toast.makeText(context, "Download canceled: " + downloadEntry.getImageData().fileName, Toast.LENGTH_LONG).show();
                         } else if(status == DOWNLOAD_STATUS_TOO_MANY_ERRORS) {
@@ -469,7 +448,7 @@ public class DownloadService extends IntentService {
         
         private static PowerManager.WakeLock sWackeLock;
         
-        private static OnDowloadFinishedListener onDowloadFinishedListener;
+        private static OnDownloadFinishedListener onDowloadFinishedListener;
 
         private static void doDownloadProgress(ImageData imageData, long donloadId, int progress) {
             if(onDowloadFinishedListener != null) {
@@ -500,11 +479,17 @@ public class DownloadService extends IntentService {
                 downloadEntry.getImageData().setIsInDownloadQueue(false);
             }
             sDownloadQueue.clear();
+            if(sDownloadQueueDict != null) {
+                sDownloadQueueDict.clear();
+            }
             doDowloadFinished(null, -1, true);
         }
 
         /*private*/ static void remove(DownloadEntry downloadEntry, boolean canceled) {
             sDownloadQueue.remove(downloadEntry);
+            if(sDownloadQueueDict != null && downloadEntry.getDownloadId() > 0) {
+                sDownloadQueueDict.remove(downloadEntry.getDownloadId());
+            }
             downloadEntry.getImageData().setIsInDownloadQueue(false);
             doDowloadFinished(downloadEntry.mImageData, downloadEntry.getDownloadId(), canceled);
         }
@@ -538,12 +523,14 @@ public class DownloadService extends IntentService {
             } else {
                 notificationManager.cancel(PROGRESS_NOTIFICATION_ID);
 
-                if(downloadCount > 0) {
+                if(Queue.downloadCount > 0) {
                     builder.setContentText(String.format(context.getString(R.string.download_done_notification_text), downloadCount))
                            .setContentTitle(context.getString(R.string.download_done_notification_title));
                     notificationManager.notify(DONE_NOTIFICATION_ID, builder.build());
-                    downloadCount = 0;
+                    Queue.downloadCount = 0;
                 }
+
+                Queue.errorCount = 0;
 
                 if(progress > -1) {
                    Toast.makeText(context, R.string.donwload_done_notification_title, Toast.LENGTH_LONG).show();
@@ -599,6 +586,10 @@ public class DownloadService extends IntentService {
 
         /*private*/ static void download(DownloadEntry downloadEntry) {
 
+            if(sWackeLock == null) {
+                sWackeLock = MyApplication.acquireWakeLock();
+            }
+
             ImageData imageData = downloadEntry.getImageData();
             String url = imageData.getDownloadUrl();
 
@@ -606,15 +597,8 @@ public class DownloadService extends IntentService {
 
             downloadNotification(imageData, 0);
 
-            File parentDir = imageData.getLocalPath().getParentFile();
-            parentDir.mkdirs();
-
-            int id = DownloadService.download(context, url, imageData.getLocalPath().getAbsolutePath());
+            int id = DownloadService.download(context, url);
             downloadEntry.setDownloadId(id);
-
-            if(sWackeLock == null) {
-                sWackeLock = MyApplication.acquireWakeLock();
-            }
 
             if(BuildConfig.DEBUG) Logger.debug(TAG, "Starting download: " + imageData.fileName + ", ID: " + id);
         }
@@ -649,7 +633,9 @@ public class DownloadService extends IntentService {
             for (DownloadEntry downloadEntry : sDownloadQueue) {
                 if (downloadEntry.getDownloadId() == downloadId) {
                     if(BuildConfig.DEBUG) Logger.debug(TAG, "Found download entry in list: " + downloadId);
-                    sDownloadQueueDict.put(downloadId, downloadEntry);
+                    if(downloadId > 0) {
+                        sDownloadQueueDict.put(downloadId, downloadEntry);
+                    }
                     return downloadEntry;
                 }
             }

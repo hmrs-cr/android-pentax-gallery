@@ -8,6 +8,8 @@ import org.json.JSONException;
 
 public class PentaxImageList extends ImageList {
 
+    private static final String TAG = "PentaxImageList";
+
     PentaxImageList(JSONArray jsonArray) throws JSONException {
         super(jsonArray);
     }

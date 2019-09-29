@@ -87,7 +87,7 @@ import java.util.List;
  */
 public class ImageGridFragment extends Fragment implements AdapterView.OnItemClickListener,
         AdapterView.OnItemLongClickListener,
-        DownloadService.OnDowloadFinishedListener,
+        DownloadService.OnDownloadFinishedListener,
         SearchView.OnQueryTextListener,
         ActionBar.OnNavigationListener,
         SwipeRefreshLayout.OnRefreshListener,
@@ -531,6 +531,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     }
 
     /*package*/ void downloadJpgs(boolean forceRefresh) {
+
 
         List<ImageData> enqueue = getDownloadList();
         Logger.debug(TAG, "mNeedUpdateImageList:"+mNeedUpdateImageList);
