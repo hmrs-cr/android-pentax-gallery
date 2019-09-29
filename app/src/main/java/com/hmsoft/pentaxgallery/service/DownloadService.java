@@ -403,8 +403,8 @@ public class DownloadService extends IntentService {
         }
 
         private static void doDowloadFinished(ImageData imageData, long donloadId, boolean wasCanceled) {
-            if(!wasCanceled) {
-                imageData.updateExistsOnLocalStorage();
+            if(imageData != null) {
+                imageData.updateExistsOnLocalStorageAsync();
             }
             if(onDowloadFinishedListener != null) {
                 onDowloadFinishedListener.onDownloadFinished(imageData, donloadId, sDownloadQueue.size(), wasCanceled);
@@ -432,7 +432,6 @@ public class DownloadService extends IntentService {
 
         /*private*/ static void remove(DownloadEntry downloadEntry, boolean canceled) {
             sDownloadQueue.remove(downloadEntry);
-            downloadEntry.getImageData().updateExistsOnLocalStorage();
             downloadEntry.getImageData().setIsInDownloadQueue(false);
             doDowloadFinished(downloadEntry.mImageData, downloadEntry.getDownloadId(), canceled);
         }

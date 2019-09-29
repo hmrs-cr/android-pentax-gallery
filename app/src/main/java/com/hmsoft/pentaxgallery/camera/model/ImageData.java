@@ -21,9 +21,10 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
-import com.hmsoft.pentaxgallery.util.Logger;
 
 import java.io.File;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public abstract class ImageData {
 
@@ -91,6 +92,9 @@ public abstract class ImageData {
 
     public abstract Uri getLocalStorageUri();
 
+
+    private static Executor threadExecutor;
+
     public boolean existsOnLocalStorage() {
         if(mExistsOnLocalStorage == null) {
             updateExistsOnLocalStorage();
@@ -98,15 +102,23 @@ public abstract class ImageData {
         return mExistsOnLocalStorage;
     }
 
+    public void updateExistsOnLocalStorageAsync() {
+        synchronized (ImageData.class) {
+            if (threadExecutor == null) {
+                threadExecutor = Executors.newSingleThreadExecutor();
+            }
+        }
+
+        threadExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                updateExistsOnLocalStorage();
+            }
+        });
+    }
+
     public void updateExistsOnLocalStorage() {
-        /*File localPath = getLocalPath();
-        mExistsOnLocalStorage  = localPath != null && localPath.exists() && localPath.isFile();*/
-
-
-        // TODO: Use this approach when targeting most recent Android API levels.
         mExistsOnLocalStorage  = getLocalStorageUri() != null;
-
-        if(BuildConfig.DEBUG) Logger.debug(TAG, "mExistsOnLocalStorage: " + uniqueFileName + ": " +mExistsOnLocalStorage);
     }
 
     public ImageMetaData getMetaData() {

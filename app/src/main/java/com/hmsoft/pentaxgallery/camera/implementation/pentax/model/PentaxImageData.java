@@ -21,11 +21,13 @@ import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 
+import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.camera.implementation.pentax.UrlHelper;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.util.DefaultSettings;
+import com.hmsoft.pentaxgallery.util.TaskExecutor;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,9 +39,9 @@ public class PentaxImageData extends ImageData {
     private File mLocalPath;
     private Uri mLocalUri = null;
 
-    public PentaxImageData(String directory, String fileName) {
+    PentaxImageData(String directory, String fileName) {
         super(directory, fileName);
-        updateExistsOnLocalStorage();
+        updateExistsOnLocalStorageAsync();
     }
   
     @Override
@@ -77,6 +79,13 @@ public class PentaxImageData extends ImageData {
     @Override
     public Uri getLocalStorageUri() {
         if(mLocalUri == null) {
+
+            if(BuildConfig.DEBUG) {
+                if (TaskExecutor.isMainUIThread()) {
+                    throw  new RuntimeException("Expensive IO in main thread!!!1");
+                }
+            }
+
             Cursor cursor = getMediaStoreCursor();
             if(cursor != null && cursor.getCount() > 0 && cursor.moveToFirst()) {
                 String id = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media._ID));

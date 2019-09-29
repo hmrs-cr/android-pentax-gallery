@@ -8,7 +8,7 @@ import org.json.JSONException;
 
 public class PentaxImageList extends ImageList {
 
-    public PentaxImageList(JSONArray jsonArray) throws JSONException {
+    PentaxImageList(JSONArray jsonArray) throws JSONException {
         super(jsonArray);
     }
 
