@@ -305,7 +305,6 @@ public class DownloadService extends IntentService {
                         Date date = dateFormat.parse(imageMetaData.dateTime);
                         values.put(MediaStore.Images.Media.ORIENTATION, imageMetaData.orientationDegrees);
                         values.put(MediaStore.Images.Media.DATE_TAKEN, date.getTime());
-                        MediaStore.Images.Media.
                     } catch (ParseException e) {
                         Logger.warning(TAG, "Error parsing date: " + imageMetaData.dateTime, e);
                     }

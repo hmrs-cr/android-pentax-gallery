@@ -27,10 +27,13 @@ import android.app.SearchManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -76,7 +79,9 @@ import com.hmsoft.pentaxgallery.util.image.ImageFetcher;
 import com.hmsoft.pentaxgallery.util.image.ImageRotatorFetcher;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The main fragment that powers the ImageGridActivity screen. Fairly straight forward GridView
@@ -677,6 +682,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     public void onDownloadFinished(ImageData imageData, long donloadId, int remainingDownloads, boolean wasCanceled) {
         Logger.debug(TAG, "onDownloadFinished: " + donloadId + " Remaining: " + remainingDownloads);
         if(mCamera.isFiltered()) {
+            if(mCamera.hasFilter(FilteredImageList.DownloadedFilter) && mCamera.getImageList() instanceof FilteredImageList) {
+                    ((FilteredImageList)mCamera.getImageList()).rebuildFilter();
+            }
             mAdapter.notifyDataSetChanged();
         }
         updateActionBarTitle();
@@ -1069,17 +1077,77 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
               mCamera.setCurrentStorageIndex((int) params[1]);
            }
 
+           if(BuildConfig.DEBUG) {
+               Logger.debug(TAG, "Load image list START");
+           }
+
            ImageList imageList = mCamera.loadImageList(ignoreCache);
 
             if (imageList != null) {
+                Map<String, String> downloadedList = loadDownloadedList(imageList);
                 DownloadService.loadQueueFromCache(imageList, ignoreCache);
                 for(int c = 0; c < imageList.length(); c++) {
                     ImageData imageData = imageList.getImage(c);
                     imageData.setIsFlagged(CacheUtils.keyExists(imageData.flaggedCacheKey));
+
+                    String id = downloadedList.get(imageData.uniqueFileName);
+                    if(id != null) {
+                        imageData.setLocalStorageUri(Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id));
+                    }
                 }
+
+                downloadedList.clear();
+            }
+
+            if(BuildConfig.DEBUG) {
+                Logger.debug(TAG, "Load image list END");
             }
 
            return imageList;
+        }
+
+        private Map<String, String> loadDownloadedList(ImageList imageList) {
+            final String orderByMediaStoreCursor = MediaStore.Images.Media.DATE_TAKEN;
+            final String[] projectionMediaStoreCursor = new String[] {
+                    MediaStore.Images.Media._ID,
+                    MediaStore.Images.Media.DISPLAY_NAME
+            };
+
+
+            StringBuilder whereSb = new StringBuilder();
+            whereSb.append(MediaStore.Images.Media.DISPLAY_NAME);
+            whereSb.append(" IN (");
+            for(int c = 0; c < imageList.length(); c++) {
+                whereSb.append("'");
+                whereSb.append(imageList.getImage(c).uniqueFileName);
+                whereSb.append("'");
+                if(c < imageList.length() - 1) {
+                    whereSb.append(",");
+                }
+            }
+            whereSb.append(")");
+
+            Cursor cursor = MediaStore.Images.Media.query(
+                    getContext().getContentResolver(),
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    projectionMediaStoreCursor,
+                    whereSb.toString(),
+                    orderByMediaStoreCursor);
+
+            whereSb.setLength(0);
+
+            HashMap<String, String> table = new HashMap<>();
+
+            while(cursor.moveToNext()) {
+                int idIndex = cursor.getColumnIndex(MediaStore.Images.Media._ID);
+                int displayNameIndex = cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME);
+
+                String id =  cursor.getString(idIndex);
+                String uniqueName =  cursor.getString(displayNameIndex);
+                table.put(uniqueName, id);
+            }
+
+            return table;
         }
 
         @Override
