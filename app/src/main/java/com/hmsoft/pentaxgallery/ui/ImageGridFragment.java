@@ -1147,6 +1147,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 table.put(uniqueName, id);
             }
 
+            cursor.close();
+
             return table;
         }
 

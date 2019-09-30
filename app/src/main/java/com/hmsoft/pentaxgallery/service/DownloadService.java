@@ -37,6 +37,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -298,7 +299,7 @@ public class DownloadService extends IntentService {
                 values.put(MediaStore.Images.Media.DISPLAY_NAME, imageData.uniqueFileName);
                 values.put(MediaStore.Images.Media.DESCRIPTION, imageData.uniqueFileName);
                 values.put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis());
-                values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+                values.put(MediaStore.Images.Media.MIME_TYPE, imageData.isRaw ? "image/x-adobe-dng" : "image/jpeg");
                 values.put(MediaStore.Images.Media.SIZE, fileLength);
                 if(imageMetaData != null) {
                     try {
@@ -311,9 +312,12 @@ public class DownloadService extends IntentService {
                 }
 
                 if (Build.VERSION.SDK_INT < /*Build.VERSION_CODES.Q*/ 29) {
-                    values.put(MediaStore.MediaColumns.DATA, imageData.getLocalPath().getAbsolutePath());
+                    File localPath = imageData.getLocalPath();
+                    values.put(MediaStore.MediaColumns.DATA, localPath.getAbsolutePath());
+                    localPath.getParentFile().mkdirs();
                 } else {
                     //MediaStore.MediaColumns.RELATIVE_PATH
+                    //values.put(MediaStore.Images.Media.IS_PENDING, 1);
                 }
 
                 uri = cr.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
@@ -321,8 +325,6 @@ public class DownloadService extends IntentService {
                     Logger.warning(TAG, "Failed to insert image in gallery " + imageData.fileName);
                 }
             }
-
-            /* TODO: Fix raw image download */
 
             // download the file
             InputStream input = new BufferedInputStream(connection.getInputStream());
