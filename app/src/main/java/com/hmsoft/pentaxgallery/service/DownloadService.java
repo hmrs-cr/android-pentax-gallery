@@ -85,6 +85,7 @@ public class DownloadService extends IntentService {
 
     private static int downloadId = 0;
     private static int downloadErrorCount = 0;
+    private static boolean sShutCameraDownWhenDone;
 
     public interface OnDownloadFinishedListener {
         void onDownloadProgress(ImageData imageData, long donloadId, int progress);
@@ -304,6 +305,18 @@ public class DownloadService extends IntentService {
         receiver.send(DOWNLOAD_FINISHED, resultData);
     }
 
+    public static void toggleShutCameraDownWhenDone() {
+        sShutCameraDownWhenDone = !sShutCameraDownWhenDone;
+    }
+
+    public static void setShutCameraDownWhenDone(boolean setShutCameradownWhenDone) {
+        sShutCameraDownWhenDone = setShutCameradownWhenDone;
+    }
+
+    public static boolean shutCameraDownWhenDone() {
+        return sShutCameraDownWhenDone;
+    }
+
     /*private*/ static int downloadDown(Context context, DownloadEntry downloadEntry) {
         Intent intent = new Intent(context, DownloadService.class);
         intent.setAction(ACTION_DOWNLOAD);        
@@ -514,7 +527,7 @@ public class DownloadService extends IntentService {
             }
         }
 
-        private static void doDowloadFinished(ImageData imageData, long donloadId, boolean wasCanceled) {
+        private static void doDownloadFinished(ImageData imageData, long donloadId, boolean wasCanceled) {
 
             if(onDownloadFinishedListener != null) {
                 onDownloadFinishedListener.onDownloadFinished(imageData, donloadId, sDownloadQueue.size(), wasCanceled);
@@ -526,6 +539,9 @@ public class DownloadService extends IntentService {
                     sWackeLock.release();
                     sWackeLock = null;
                     if(BuildConfig.DEBUG) Logger.debug(TAG, "WakeLock released");
+                }
+                if(sShutCameraDownWhenDone) {
+                    CameraFactory.DefaultCamera.powerOff();
                 }
                 downloadNotification(null, donloadId > 0 ? 0 : -1);
             }
@@ -540,7 +556,7 @@ public class DownloadService extends IntentService {
             if(sDownloadQueueDict != null) {
                 sDownloadQueueDict.clear();
             }
-            doDowloadFinished(null, -1, true);
+            doDownloadFinished(null, -1, true);
         }
 
         /*private*/ static void remove(DownloadEntry downloadEntry, boolean canceled) {
@@ -549,7 +565,7 @@ public class DownloadService extends IntentService {
                 sDownloadQueueDict.remove(downloadEntry.getDownloadId());
             }
             downloadEntry.getImageData().setIsInDownloadQueue(false);
-            doDowloadFinished(downloadEntry.mImageData, downloadEntry.getDownloadId(), canceled);
+            doDownloadFinished(downloadEntry.mImageData, downloadEntry.getDownloadId(), canceled);
         }
               
         /*public*/ static boolean inBatchDownload;        
@@ -587,13 +603,15 @@ public class DownloadService extends IntentService {
                                                Queue.errorCount);
                 } else if (Queue.downloadCount > 0) {
                     contentText = String.format(context.getString(R.string.download_done_notification_text), Queue.downloadCount);
-                } else {                  
+                } else if (Queue.errorCount > 0) {
                   contentText = String.format(context.getString(R.string.download_done_failed_notification_text), Queue.errorCount);
                 }
 
-                builder.setContentText(contentText)
-                       .setContentTitle(context.getString(R.string.download_done_notification_title));
-                notificationManager.notify(DONE_NOTIFICATION_ID, builder.build());                
+                if(contentText != null) {
+                    builder.setContentText(contentText)
+                            .setContentTitle(context.getString(R.string.download_done_notification_title));
+                    notificationManager.notify(DONE_NOTIFICATION_ID, builder.build());
+                }
 
                 Queue.errorCount = 0;
                 Queue.downloadCount = 0;

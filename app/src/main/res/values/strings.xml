@@ -50,4 +50,5 @@
     <string name="jpg_only">JPG only</string>
     <string name="flagged_images">Flagged images</string>
     <string name="cancel_all_transfers">Cancel all transfers</string>
+    <string name="shutdown_camera_when_done">Shutdown camera when done</string>
 </resources>

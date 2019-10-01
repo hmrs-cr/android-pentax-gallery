@@ -328,6 +328,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         proccessDownloadQueueItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
         MenuItem cancelDownloadQueueItem = menu.findItem(R.id.cancel_download_queue);
         cancelDownloadQueueItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+        MenuItem shutdownWhenDoneItem = menu.findItem(R.id.shutdown_when_download_done_queue);
+        shutdownWhenDoneItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
 
         MenuItem downloadJpgs = menu.findItem(R.id.download_jpgs);
         downloadJpgs.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
@@ -432,11 +434,11 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             String syncText = getString(R.string.sync_images);
             MenuItem syncItem = mMenu.findItem(R.id.sync_images_1);
             syncItem.setTitle(multyStorage ? cameraData.storages.get(0).displayName :  syncText);
-            syncItem.setVisible(true);
+            syncItem.setVisible(!mCamera.hasFilter(DownloadService.DownloadQueueFilter));
             if(multyStorage) syncItem.setIcon(null);
 
             syncItem = mMenu.findItem(R.id.sync_images_2);
-            syncItem.setVisible(multyStorage);
+            syncItem.setVisible(multyStorage && !mCamera.hasFilter(DownloadService.DownloadQueueFilter));
             syncItem.setTitle(multyStorage ? cameraData.storages.get(1).displayName :  syncText);
             if(multyStorage) syncItem.setIcon(null);
 
@@ -444,6 +446,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             proccessDownloadQueueItem.setVisible(isShowDownloadQueueOnly);
             MenuItem cancelDownloadQueueItem = mMenu.findItem(R.id.cancel_download_queue);
             cancelDownloadQueueItem.setVisible(isShowDownloadQueueOnly);
+            MenuItem shutdownWhenDoneItem = mMenu.findItem(R.id.shutdown_when_download_done_queue);
+            shutdownWhenDoneItem.setVisible(isShowDownloadQueueOnly);
+            shutdownWhenDoneItem.setChecked(DownloadService.shutCameraDownWhenDone());
         }
     }
 
@@ -484,11 +489,15 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 int newStorageIndex = itemId == R.id.sync_images_1 ? 0 : 1;
                 syncPictureList(newStorageIndex, currentStorageIndex == newStorageIndex, true);
                 return true;
+            case R.id.shutdown_when_download_done_queue:
+                DownloadService.toggleShutCameraDownWhenDone();
+                return true;
             case R.id.proccess_download_queue:
                 DownloadService.processDownloadQueue();
                 return true;
             case R.id.cancel_download_queue:
                 DownloadService.cancelAllDownloads();
+                showView(false, -1);
                 return true;
             case R.id.download_selected:
                 downloadSelected();

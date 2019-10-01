@@ -251,4 +251,8 @@ public class Camera {
         }
         return null;
     }
+
+    public void powerOff() {
+        mController.powerOff(null);
+    }
 }

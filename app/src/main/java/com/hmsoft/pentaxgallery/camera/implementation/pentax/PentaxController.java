@@ -197,7 +197,9 @@ public class PentaxController implements CameraController {
             @Override
             public void run() {
                 BaseResponse response = powerOff();
-                TaskExecutor.executeOnUIThread(new CameraController.AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, response));
+                if(onAsyncCommandExecutedListener != null) {
+                    TaskExecutor.executeOnUIThread(new CameraController.AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, response));
+                }
 
             }
         });
