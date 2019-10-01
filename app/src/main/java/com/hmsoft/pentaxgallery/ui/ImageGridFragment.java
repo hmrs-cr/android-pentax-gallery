@@ -326,6 +326,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         searchItem.setActionView(R.layout.search_view);
         MenuItem proccessDownloadQueueItem = menu.findItem(R.id.proccess_download_queue);
         proccessDownloadQueueItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        MenuItem cancelDownloadQueueItem = menu.findItem(R.id.cancel_download_queue);
+        cancelDownloadQueueItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
 
         MenuItem downloadJpgs = menu.findItem(R.id.download_jpgs);
         downloadJpgs.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
@@ -440,6 +442,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
             MenuItem proccessDownloadQueueItem = mMenu.findItem(R.id.proccess_download_queue);
             proccessDownloadQueueItem.setVisible(isShowDownloadQueueOnly);
+            MenuItem cancelDownloadQueueItem = mMenu.findItem(R.id.cancel_download_queue);
+            cancelDownloadQueueItem.setVisible(isShowDownloadQueueOnly);
         }
     }
 
@@ -482,6 +486,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 return true;
             case R.id.proccess_download_queue:
                 DownloadService.processDownloadQueue();
+                return true;
+            case R.id.cancel_download_queue:
+                DownloadService.cancelAllDownloads();
                 return true;
             case R.id.download_selected:
                 downloadSelected();

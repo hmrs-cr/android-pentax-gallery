@@ -38,7 +38,6 @@ import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
@@ -85,7 +84,7 @@ public class DownloadService extends IntentService {
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
     private static int downloadId = 0;
-    private static int errorCount = 0;    
+    private static int downloadErrorCount = 0;
 
     public interface OnDownloadFinishedListener {
         void onDownloadProgress(ImageData imageData, long donloadId, int progress);
@@ -150,17 +149,19 @@ public class DownloadService extends IntentService {
   
     private void handleActionDownload(int downloadId, ResultReceiver receiver) {
 
-      Bundle resultData = new Bundle();
-      if (errorCount >= ALLOWED_CONSECUTIVE_ERRORS) {
+        Bundle resultData = new Bundle();
+
+        if (downloadErrorCount >= ALLOWED_CONSECUTIVE_ERRORS) {
+            resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
             resultData.putInt(EXTRA_DOWNLOAD_STATUS, DOWNLOAD_STATUS_TOO_MANY_ERRORS);
             receiver.send(DOWNLOAD_FINISHED, resultData);
-            errorCount = 0;
+            downloadErrorCount = 0;
             return;
-       }
-      
-      DownloadEntry downloadEntry = Queue.findDownloadEntry(downloadId);
-        if(downloadEntry == null) {
-            if(BuildConfig.DEBUG) {
+        }
+
+        DownloadEntry downloadEntry = Queue.findDownloadEntry(downloadId);
+        if (downloadEntry == null) {
+            if (BuildConfig.DEBUG) {
                 Logger.debug(TAG, "No downloadDown with id " + downloadId + " found");
                 return;
             }
@@ -170,19 +171,19 @@ public class DownloadService extends IntentService {
         int status;
         String statusMessage = "";
         int fileLength = 0;
-        
+
         resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
         resultData.putInt(EXTRA_PROGRESS, 0);
         receiver.send(UPDATE_PROGRESS, resultData);
 
-        Uri uri = null;        
+        Uri uri = null;
 
         Context context = MyApplication.ApplicationContext;
         ContentResolver cr = context.getContentResolver();
         try {
             cancelDownload(-1);
-            ImageData imageData  = downloadEntry.getImageData();
-          
+            ImageData imageData = downloadEntry.getImageData();
+
             //create url and connect
             URL url = new URL(imageData.getDownloadUrl());
             URLConnection connection = url.openConnection();
@@ -195,11 +196,11 @@ public class DownloadService extends IntentService {
 
             // this will be useful so that you can show a typical 0-100% progress bar
             fileLength = connection.getContentLength();
-            
+
             ImageMetaData imageMetaData = CameraFactory.DefaultCamera.getImageInfo(imageData);
             uri = imageData.getLocalStorageUri();
-                      
-            if(uri == null) {
+
+            if (uri == null) {
                 ContentValues values = new ContentValues();
                 values.put(MediaStore.Images.Media.TITLE, imageData.uniqueFileName);
                 values.put(MediaStore.Images.Media.DISPLAY_NAME, imageData.uniqueFileName);
@@ -207,10 +208,10 @@ public class DownloadService extends IntentService {
                 values.put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis());
                 values.put(MediaStore.Images.Media.MIME_TYPE, imageData.isRaw ? "image/x-adobe-dng" : "image/jpeg");
                 values.put(MediaStore.Images.Media.SIZE, fileLength);
-                if(imageMetaData != null) {
+                if (imageMetaData != null) {
                     values.put(MediaStore.Images.Media.ORIENTATION, imageMetaData.orientationDegrees);
                     try {
-                        Date date = dateFormat.parse(imageMetaData.dateTime);                        
+                        Date date = dateFormat.parse(imageMetaData.dateTime);
                         values.put(MediaStore.Images.Media.DATE_TAKEN, date.getTime());
                     } catch (ParseException e) {
                         Logger.warning(TAG, "Error parsing date: " + imageMetaData.dateTime, e);
@@ -250,7 +251,7 @@ public class DownloadService extends IntentService {
 
                     total += count;
                     output.write(data, 0, count);
-                  
+
                     int progress = (int) (total * 100 / fileLength);
                     if (progress > lastProgress) {
                         // publishing the progress....
@@ -259,10 +260,10 @@ public class DownloadService extends IntentService {
                         resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
                         receiver.send(UPDATE_PROGRESS, resultData);
                         lastProgress = progress;
-                    }                    
+                    }
                 }
                 status = DOWNLOAD_STATUS_SUCCESS;
-                errorCount = 0;
+                downloadErrorCount = 0;
             } finally {
                 // close streams
                 output.flush();
@@ -273,11 +274,11 @@ public class DownloadService extends IntentService {
                     status = DOWNLOAD_STATUS_CANCELED;
                 }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             Logger.warning(TAG, "Error downloading file", e);
             status = DOWNLOAD_STATUS_ERROR;
             statusMessage = e.getLocalizedMessage();
-            errorCount++;
+            downloadErrorCount++;
         }
 
         if (status != DOWNLOAD_STATUS_SUCCESS && uri != null) {
@@ -288,11 +289,12 @@ public class DownloadService extends IntentService {
             }
             uri = null;
         }
-      
+
         if (Build.VERSION.SDK_INT >= /*Build.VERSION_CODES.Q*/ 29 && uri != null) {
             //values.put(MediaStore.Images.Media.IS_PENDING, 0);
         }
 
+        resultData = new Bundle();
         resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
         resultData.putInt(EXTRA_DOWNLOAD_STATUS, status);
         resultData.putString(EXTRA_DOWNLOAD_STATUS_MESSAGE, statusMessage);
@@ -311,6 +313,10 @@ public class DownloadService extends IntentService {
         context.startService(intent);
         if(BuildConfig.DEBUG) Logger.debug(TAG, "Download added to service: " + downloadId);
         return downloadId;
+    }
+
+    public static void cancelAllDownloads() {
+        Queue.cancelAll();
     }
 
     public static void cancelCurrentDownload() {
@@ -413,7 +419,7 @@ public class DownloadService extends IntentService {
 
                 super.onReceiveResult(resultCode, resultData);
               
-                int id = resultData.getInt(EXTRA_DOWNLOAD_ID);                
+                int id = resultData.getInt(EXTRA_DOWNLOAD_ID);
                 DownloadEntry downloadEntry = Queue.findDownloadEntry(id);
                 if(downloadEntry == null) {
                    if(BuildConfig.DEBUG) {
@@ -458,6 +464,7 @@ public class DownloadService extends IntentService {
                         Toast.makeText(context, "Download canceled: " + imageData.fileName, Toast.LENGTH_LONG).show();
                     } else if(status == DOWNLOAD_STATUS_TOO_MANY_ERRORS) {
                         Toast.makeText(context, "Too many errors.", Toast.LENGTH_LONG).show();
+                        Queue.errorCount += sDownloadQueue.size();
                         cancelAll();
                         return;
                     }

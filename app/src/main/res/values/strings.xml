@@ -49,4 +49,5 @@
     <string name="raw_only">RAW only</string>
     <string name="jpg_only">JPG only</string>
     <string name="flagged_images">Flagged images</string>
+    <string name="cancel_all_transfers">Cancel all transfers</string>
 </resources>
