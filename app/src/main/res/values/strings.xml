@@ -42,6 +42,8 @@
     <string name="donwload_done_notification_title">All pictures transferred</string>
     <string name="download_done_notification_title">Transfer done.</string>
     <string name="download_done_notification_text">%d images transferred</string>
+    <string name="download_done_with_fails_notification_text">%d images transferred. %d images failed</string>
+    <string name="download_done_failed_notification_text">%d images failed to transfer</string>
     <string name="no_new_images_to_transfer">No new images to transfer.</string>
     <string name="connected_to">Connected to %s (%s)</string>
     <string name="raw_only">RAW only</string>

@@ -144,7 +144,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
         super.onResume();
         mImageFetcher.setExitTasksEarly(false);
         updateUiElements();
-        DownloadService.setOnDowloadFinishedListener(this);
+        DownloadService.setOnDownloadFinishedListener(this);
     }
 
     @Override
@@ -302,7 +302,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
     private void downloadNow() {
         int i = mPager.getCurrentItem();
         ImageData imageData = mCamera.getImageList().getImage(i);
-        DownloadService.download(imageData);
+        DownloadService.downloadDown(imageData);
         updateUiElements();
     }
 

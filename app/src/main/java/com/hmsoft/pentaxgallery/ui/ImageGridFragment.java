@@ -239,7 +239,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         } else {
             mProgressBar.setVisibility(View.GONE);
         }
-        DownloadService.setOnDowloadFinishedListener(this);
+        DownloadService.setOnDownloadFinishedListener(this);
         updateActionBarTitle();
     }
 
