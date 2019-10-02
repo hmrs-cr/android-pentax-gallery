@@ -51,4 +51,14 @@
     <string name="flagged_images">Flagged images</string>
     <string name="cancel_all_transfers">Cancel all transfers</string>
     <string name="shutdown_camera_when_done">Shutdown camera when done</string>
+    <string name="all_pictures_transferred">All pictures transferred</string>
+    <string name="no_pictures_transferred">No pictures transferred</string>
+    <string name="no_flagged_pictures">No flagged pictures</string>
+    <string name="no_raw_pictures">No RAW pictures</string>
+    <string name="no_jpg_pictures">No JPG pictures</string>
+    <string name="no_pictures_in_camera">No pictures in camera</string>
+    <string name="connecting">Connecting...</string>
+    <string name="loading_picture_list">Loading picture list...</string>
+    <string name="connecting_to">Trying to connect to %s...</string>
+    <string name="loading_local_data">Loading local data...</string>
 </resources>

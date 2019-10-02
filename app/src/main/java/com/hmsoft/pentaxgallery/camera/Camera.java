@@ -30,12 +30,21 @@ public class Camera {
     private int mCurrentStorageIndex;
     private FilteredImageList mFilteredImageList = null;
 
+    public interface OnWifiConnectionAttemptListener {
+        void onWifiConnectionAttempt(String ssid);
+    }
+
     public Camera(CameraController controller) {
         this.mController = controller;
     }
 
     @WorkerThread
     public CameraData connect() {
+        return connect(null);
+    }
+
+    @WorkerThread
+    public CameraData connect(OnWifiConnectionAttemptListener listener) {
       CameraData cameraData = null;
       mCameraConnected = false;
 
@@ -67,13 +76,17 @@ public class Camera {
                       Logger.warning(TAG, "All registered cameras failed to connect");
                       break;
                   }
-                  
+
+                  cameraData = cameras.get(ci++);
+
+                  if(listener != null) {
+                      listener.onWifiConnectionAttempt(cameraData.ssid);
+                  }
+
                   if(ci == 0) {                    
                      WifiHelper.startWifiScan(MyApplication.ApplicationContext);
                      WifiHelper.waitForScanResultsAvailable(7500);
                   }
-                
-                  cameraData = cameras.get(ci++);
                 
                   if(!WifiHelper.isWifiInRange(cameraData.ssid)) {
                       if(BuildConfig.DEBUG) Logger.debug(TAG, cameraData.ssid + " not in range.");
