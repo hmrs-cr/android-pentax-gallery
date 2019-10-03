@@ -49,12 +49,9 @@ import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.service.DownloadService;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
-import com.hmsoft.pentaxgallery.util.cache.CacheUtils;
 import com.hmsoft.pentaxgallery.util.image.ImageCache;
 import com.hmsoft.pentaxgallery.util.image.ImageFetcher;
 import com.hmsoft.pentaxgallery.util.image.ImageLocalFetcher;
-
-import java.util.Date;
 
 public class ImageDetailActivity extends FragmentActivity implements OnClickListener,
         GestureDetector.OnGestureListener,
@@ -246,19 +243,10 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
 
     private void setFlagged(boolean flagged) {
         imageData.setIsFlagged(flagged);
-        persistFlaggedFlag(imageData);
-    }
-
-    private void persistFlaggedFlag(final ImageData imageData) {
-        final boolean flagged = imageData.isFlagged();
         TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
             @Override
             public void run() {
-                if(flagged) {
-                    CacheUtils.saveString(imageData.flaggedCacheKey, (new Date()).toString());
-                } else {
-                    CacheUtils.remove(imageData.flaggedCacheKey);
-                }
+                imageData.saveData();
             }
         });
     }

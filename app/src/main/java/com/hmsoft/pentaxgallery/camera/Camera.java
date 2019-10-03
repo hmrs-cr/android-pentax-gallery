@@ -24,7 +24,7 @@ public class Camera {
     private static final String TAG = "Camera";
   
     private final CameraController mController;
-  
+
     private boolean mCameraConnected;
     private CameraData mCameraData;
     private int mCurrentStorageIndex;
@@ -50,6 +50,8 @@ public class Camera {
 
       int retryes = 3;
       int ci = 0;
+      CameraData latesteConnectedCamera = null;
+      List<CameraData> cameras = null;
       while (!mCameraConnected) {
 
           if (mController.connectToCamera()) {
@@ -68,8 +70,15 @@ public class Camera {
                   break;
               }
 
-              List<CameraData> cameras = CameraData.getRegisteredCameras();
+              if (cameras == null) {
+                  cameras = CameraData.getRegisteredCameras();
+              }
+
               if (cameras != null && cameras.size() > 0) {
+                  if(latesteConnectedCamera == null) {
+                      latesteConnectedCamera = cameras.get(0);
+                  }
+
                   WifiHelper.turnWifiOn(MyApplication.ApplicationContext, 1000);
 
                   if(ci == cameras.size()) {
@@ -114,7 +123,7 @@ public class Camera {
       }
 
       if(cameraData == null) {
-          cameraData = mController.getDeviceInfo(false);
+          cameraData = latesteConnectedCamera;
           if(BuildConfig.DEBUG) Logger.debug(TAG, "Camera data from cache: " + cameraData);
       }
 
@@ -188,13 +197,16 @@ public class Camera {
     }
   
     public StorageData getCurrentStorage() {
-        if(mCameraData != null) {
-            if(mCurrentStorageIndex < 0 || mCurrentStorageIndex >= mCameraData.storages.size()) {
-                mCurrentStorageIndex = 0;
-            }
-            return  mCameraData.storages.get(mCurrentStorageIndex);
+        CameraData cameraData = mCameraData;
+        if (cameraData == null) {
+            cameraData = CameraData.DefaultCameraData;
         }
-        return StorageData.DefaultStorage;
+
+
+        if (mCurrentStorageIndex < 0 || (mCurrentStorageIndex >= cameraData.storages.size())) {
+            mCurrentStorageIndex = 0;
+        }
+        return cameraData.storages.get(mCurrentStorageIndex);
     }
 
     public ImageList getImageList() {        

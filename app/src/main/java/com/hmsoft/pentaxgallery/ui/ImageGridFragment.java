@@ -1171,11 +1171,17 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
             if (imageList != null) {
                 publishProgress(PROGRESS_LOADING_LOCAL_DATA);
-                Map<String, String> downloadedList = loadDownloadedList(imageList);
+
+                if(mCamera.isConnected()) {
+                    imageList.saveData();
+                }
+
                 DownloadService.loadQueueFromCache(imageList, ignoreCache);
+
+                Map<String, String> downloadedList = loadDownloadedList(imageList);
                 for(int c = 0; c < imageList.length(); c++) {
                     ImageData imageData = imageList.getImage(c);
-                    imageData.setIsFlagged(CacheUtils.keyExists(imageData.flaggedCacheKey));
+                    imageData.readData();
 
                     String id = downloadedList.get(imageData.uniqueFileName);
                     if(id != null) {

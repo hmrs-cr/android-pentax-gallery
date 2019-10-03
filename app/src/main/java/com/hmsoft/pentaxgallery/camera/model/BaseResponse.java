@@ -20,13 +20,17 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+
 public class BaseResponse {
 
     public final int errCode;
     public final String errMsg;
     public final boolean success;
-  
-    private JSONObject mJSONObject;
+
+    protected JSONObject mJSONObject;
 
     public BaseResponse(String response) throws JSONException {
         this(new JSONTokener(response));
@@ -47,8 +51,22 @@ public class BaseResponse {
         success = errCode == 200;
         mJSONObject = null;
     }
-  
+
     public JSONObject getJSONObject() {
         return mJSONObject;
+    }
+
+    public static void SaveStringData(Object object, File file) {
+        try {
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(file));
+            outputStreamWriter.write(object.toString());
+            outputStreamWriter.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void saveData(File file) {
+        SaveStringData(getJSONObject(), file);
     }
 }

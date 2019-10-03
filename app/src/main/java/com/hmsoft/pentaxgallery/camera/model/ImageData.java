@@ -23,6 +23,10 @@ import android.net.Uri;
 import com.hmsoft.pentaxgallery.BuildConfig;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Properties;
 
 public abstract class ImageData {
 
@@ -41,19 +45,24 @@ public abstract class ImageData {
 
     protected Boolean mExistsOnLocalStorage;
 
-    public final String flaggedCacheKey;
+    protected final String dataKey;
+    private File dataFile;
+    private ImageList imageList;
 
     private boolean mIsDownloadQueue;
     private boolean mIsFlagged;
     private Bitmap mThumbBitmap;
+  
+    private Properties mProperties;
 
     public ImageData(String directory, String fileName) {
         this.directory = directory;
         this.fileName = fileName;
         this.fullPath = directory + "/" + fileName;
         this.uniqueFileName = directory + "-" + fileName;
-        this.flaggedCacheKey = uniqueFileName.substring(0, uniqueFileName.lastIndexOf('.')) + ".flagged";
+        this.dataKey = uniqueFileName + ".data";
         this.isRaw = !fileName.toLowerCase().endsWith(".jpg");
+        this.imageList = imageList;
     }
 
     public boolean match(String text) {
@@ -89,7 +98,7 @@ public abstract class ImageData {
     public abstract Uri getLocalStorageUri();
 
     public abstract void setLocalStorageUri(Uri localUri);
-
+        
     public boolean existsOnLocalStorage() {
         if(mExistsOnLocalStorage == null) {
             updateExistsOnLocalStorage();
@@ -138,4 +147,70 @@ public abstract class ImageData {
     public void setIsInDownloadQueue(boolean isDownloadQueue) {
         this.mIsDownloadQueue = isDownloadQueue;
     }
+
+    private File getDataFile() {
+        if(dataFile == null) {
+            CameraData cameraData = mStorageData.getCameraData();
+            File parentDir = new File(cameraData.getStorageDirectory(), "Images" + File.separator +
+                    mStorageData.name);
+            parentDir.mkdirs();
+            dataFile = new File(parentDir, this.dataKey);
+        }
+        return dataFile;
+    }
+
+    public void saveData() {
+        saveData(getDataFile());
+    }
+
+    private void saveData(File dataFile) {
+       try {           
+           Properties properties = this.getProperties();           
+           FileOutputStream outputStream = new FileOutputStream(dataFile);
+           properties.store(outputStream, "");
+           outputStream.close();
+       } catch (IOException e) {
+           e.printStackTrace();
+       }
+    }
+
+    public void readData() {
+        readData(getDataFile());
+    }
+
+    private void readData(File dataFile) {
+        try {            
+            if(dataFile.exists()) {
+                if (mProperties == null) {
+                    mProperties = new Properties();
+                }
+                FileInputStream inputStream = new FileInputStream(dataFile);
+                mProperties.load(inputStream);
+
+                mIsFlagged = Boolean.parseBoolean(mProperties.getProperty("IsFlagged"));
+                mIsDownloadQueue = Boolean.parseBoolean(mProperties.getProperty("InDownloadQueue"));
+
+                inputStream.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+  
+    public Properties getProperties() {
+        if( mProperties == null) {
+            mProperties = new Properties();
+        }
+        mProperties.setProperty("IsFlagged", Boolean.toString(mIsFlagged));
+        mProperties.setProperty("InDownloadQueue", Boolean.toString(mIsDownloadQueue));
+        if(mMetaData != null) {
+            mProperties.setProperty("CameraModel", mMetaData.cameraModel);
+            mProperties.setProperty("DateTime", mMetaData.dateTime);
+        }
+        if (mStorageData != null) {
+            mProperties.setProperty("Storage", mStorageData.name);
+        }
+        return mProperties;
+    }
+
 }
