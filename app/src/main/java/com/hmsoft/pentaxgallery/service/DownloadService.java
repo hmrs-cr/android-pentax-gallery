@@ -639,7 +639,7 @@ public class DownloadService extends IntentService {
                         JSONObject jsonObject = jsonArray.getJSONObject(c);
                         String fileName = jsonObject.getString(DownloadEntry.UNIQUE_FILE_NAME);
                         ImageData imageData = sourceImageList.findByUniqueFileName(fileName);
-                        if (imageData != null) {
+                        if (imageData != null && !imageData.existsOnLocalStorage()) {
                             DownloadEntry downloadEntry = new DownloadEntry(imageData);
                             sDownloadQueue.add(downloadEntry);
                         }

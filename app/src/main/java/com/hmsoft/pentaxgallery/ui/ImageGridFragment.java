@@ -500,7 +500,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 removeFilters();
                 int currentStorageIndex = mCamera.getCurrentStorageIndex();
                 int newStorageIndex = itemId == R.id.sync_images_1 ? 0 : 1;
-                syncPictureList(newStorageIndex, currentStorageIndex == newStorageIndex, true);
+                syncPictureList(newStorageIndex, currentStorageIndex != newStorageIndex, true);
                 return true;
             case R.id.shutdown_when_download_done_queue:
                 DownloadService.toggleShutCameraDownWhenDone();
@@ -733,22 +733,23 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 .show();
     }
 
-    private void syncPictureList(boolean ignoreCache) {
-        syncPictureList(-1, ignoreCache, true);
+    private void syncPictureList(boolean loadImageListOnly) {
+        syncPictureList(-1, loadImageListOnly, true);
     }
 
-    private void syncPictureList(int storageIndex, boolean ignoreCache, boolean showProgressBar) {
-        syncPictureList(storageIndex, ignoreCache, showProgressBar, null);
+    private void syncPictureList(int storageIndex, boolean loadImageListOnly, boolean showProgressBar) {
+        syncPictureList(storageIndex, loadImageListOnly, showProgressBar, null);
     }
 
-    private void syncPictureList(int storageIndex, boolean ignoreCache, boolean showProgressBar, OnRefreshDoneListener refreshDoneListener) {
+    private void syncPictureList(int storageIndex, boolean loadImageListOnly, boolean showProgressBar,
+                                 OnRefreshDoneListener refreshDoneListener) {
         if(mImageListTask == null) {
             if(showProgressBar) {
                 mProgressBar.setVisibility(View.VISIBLE);
                 mSwipeRefreshLayout.setVisibility(View.GONE);
             }
             mImageListTask = new ImageListTask(refreshDoneListener);
-            mImageListTask.execute(ignoreCache, storageIndex);
+            mImageListTask.execute(loadImageListOnly, storageIndex);
         }
     }
 
@@ -807,7 +808,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     @Override
     public void onRefresh() {
         mCamera.setCameraData(null);
-        syncPictureList(mCamera.getCurrentStorageIndex(), true, false);
+        syncPictureList(mCamera.getCurrentStorageIndex(), false, false);
     }
 
     @Override
@@ -1112,6 +1113,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         private static final int PROGRESS_CONNECTED = 0;
         private static final int PROGRESS_CONNECTING = 1;
         private static final int PROGRESS_LOADING_LOCAL_DATA = 2;
+        private static final int PROGRESS_LOADING_PICTURE_LIST = 3;
 
         private OnRefreshDoneListener refreshDoneListener;
 
@@ -1138,6 +1140,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                     updateProgressText(R.string.loading_picture_list);
                     updateActionBarTitle();
                     break;
+                case PROGRESS_LOADING_PICTURE_LIST:
+                    updateProgressText(R.string.loading_picture_list);
+                    break;
                 case PROGRESS_CONNECTING:
                     updateProgressText(String.format(getString(R.string.connecting_to), values[1]));
                     break;
@@ -1151,49 +1156,62 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         @Override
         protected ImageList doInBackground(Object... params) {
 
-            boolean ignoreCache = params.length > 0 ? (Boolean) params[0] : false;
+            boolean loadImageListOnly = params.length > 0 ? (Boolean) params[0] : false;
 
             DefaultSettings.getsInstance().load();
 
-            CameraData cameraData =  mCamera.connect(this);
-            if(mCamera.isConnected()) {
-                publishProgress(PROGRESS_CONNECTED, cameraData);
+            CameraData cameraData;
+            if (mCamera.getCameraData() != null && loadImageListOnly) {
+                cameraData = mCamera.getCameraData();
+                publishProgress(PROGRESS_LOADING_PICTURE_LIST, cameraData);
+            } else {
+                cameraData = mCamera.connect(this);
+                if (mCamera.isConnected()) {
+                    publishProgress(PROGRESS_CONNECTED, cameraData);
+                }
             }
-          
-           if (params.length > 1 && (int) params[1] >= 0) {
-              mCamera.setCurrentStorageIndex((int) params[1]);
-           }
 
-           if(BuildConfig.DEBUG) {
-               Logger.debug(TAG, "Load image list START");
-           }
+            ImageList imageList = null;
+            if (params.length > 1 && (int) params[1] >= 0) {
+                int newStorageIndex = (int) params[1];
+                if (newStorageIndex != mCamera.getCurrentStorageIndex()) {
+                    mCamera.setCurrentStorageIndex(newStorageIndex);
+                    if(loadImageListOnly) {
+                        imageList = mCamera.getCurrentStorage().getImageList();
+                    }
+                }
+            }
 
-           ImageList imageList = mCamera.loadImageList();
+            if (BuildConfig.DEBUG) {
+                Logger.debug(TAG, "Load image list START");
+            }
 
-            if (imageList != null) {
+            if (imageList == null) {
+                imageList = mCamera.loadImageList();
+            }
+
+            if (imageList != null && !loadImageListOnly) {
                 publishProgress(PROGRESS_LOADING_LOCAL_DATA);
-                
-                DownloadService.loadQueueFromFile(imageList, cameraData);
 
                 Map<String, String> downloadedList = loadDownloadedList(imageList);
-                for(int c = 0; c < imageList.length(); c++) {
+                for (int c = 0; c < imageList.length(); c++) {
                     ImageData imageData = imageList.getImage(c);
                     imageData.readData();
 
                     String id = downloadedList.get(imageData.uniqueFileName);
-                    if(id != null) {
+                    if (id != null) {
                         imageData.setLocalStorageUri(Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id));
                     }
                 }
-
                 downloadedList.clear();
+                DownloadService.loadQueueFromFile(imageList, cameraData);
             }
 
-            if(BuildConfig.DEBUG) {
+            if (BuildConfig.DEBUG) {
                 Logger.debug(TAG, "Load image list END");
             }
 
-           return imageList;
+            return imageList;
         }
 
         private Map<String, String> loadDownloadedList(ImageList imageList) {

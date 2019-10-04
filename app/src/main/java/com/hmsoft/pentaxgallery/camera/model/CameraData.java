@@ -53,6 +53,7 @@ public class CameraData extends BaseResponse {
 
     public final List<StorageData> storages = new LinkedList<>();
     private File storageDirectory;
+    private final String cameraId;
 
     public CameraData(String response) throws JSONException {
         this(new JSONTokener(response));
@@ -67,6 +68,8 @@ public class CameraData extends BaseResponse {
         macAddress = "Default";
         serialNo = "Default";
         dateAdded = null;
+
+        cameraId = "default.camera";
 
         this.key = null;
         this.ssid = null;
@@ -86,6 +89,8 @@ public class CameraData extends BaseResponse {
         serialNo = jsonObject.optString("serialNo");
         manufacturer = jsonObject.optString("manufacturer");
         dateAdded = jsonObject.optString("dataAdded");
+
+        cameraId = macAddress.replace(":", "") + "." + serialNo;
 
         key = jsonObject.optString("key");
         ssid = jsonObject.optString("ssid");
@@ -122,8 +127,7 @@ public class CameraData extends BaseResponse {
 
     public File getStorageDirectory() {
         if(storageDirectory == null) {
-            storageDirectory = new File(getParentStorageDirectory(),
-                    macAddress.replace(":", "") + "." + serialNo);
+            storageDirectory = new File(getParentStorageDirectory(),cameraId);
             storageDirectory.mkdirs();
         }
         return storageDirectory;

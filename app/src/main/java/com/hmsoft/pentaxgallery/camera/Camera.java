@@ -44,11 +44,20 @@ public class Camera {
 
     @WorkerThread
     public CameraData connect() {
-        return connect(null);
+        return connect((String)null);
     }
 
     @WorkerThread
+    public CameraData connect(String cameraId) {
+        return connect(cameraId, null);
+    }
+
     public CameraData connect(OnWifiConnectionAttemptListener listener) {
+        return connect(null, listener);
+    }
+
+    @WorkerThread
+    public CameraData connect(String cameraId, OnWifiConnectionAttemptListener listener) {
       CameraData cameraData = null;
       mCameraConnected = false;
 
