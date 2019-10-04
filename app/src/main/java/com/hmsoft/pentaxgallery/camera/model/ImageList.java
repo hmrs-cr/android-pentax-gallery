@@ -21,18 +21,15 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class ImageList {
 
     protected final List<ImageData> mImageList = new ArrayList<>();
-    private final JSONArray jsonArray;
-    private File dataFile;
     private StorageData mStorage;
 
-    public ImageList() { jsonArray = null; }
+    public ImageList() { }
 
     public ImageList(String jsonData) throws JSONException {
         this(new JSONObject(new JSONTokener(jsonData)));
@@ -43,7 +40,6 @@ public abstract class ImageList {
     }
 
     public ImageList(JSONArray jsonArray) throws JSONException {
-        this.jsonArray = jsonArray;
         int len = jsonArray != null ? jsonArray.length() : 0;
         for(int c = len-1; c > -1; c--) {
             JSONObject jsonObject = jsonArray.getJSONObject(c);
@@ -118,25 +114,12 @@ public abstract class ImageList {
         }
         return sb.toString();
     }
-
-    private File getDataDFile() {
-        if(dataFile == null) {
-            CameraData cameraData = mStorage.getCameraData();
-            File parentDir = new File(cameraData.getStorageDirectory(), "Images");
-            parentDir.mkdirs();
-            dataFile = new File(parentDir, mStorage.name + ".list");
-        }
-        return dataFile;
-    }
-
-    public void saveData() {
-        if(jsonArray != null) {
-            BaseResponse.SaveStringData(jsonArray, getDataDFile());
-        }
-    }
-
-
+  
     public void setStorageData(StorageData storage) {
         mStorage = storage;
+    }
+  
+    public StorageData getStorageData() {
+        return mStorage;
     }
 }

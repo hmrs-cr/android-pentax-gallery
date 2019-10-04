@@ -19,17 +19,15 @@ package com.hmsoft.pentaxgallery.camera.model;
 import android.text.format.DateFormat;
 
 import com.hmsoft.pentaxgallery.MyApplication;
+import com.hmsoft.pentaxgallery.util.Utils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -40,6 +38,8 @@ import java.util.List;
 public class CameraData extends BaseResponse {
 
     public static final CameraData DefaultCameraData = new CameraData();
+    private static final String FOLDER_CAMERAS = "cameras";
+    private static final String FILE_NAME_CAMERA_DATA = "camera.data";
 
     public final String manufacturer;
     public final String model;
@@ -117,10 +117,10 @@ public class CameraData extends BaseResponse {
     }
 
     private static File getParentStorageDirectory() {
-        return new File(MyApplication.ApplicationContext.getFilesDir(), "Cameras");
+        return new File(MyApplication.ApplicationContext.getFilesDir(), FOLDER_CAMERAS);
     }
 
-    /*private*/ File getStorageDirectory() {
+    public File getStorageDirectory() {
         if(storageDirectory == null) {
             storageDirectory = new File(getParentStorageDirectory(),
                     macAddress.replace(":", "") + "." + serialNo);
@@ -135,26 +135,17 @@ public class CameraData extends BaseResponse {
         }
         try {
             mJSONObject.put("dataAdded", DateFormat.format("yyyyMMddHHmmss", new Date()));
-            saveData(new File(getStorageDirectory(), "CameraData"));
+            saveData(new File(getStorageDirectory(), FILE_NAME_CAMERA_DATA));
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
     private static CameraData createFromFile(File file) {
-        FileInputStream fi = null;
         try {
-            fi = new FileInputStream(file);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(fi));
-            StringBuilder sb = new StringBuilder();
-            String line = null;
-            while ((line = reader.readLine()) != null) {
-                sb.append(line).append("\n");
-            }
-            reader.close();
-
+            String json = Utils.readTextFile(file);
             try {
-                return new CameraData(sb.toString());
+                return new CameraData(json);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -167,12 +158,16 @@ public class CameraData extends BaseResponse {
 
     public static List<CameraData> getRegisteredCameras() {
         File folder = getParentStorageDirectory();
+        if(!folder.exists()) {
+            return new ArrayList<>(0);
+        }
+
         File[] files = folder.listFiles();
         List<CameraData> result = new ArrayList<>(files.length);
 
         for(File cameraFolder : files) {
             if (cameraFolder.isDirectory()) {
-                File cameraDataFile = new File(cameraFolder, "CameraData");
+                File cameraDataFile = new File(cameraFolder, FILE_NAME_CAMERA_DATA);
                 if(cameraDataFile.exists() && cameraDataFile.isFile()) {
                     CameraData cameraData = createFromFile(cameraDataFile);
                     if (cameraData != null) {

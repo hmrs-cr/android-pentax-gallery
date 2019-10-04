@@ -14,9 +14,13 @@ import com.hmsoft.pentaxgallery.camera.model.ImageListData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
 import com.hmsoft.pentaxgallery.util.Logger;
+import com.hmsoft.pentaxgallery.util.Utils;
 import com.hmsoft.pentaxgallery.util.WifiHelper;
 
+import org.json.JSONException;
+
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 public class Camera {
@@ -57,7 +61,7 @@ public class Camera {
           if (mController.connectToCamera()) {
               BaseResponse response = mController.ping();
               if (response != null && response.success) {
-                  cameraData = mController.getDeviceInfo(true);
+                  cameraData = mController.getDeviceInfo();
               }
           } else {
               Logger.warning(TAG, "Could not bind to WiFi");
@@ -150,13 +154,21 @@ public class Camera {
     }
 
     @WorkerThread
-    public ImageList loadImageList(boolean ignoreCache) {
-        ImageListData imageListResponse = mController.getImageList(getCurrentStorage(),
-                mCameraConnected || ignoreCache);
+    public ImageList loadImageList() {
+        ImageListData imageListResponse = mCameraConnected    ?
+                mController.getImageList(getCurrentStorage()) :
+                null;
       
         if(imageListResponse != null) {
-          setImageList(imageListResponse.dirList);
-          return imageListResponse.dirList;
+            setImageList(imageListResponse.dirList);
+            imageListResponse.saveData();
+            return imageListResponse.dirList;
+        }
+              
+        imageListResponse = mCameraData != null ? createImageListResponseFromFile() : null;
+        if(imageListResponse != null) {
+            setImageList(imageListResponse.dirList);
+            return imageListResponse.dirList;
         }
 
         setImageList(null);
@@ -279,5 +291,17 @@ public class Camera {
 
     public void powerOff() {
         mController.powerOff(null);
+    }
+  
+    private ImageListData createImageListResponseFromFile() {
+        File file = ImageListData.getDataFile(getCurrentStorage());
+        String json = null;
+        try {
+            json = Utils.readTextFile(file);
+            return mController.createImageList(json);
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

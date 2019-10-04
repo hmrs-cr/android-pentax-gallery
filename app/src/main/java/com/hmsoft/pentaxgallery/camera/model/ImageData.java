@@ -21,16 +21,19 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
+import com.hmsoft.pentaxgallery.util.Logger;
+import com.hmsoft.pentaxgallery.util.Utils;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Properties;
 
 public abstract class ImageData {
 
     private static final String TAG = "ImageData";
+    /*private*/ static final String FOLDER_IMAGES = "images";
 
     public final String directory;
     public final String fileName;
@@ -53,7 +56,7 @@ public abstract class ImageData {
     private boolean mIsFlagged;
     private Bitmap mThumbBitmap;
   
-    private Properties mProperties;
+    private JSONObject mJSONObject;
 
     public ImageData(String directory, String fileName) {
         this.directory = directory;
@@ -151,7 +154,7 @@ public abstract class ImageData {
     private File getDataFile() {
         if(dataFile == null) {
             CameraData cameraData = mStorageData.getCameraData();
-            File parentDir = new File(cameraData.getStorageDirectory(), "Images" + File.separator +
+            File parentDir = new File(cameraData.getStorageDirectory(), FOLDER_IMAGES + File.separator +
                     mStorageData.name);
             parentDir.mkdirs();
             dataFile = new File(parentDir, this.dataKey);
@@ -165,11 +168,9 @@ public abstract class ImageData {
 
     private void saveData(File dataFile) {
        try {           
-           Properties properties = this.getProperties();           
-           FileOutputStream outputStream = new FileOutputStream(dataFile);
-           properties.store(outputStream, "");
-           outputStream.close();
-       } catch (IOException e) {
+           JSONObject jsonObject = this.getJSONObject();
+           Utils.saveTextFile(dataFile, BuildConfig.DEBUG ? jsonObject.toString(4) : jsonObject.toString());
+       } catch (JSONException | IOException e) {
            e.printStackTrace();
        }
     }
@@ -181,36 +182,36 @@ public abstract class ImageData {
     private void readData(File dataFile) {
         try {            
             if(dataFile.exists()) {
-                if (mProperties == null) {
-                    mProperties = new Properties();
+                String json = Utils.readTextFile(dataFile);
+                mJSONObject = new JSONObject(json);
+
+                mIsFlagged = mJSONObject.optBoolean("isFlagged", false);
+                mIsDownloadQueue = mJSONObject.optBoolean("inDownloadQueue", false);
+                JSONObject metadata = mJSONObject.optJSONObject("metadata");
+                if(metadata != null) {
+                    setMetaData(new ImageMetaData(metadata));
+                    if(BuildConfig.DEBUG) Logger.debug(fileName, "Image metadata loaded from local file");
                 }
-                FileInputStream inputStream = new FileInputStream(dataFile);
-                mProperties.load(inputStream);
-
-                mIsFlagged = Boolean.parseBoolean(mProperties.getProperty("IsFlagged"));
-                mIsDownloadQueue = Boolean.parseBoolean(mProperties.getProperty("InDownloadQueue"));
-
-                inputStream.close();
             }
-        } catch (IOException e) {
+        } catch (JSONException | IOException e) {
             e.printStackTrace();
         }
     }
   
-    public Properties getProperties() {
-        if( mProperties == null) {
-            mProperties = new Properties();
+    public JSONObject getJSONObject() {
+        if (mJSONObject == null) {
+            mJSONObject = new JSONObject();
         }
-        mProperties.setProperty("IsFlagged", Boolean.toString(mIsFlagged));
-        mProperties.setProperty("InDownloadQueue", Boolean.toString(mIsDownloadQueue));
-        if(mMetaData != null) {
-            mProperties.setProperty("CameraModel", mMetaData.cameraModel);
-            mProperties.setProperty("DateTime", mMetaData.dateTime);
+        try {
+            mJSONObject.put("isFlagged", Boolean.toString(mIsFlagged));
+            mJSONObject.put("inDownloadQueue", Boolean.toString(mIsDownloadQueue));
+            if (mMetaData != null) {
+                mJSONObject.put("metadata", mMetaData.getJSONObject());
+            }
+            return mJSONObject;
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
-        if (mStorageData != null) {
-            mProperties.setProperty("Storage", mStorageData.name);
-        }
-        return mProperties;
+        return null;
     }
-
 }

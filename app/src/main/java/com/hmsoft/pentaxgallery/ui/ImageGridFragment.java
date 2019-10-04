@@ -74,7 +74,6 @@ import com.hmsoft.pentaxgallery.util.DefaultSettings;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 import com.hmsoft.pentaxgallery.util.Utils;
-import com.hmsoft.pentaxgallery.util.cache.CacheUtils;
 import com.hmsoft.pentaxgallery.util.image.ImageCache;
 import com.hmsoft.pentaxgallery.util.image.ImageFetcher;
 import com.hmsoft.pentaxgallery.util.image.ImageRotatorFetcher;
@@ -140,7 +139,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         mImageFetcher = new ImageRotatorFetcher(getActivity(), mImageThumbSize);
         mImageFetcher.setLoadingImage(R.drawable.empty_photo);
         mImageFetcher.addImageCache(getActivity().getSupportFragmentManager(), cacheParams);
-        CacheUtils.init();
+        //CacheUtils.init();
     }
 
     @Override
@@ -259,17 +258,19 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     public void onPause() {
         super.onPause();
 
-        TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
-            @Override
-            public void run() {
-                DownloadService.saveQueueToCache();
-            }
-        });
+        if(mCamera.isConnected()) {
+            TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
+                @Override
+                public void run() {
+                    DownloadService.saveQueueToFile(mCamera.getCameraData());
+                }
+            });
+        }
 
         mImageFetcher.setPauseWork(false);
         mImageFetcher.setExitTasksEarly(true);
         mImageFetcher.flushCache();
-        CacheUtils.flush();
+        //CacheUtils.flush();
     }
 
     @Override
@@ -277,7 +278,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         mCamera.getController().setCameraChangeListener(null);
         super.onDestroy();
         mImageFetcher.closeCache();
-        CacheUtils.close();
+        //CacheUtils.close();
         if(mImageListTask != null) {
             mImageListTask.cancel(true);
             mImageListTask = null;
@@ -1167,16 +1168,12 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                Logger.debug(TAG, "Load image list START");
            }
 
-           ImageList imageList = mCamera.loadImageList(ignoreCache);
+           ImageList imageList = mCamera.loadImageList();
 
             if (imageList != null) {
                 publishProgress(PROGRESS_LOADING_LOCAL_DATA);
-
-                if(mCamera.isConnected()) {
-                    imageList.saveData();
-                }
-
-                DownloadService.loadQueueFromCache(imageList, ignoreCache);
+                
+                DownloadService.loadQueueFromFile(imageList, cameraData);
 
                 Map<String, String> downloadedList = loadDownloadedList(imageList);
                 for(int c = 0; c < imageList.length(); c++) {

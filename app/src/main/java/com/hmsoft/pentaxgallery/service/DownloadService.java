@@ -23,6 +23,7 @@ import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.CameraFactory;
+import com.hmsoft.pentaxgallery.camera.model.CameraData;
 import com.hmsoft.pentaxgallery.camera.model.FilteredImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageList;
@@ -30,7 +31,7 @@ import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.ui.ImageGridActivity;
 import com.hmsoft.pentaxgallery.util.DefaultSettings;
 import com.hmsoft.pentaxgallery.util.Logger;
-import com.hmsoft.pentaxgallery.util.cache.CacheUtils;
+import com.hmsoft.pentaxgallery.util.Utils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -38,6 +39,7 @@ import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
@@ -389,8 +391,8 @@ public class DownloadService extends IntentService {
        return Queue.addDownloadQueue(imageData, Queue.inBatchDownload);
     }
     
-    public static void saveQueueToCache() {
-        Queue.saveToCache();    
+    public static void saveQueueToFile(CameraData cameraData) {
+        Queue.saveToFile(cameraData);
     }
     
     public static void processDownloadQueue() {
@@ -401,8 +403,8 @@ public class DownloadService extends IntentService {
         Queue.inBatchDownload = inBatchDownload;
     }
 
-    public static void loadQueueFromCache(ImageList sourceImageList, boolean forceLoad) {
-        Queue.loadFromCache(sourceImageList, forceLoad);
+    public static void loadQueueFromFile(ImageList sourceImageList, CameraData cameraData) {
+        Queue.loadFromFile(sourceImageList, cameraData);
     }
 
     private static class Queue {
@@ -414,6 +416,7 @@ public class DownloadService extends IntentService {
 
         private static final int PROGRESS_NOTIFICATION_ID = 5;
         private static final int DONE_NOTIFICATION_ID = 6;
+        private static final String FILE_NAME_DOWNLOAD_QUEUE = "download.queue";
 
         private static Hashtable<Integer, DownloadEntry> sDownloadQueueDict = null;
         private static List<DownloadEntry> sDownloadQueue;
@@ -622,36 +625,32 @@ public class DownloadService extends IntentService {
             }
         }
 
-        /*public*/ static void loadFromCache(ImageList sourceImageList, boolean forceLoad) {
+        /*public*/ static void loadFromFile(ImageList sourceImageList, CameraData cameraData) {
             if(sourceImageList == null || sourceImageList.length() == 0) {
                 return;
             }
 
-            if(sDownloadQueue == null || forceLoad) {
-                String cacheValue = CacheUtils.getString(CACHE_KEY);
-                if(cacheValue == null) {
-                    return;
-                }
-
-                sDownloadQueue = new ArrayList<DownloadEntry>();
+            if(sDownloadQueue == null) {
+                sDownloadQueue = new ArrayList<>();
                 try {
-                    JSONArray jsonArray = new JSONArray(cacheValue);
-                    for(int c = 0; c < jsonArray.length(); c++) {
+                    String json = Utils.readTextFile(new File(cameraData.getStorageDirectory(), FILE_NAME_DOWNLOAD_QUEUE));
+                    JSONArray jsonArray = new JSONArray(json);
+                    for (int c = 0; c < jsonArray.length(); c++) {
                         JSONObject jsonObject = jsonArray.getJSONObject(c);
                         String fileName = jsonObject.getString(DownloadEntry.UNIQUE_FILE_NAME);
                         ImageData imageData = sourceImageList.findByUniqueFileName(fileName);
-                        if(imageData != null) {
+                        if (imageData != null) {
                             DownloadEntry downloadEntry = new DownloadEntry(imageData);
                             sDownloadQueue.add(downloadEntry);
                         }
                     }
-                } catch (JSONException e) {
+                } catch (IOException | JSONException e) {
                     e.printStackTrace();
                 }
             }
         }
 
-        /*public*/ static void saveToCache() {
+        /*public*/ static void saveToFile(CameraData cameraData) {
             JSONArray jsonArray = new JSONArray();
             if(sDownloadQueue != null) {
                 for (DownloadEntry downloadEntry : sDownloadQueue) {
@@ -661,7 +660,11 @@ public class DownloadService extends IntentService {
                     }
                 }
             }
-            CacheUtils.saveString(CACHE_KEY, jsonArray.toString());
+            try {
+                Utils.saveTextFile(new File(cameraData.getStorageDirectory(), FILE_NAME_DOWNLOAD_QUEUE), jsonArray.toString());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         public static DownloadEntry getNextDownload() {

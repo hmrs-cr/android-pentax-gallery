@@ -19,11 +19,13 @@ package com.hmsoft.pentaxgallery.camera.implementation.pentax.model;
 import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 
+import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.camera.implementation.pentax.UrlHelper;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.util.DefaultSettings;
+import com.hmsoft.pentaxgallery.util.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,6 +50,7 @@ public class PentaxImageData extends ImageData {
                 exifInterface = new ExifInterface(fd.getFileDescriptor());
                 setMetaData(new PentaxImageMetaData(getLocalPath(), exifInterface));
                 fd.close();
+                if(BuildConfig.DEBUG) Logger.debug(fileName, "Image metadata loaded from downloaded picture");
             } catch (IOException e) {
                 e.printStackTrace();
             }
