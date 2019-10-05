@@ -116,6 +116,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private Camera mCamera = CameraFactory.DefaultCamera;
     private boolean mNeedUpdateImageList;
+    private volatile boolean mDontShowProgressBar;
 
     /**
      * Empty constructor as per the Fragment documentation
@@ -612,8 +613,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     /*package*/ void downloadJpgs(boolean forceRefresh) {
 
 
-        List<ImageData> enqueue = getDownloadList();
-        Logger.debug(TAG, "mNeedUpdateImageList:"+mNeedUpdateImageList);
+        List<ImageData> enqueue = getDownloadList();        
         if((mNeedUpdateImageList && (enqueue == null || enqueue.size() == 0)) || forceRefresh) {
             syncPictureList(mCamera.getCurrentStorageIndex(), true, false, new OnRefreshDoneListener() {
                 @Override
@@ -745,8 +745,16 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                                  OnRefreshDoneListener refreshDoneListener) {
         if(mImageListTask == null) {
             if(showProgressBar) {
-                mProgressBar.setVisibility(View.VISIBLE);
-                mSwipeRefreshLayout.setVisibility(View.GONE);
+                mDontShowProgressBar = false;
+                TaskExecutor.executeOnUIThread(new Runnable() {
+                    @Override
+                    public void run() {
+                          if(!mDontShowProgressBar) {
+                              mProgressBar.setVisibility(View.VISIBLE);
+                              mSwipeRefreshLayout.setVisibility(View.GONE);
+                          }
+                    }
+                 }, 0.3);
             }
             mImageListTask = new ImageListTask(refreshDoneListener);
             mImageListTask.execute(loadImageListOnly, storageIndex);
@@ -1157,6 +1165,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         protected ImageList doInBackground(Object... params) {
 
             boolean loadImageListOnly = params.length > 0 ? (Boolean) params[0] : false;
+            int newStorageIndex = params.length > 1 ? (int) params[1] : -1;
 
             DefaultSettings.getsInstance().load();
 
@@ -1172,25 +1181,25 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             }
 
             ImageList imageList = null;
-            if (params.length > 1 && (int) params[1] >= 0) {
-                int newStorageIndex = (int) params[1];
-                if (newStorageIndex != mCamera.getCurrentStorageIndex()) {
-                    mCamera.setCurrentStorageIndex(newStorageIndex);
-                    if(loadImageListOnly) {
-                        imageList = mCamera.getCurrentStorage().getImageList();
-                    }
-                }
+            if (newStorageIndex >= 0 && newStorageIndex != mCamera.getCurrentStorageIndex()) {
+                mCamera.setCurrentStorageIndex(newStorageIndex);
+                if(loadImageListOnly) {
+                    imageList = mCamera.getCurrentStorage().getImageList();
+                    mDontShowProgressBar = imageList != null;
+                }                
             }
 
             if (BuildConfig.DEBUG) {
                 Logger.debug(TAG, "Load image list START");
             }
 
-            if (imageList == null) {
+            boolean needToLoadLocalData = !loadImageListOnly;
+            if (mNeedUpdateImageList || imageList == null || imageList.length() == 0) {
                 imageList = mCamera.loadImageList();
+                needToLoadLocalData = true;
             }
 
-            if (imageList != null && !loadImageListOnly) {
+            if (imageList != null && needToLoadLocalData) {
                 publishProgress(PROGRESS_LOADING_LOCAL_DATA);
 
                 Map<String, String> downloadedList = loadDownloadedList(imageList);
@@ -1220,7 +1229,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                     MediaStore.Images.Media._ID,
                     MediaStore.Images.Media.DISPLAY_NAME
             };
-
 
             StringBuilder whereSb = new StringBuilder();
             whereSb.append(MediaStore.Images.Media.DISPLAY_NAME);
