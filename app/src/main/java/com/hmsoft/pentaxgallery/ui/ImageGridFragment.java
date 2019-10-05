@@ -467,18 +467,18 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             MenuItem syncItem = mMenu.findItem(R.id.sync_images_1);
             syncItem.setTitle(multyStorage ? cameraData.storages.get(0).displayName :  syncText);
             syncItem.setVisible(!mCamera.hasFilter(DownloadService.DownloadQueueFilter));
+            syncItem.setCheckable(multyStorage);
+            syncItem.setChecked(multyStorage && currentStorageIndex == 0);
             if(multyStorage) {
-                syncItem.setCheckable(true);
-                syncItem.setChecked(currentStorageIndex == 0);
                 syncItem.setIcon(null);
             }
 
             syncItem = mMenu.findItem(R.id.sync_images_2);
             syncItem.setVisible(multyStorage && !mCamera.hasFilter(DownloadService.DownloadQueueFilter));
             syncItem.setTitle(multyStorage ? cameraData.storages.get(1).displayName :  syncText);
+            syncItem.setCheckable(multyStorage);
+            syncItem.setChecked(multyStorage && currentStorageIndex == 1);
             if(multyStorage) {
-                syncItem.setCheckable(true);
-                syncItem.setChecked(currentStorageIndex == 1);
                 syncItem.setIcon(null);
             }
 
