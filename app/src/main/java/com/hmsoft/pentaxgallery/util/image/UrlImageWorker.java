@@ -99,7 +99,7 @@ public abstract class UrlImageWorker {
      * image is found in the memory cache, it is set immediately, otherwise an {@link AsyncTask}
      * will be created to asynchronously load the bitmap.
      *
-     * @param url The URL of the image to download.
+     * @param url The URL of the image to downloadDown.
      * @param imageView The ImageView to bind the downloaded image to.
      * @param listener A listener that will be called back once the image has been loaded.
      */
@@ -141,7 +141,7 @@ public abstract class UrlImageWorker {
      * image is found in the memory cache, it is set immediately, otherwise an {@link AsyncTask}
      * will be created to asynchronously load the bitmap.
      *
-     * @param url The URL of the image to download.
+     * @param url The URL of the image to downloadDown.
      * @param imageView The ImageView to bind the downloaded image to.
      */
     public void loadImage(String url, Object param, ImageView imageView) {

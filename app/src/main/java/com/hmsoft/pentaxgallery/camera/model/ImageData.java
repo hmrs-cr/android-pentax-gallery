@@ -17,19 +17,23 @@
 package com.hmsoft.pentaxgallery.camera.model;
 
 
-import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.provider.MediaStore;
+import android.net.Uri;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
-import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.util.Logger;
+import com.hmsoft.pentaxgallery.util.Utils;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
+import java.io.IOException;
 
 public abstract class ImageData {
 
     private static final String TAG = "ImageData";
+    /*private*/ static final String FOLDER_IMAGES = "images";
 
     public final String directory;
     public final String fileName;
@@ -44,24 +48,24 @@ public abstract class ImageData {
 
     protected Boolean mExistsOnLocalStorage;
 
-    public final String flaggedCacheKey;
+    protected final String dataKey;
+    private File dataFile;
+    private ImageList imageList;
 
     private boolean mIsDownloadQueue;
     private boolean mIsFlagged;
     private Bitmap mThumbBitmap;
-
-    private static final String orderByMediaStoreCursor = MediaStore.Images.Media.DATE_TAKEN  + " DESC";
-    private static final String[] projectionMediaStoreCursor = new String[] {
-            MediaStore.Images.Media._ID,
-    };
+  
+    private JSONObject mJSONObject;
 
     public ImageData(String directory, String fileName) {
         this.directory = directory;
         this.fileName = fileName;
         this.fullPath = directory + "/" + fileName;
         this.uniqueFileName = directory + "-" + fileName;
-        this.flaggedCacheKey = uniqueFileName.substring(0, uniqueFileName.lastIndexOf('.')) + ".flagged";
+        this.dataKey = uniqueFileName + ".data";
         this.isRaw = !fileName.toLowerCase().endsWith(".jpg");
+        this.imageList = imageList;
     }
 
     public boolean match(String text) {
@@ -94,24 +98,19 @@ public abstract class ImageData {
   
     public abstract ImageMetaData readMetadata();
 
+    public abstract Uri getLocalStorageUri();
+
+    public abstract void setLocalStorageUri(Uri localUri);
+        
     public boolean existsOnLocalStorage() {
         if(mExistsOnLocalStorage == null) {
-            updateExistsOnLocasStorage();
+            updateExistsOnLocalStorage();
         }
-        return mExistsOnLocalStorage.booleanValue();
+        return mExistsOnLocalStorage;
     }
 
-    public void updateExistsOnLocasStorage() {
-        File localPath = getLocalPath();
-        mExistsOnLocalStorage  = localPath != null && localPath.exists() && localPath.isFile();
-
-        /*
-        // TODO: Use this approach when targeting most recent Android API levels.
-        Cursor cursor = getMediaStoreCursor();
-        mExistsOnLocalStorage  = cursor != null && cursor.getCount() > 0;
-        cursor.close();
-         */
-        if(BuildConfig.DEBUG) Logger.debug(TAG, "mExistsOnLocalStorage: " + uniqueFileName + ": " +mExistsOnLocalStorage);
+    public void updateExistsOnLocalStorage() {
+        mExistsOnLocalStorage  = getLocalStorageUri() != null;
     }
 
     public ImageMetaData getMetaData() {
@@ -152,14 +151,67 @@ public abstract class ImageData {
         this.mIsDownloadQueue = isDownloadQueue;
     }
 
-    public Cursor getMediaStoreCursor() {
-        Cursor cursor = MediaStore.Images.Media.query(
-                MyApplication.ApplicationContext.getContentResolver(),
-                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                projectionMediaStoreCursor,
-                MediaStore.Images.Media.DISPLAY_NAME + " = '" + this.uniqueFileName + "'",
-                orderByMediaStoreCursor);
+    private File getDataFile() {
+        if(dataFile == null) {
+            CameraData cameraData = mStorageData.getCameraData();
+            File parentDir = new File(cameraData.getStorageDirectory(), FOLDER_IMAGES + File.separator +
+                    mStorageData.name);
+            parentDir.mkdirs();
+            dataFile = new File(parentDir, this.dataKey);
+        }
+        return dataFile;
+    }
 
-        return cursor;
+    public void saveData() {
+        saveData(getDataFile());
+    }
+
+    private void saveData(File dataFile) {
+       try {           
+           JSONObject jsonObject = this.getJSONObject();
+           Utils.saveTextFile(dataFile, BuildConfig.DEBUG ? jsonObject.toString(4) : jsonObject.toString());
+       } catch (JSONException | IOException e) {
+           e.printStackTrace();
+       }
+    }
+
+    public void readData() {
+        readData(getDataFile());
+    }
+
+    private void readData(File dataFile) {
+        try {            
+            if(dataFile.exists()) {
+                String json = Utils.readTextFile(dataFile);
+                mJSONObject = new JSONObject(json);
+
+                mIsFlagged = mJSONObject.optBoolean("isFlagged", false);
+                mIsDownloadQueue = mJSONObject.optBoolean("inDownloadQueue", false);
+                JSONObject metadata = mJSONObject.optJSONObject("metadata");
+                if(metadata != null) {
+                    setMetaData(new ImageMetaData(metadata));
+                    if(BuildConfig.DEBUG) Logger.debug(fileName, "Image metadata loaded from local file");
+                }
+            }
+        } catch (JSONException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+  
+    public JSONObject getJSONObject() {
+        if (mJSONObject == null) {
+            mJSONObject = new JSONObject();
+        }
+        try {
+            mJSONObject.put("isFlagged", Boolean.toString(mIsFlagged));
+            mJSONObject.put("inDownloadQueue", Boolean.toString(mIsDownloadQueue));
+            if (mMetaData != null) {
+                mJSONObject.put("metadata", mMetaData.getJSONObject());
+            }
+            return mJSONObject;
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

@@ -29,7 +29,7 @@ public abstract class ImageList {
     protected final List<ImageData> mImageList = new ArrayList<>();
     private StorageData mStorage;
 
-    public ImageList() {  }
+    public ImageList() { }
 
     public ImageList(String jsonData) throws JSONException {
         this(new JSONObject(new JSONTokener(jsonData)));
@@ -114,8 +114,12 @@ public abstract class ImageList {
         }
         return sb.toString();
     }
-
+  
     public void setStorageData(StorageData storage) {
         mStorage = storage;
+    }
+  
+    public StorageData getStorageData() {
+        return mStorage;
     }
 }

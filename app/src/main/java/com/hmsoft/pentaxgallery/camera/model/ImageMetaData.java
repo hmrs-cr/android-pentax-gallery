@@ -17,6 +17,8 @@
 package com.hmsoft.pentaxgallery.camera.model;
 
 
+import android.media.ExifInterface;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -36,8 +38,9 @@ public class ImageMetaData extends BaseResponse {
     public final String xv;
     public final String shutterSpeed;
     public final String latlng;
-      
-    
+    public final float orientationDegrees;
+
+
     public ImageMetaData(String directory, String fileName, boolean captured, int orientation, 
                          String cameraModel, String dateTime, String aperture, String iso, String xv,
                         String shutterSpeed, String latlng) {
@@ -53,10 +56,27 @@ public class ImageMetaData extends BaseResponse {
         this.xv = xv;
         this.shutterSpeed = shutterSpeed;
         this.latlng = latlng;
+        this.orientationDegrees = ImageMetaData.getDegrees(orientation);
     }
   
     public ImageMetaData(String jsonData) throws JSONException {
         this(new JSONObject(new JSONTokener(jsonData)));
+    }
+
+    public static float getDegrees(int orientation) {
+        float degrees = 0;
+        switch (orientation) {
+            case ExifInterface.ORIENTATION_ROTATE_270:
+                degrees = 270;
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_90:
+                degrees = 90;
+                break;
+            case ExifInterface.ORIENTATION_ROTATE_180:
+                degrees = 180;
+                break;
+        }
+        return degrees;
     }
 
 
@@ -79,5 +99,7 @@ public class ImageMetaData extends BaseResponse {
         iso = jsonObject.optString("sv");
         xv = jsonObject.optString("xv");
         shutterSpeed = jsonObject.optString("tv");
+
+        this.orientationDegrees = ImageMetaData.getDegrees(orientation);
     }          
 }

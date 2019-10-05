@@ -27,12 +27,17 @@ import android.app.SearchManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.MenuCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.Html;
 import android.util.TypedValue;
@@ -52,6 +57,7 @@ import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.SearchView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
@@ -70,13 +76,14 @@ import com.hmsoft.pentaxgallery.util.DefaultSettings;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 import com.hmsoft.pentaxgallery.util.Utils;
-import com.hmsoft.pentaxgallery.util.cache.CacheUtils;
 import com.hmsoft.pentaxgallery.util.image.ImageCache;
 import com.hmsoft.pentaxgallery.util.image.ImageFetcher;
 import com.hmsoft.pentaxgallery.util.image.ImageRotatorFetcher;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The main fragment that powers the ImageGridActivity screen. Fairly straight forward GridView
@@ -87,7 +94,7 @@ import java.util.List;
  */
 public class ImageGridFragment extends Fragment implements AdapterView.OnItemClickListener,
         AdapterView.OnItemLongClickListener,
-        DownloadService.OnDowloadFinishedListener,
+        DownloadService.OnDownloadFinishedListener,
         SearchView.OnQueryTextListener,
         ActionBar.OnNavigationListener,
         SwipeRefreshLayout.OnRefreshListener,
@@ -103,12 +110,15 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     private ImageAdapter mAdapter;
     private ImageFetcher mImageFetcher;
     private ProgressBar mProgressBar;
+    private TextView mEmptyViewLabel;
+    private TextView mProgressLabel;
     private GridView mGridView;
     private Menu mMenu;
     private SearchView mSearchView;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private Camera mCamera = CameraFactory.DefaultCamera;
     private boolean mNeedUpdateImageList;
+    private volatile boolean mDontShowProgressBar;
 
     /**
      * Empty constructor as per the Fragment documentation
@@ -132,7 +142,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         mImageFetcher = new ImageRotatorFetcher(getActivity(), mImageThumbSize);
         mImageFetcher.setLoadingImage(R.drawable.empty_photo);
         mImageFetcher.addImageCache(getActivity().getSupportFragmentManager(), cacheParams);
-        CacheUtils.init();
     }
 
     @Override
@@ -143,6 +152,14 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         final View v = inflater.inflate(R.layout.image_grid_fragment, container, false);
         mGridView = v.findViewById(R.id.gridView);
         mProgressBar = v.findViewById(R.id.progressbarGrid);
+        mEmptyViewLabel = v.findViewById(R.id.emptyViewLabel);
+        mProgressLabel = v.findViewById(R.id.progressLabel);
+        mEmptyViewLabel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showView(false, -1);
+            }
+        });
 
         mGridView.setOnTouchListener(new View.OnTouchListener(){
 
@@ -234,25 +251,28 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         } else {
             mProgressBar.setVisibility(View.GONE);
         }
-        DownloadService.setOnDowloadFinishedListener(this);
+        DownloadService.setOnDownloadFinishedListener(this);
         updateActionBarTitle();
+        updateViews(0);
     }
 
     @Override
     public void onPause() {
         super.onPause();
 
-        TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
-            @Override
-            public void run() {
-                DownloadService.saveQueueToCache();
-            }
-        });
+        if(mCamera.isConnected()) {
+            TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
+                @Override
+                public void run() {
+                    DownloadService.saveQueueToFile(mCamera.getCameraData());
+                }
+            });
+        }
 
         mImageFetcher.setPauseWork(false);
         mImageFetcher.setExitTasksEarly(true);
         mImageFetcher.flushCache();
-        CacheUtils.flush();
+        //CacheUtils.flush();
     }
 
     @Override
@@ -260,7 +280,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         mCamera.getController().setCameraChangeListener(null);
         super.onDestroy();
         mImageFetcher.closeCache();
-        CacheUtils.close();
+        //CacheUtils.close();
         if(mImageListTask != null) {
             mImageListTask.cancel(true);
             mImageListTask = null;
@@ -308,6 +328,11 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
         inflater.inflate(R.menu.main_menu, menu);
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            menu.setGroupDividerEnabled(true);
+        } else {
+            MenuCompat.setGroupDividerEnabled(menu, true);
+        }
 
         MenuItem downloadFilter = menu.findItem(R.id.downloadFilter);
         downloadFilter.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
@@ -321,6 +346,10 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         searchItem.setActionView(R.layout.search_view);
         MenuItem proccessDownloadQueueItem = menu.findItem(R.id.proccess_download_queue);
         proccessDownloadQueueItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        MenuItem cancelDownloadQueueItem = menu.findItem(R.id.cancel_download_queue);
+        cancelDownloadQueueItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
+        MenuItem shutdownWhenDoneItem = menu.findItem(R.id.shutdown_when_download_done_queue);
+        shutdownWhenDoneItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_NEVER);
 
         MenuItem downloadJpgs = menu.findItem(R.id.download_jpgs);
         downloadJpgs.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
@@ -360,8 +389,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     private void updateMenuItems() {
         if(mMenu != null) {
-
-
             if(mAdapter.isInSelectMode()) {
                 int s = mMenu.size();
                 for(int i = 0; i < s; i++) {
@@ -371,6 +398,19 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                    item.setVisible(visibleOnSelectMode);
                 }
                 return;
+            }
+
+            List<CameraData> cameras = mCamera.getRegisteredCameras();
+            if(cameras != null && cameras.size() > 1) {
+                for(CameraData cameraData : cameras) {
+                    MenuItem menuItem = mMenu.findItem(cameraData.hashCode);
+                    if(menuItem == null) {
+                        menuItem = mMenu.add(R.id.camera_menu_list, cameraData.hashCode, 1, cameraData.getDisplayName());
+                        menuItem.setCheckable(true);
+                    }
+                    CameraData currentCamera = mCamera.getCameraData();
+                    menuItem.setChecked(currentCamera != null && currentCamera.hashCode == cameraData.hashCode);
+                }
             }
 
             MenuItem downloadItem = mMenu.findItem(R.id.download_selected);
@@ -422,19 +462,33 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             boolean multyStorage =  cameraData != null && cameraData.storages.size() > 1;
 
 
+            int currentStorageIndex = mCamera.getCurrentStorageIndex();
             String syncText = getString(R.string.sync_images);
             MenuItem syncItem = mMenu.findItem(R.id.sync_images_1);
             syncItem.setTitle(multyStorage ? cameraData.storages.get(0).displayName :  syncText);
-            syncItem.setVisible(true);
-            if(multyStorage) syncItem.setIcon(null);
+            syncItem.setVisible(!mCamera.hasFilter(DownloadService.DownloadQueueFilter));
+            syncItem.setCheckable(multyStorage);
+            syncItem.setChecked(multyStorage && currentStorageIndex == 0);
+            if(multyStorage) {
+                syncItem.setIcon(null);
+            }
 
             syncItem = mMenu.findItem(R.id.sync_images_2);
-            syncItem.setVisible(multyStorage);
+            syncItem.setVisible(multyStorage && !mCamera.hasFilter(DownloadService.DownloadQueueFilter));
             syncItem.setTitle(multyStorage ? cameraData.storages.get(1).displayName :  syncText);
-            if(multyStorage) syncItem.setIcon(null);
+            syncItem.setCheckable(multyStorage);
+            syncItem.setChecked(multyStorage && currentStorageIndex == 1);
+            if(multyStorage) {
+                syncItem.setIcon(null);
+            }
 
             MenuItem proccessDownloadQueueItem = mMenu.findItem(R.id.proccess_download_queue);
             proccessDownloadQueueItem.setVisible(isShowDownloadQueueOnly);
+            MenuItem cancelDownloadQueueItem = mMenu.findItem(R.id.cancel_download_queue);
+            cancelDownloadQueueItem.setVisible(isShowDownloadQueueOnly);
+            MenuItem shutdownWhenDoneItem = mMenu.findItem(R.id.shutdown_when_download_done_queue);
+            shutdownWhenDoneItem.setVisible(isShowDownloadQueueOnly);
+            shutdownWhenDoneItem.setChecked(DownloadService.shutCameraDownWhenDone());
         }
     }
 
@@ -459,6 +513,16 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             return false;
         }
 
+        if(item.getGroupId() == R.id.camera_menu_list) {
+            for (CameraData cameraData :  mCamera.getRegisteredCameras()) {
+                if(cameraData.hashCode == itemId) {
+                    setCurrentCamera(cameraData.cameraId);
+                    return true;
+                }
+            }
+            return true;
+        }
+
         switch (itemId) {
             case R.id.view_downloaded_only:
             case R.id.view_downloads_only:
@@ -473,10 +537,17 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 removeFilters();
                 int currentStorageIndex = mCamera.getCurrentStorageIndex();
                 int newStorageIndex = itemId == R.id.sync_images_1 ? 0 : 1;
-                syncPictureList(newStorageIndex, currentStorageIndex == newStorageIndex, true);
+                syncPictureList(newStorageIndex, currentStorageIndex != newStorageIndex, true);
+                return true;
+            case R.id.shutdown_when_download_done_queue:
+                DownloadService.toggleShutCameraDownWhenDone();
                 return true;
             case R.id.proccess_download_queue:
                 DownloadService.processDownloadQueue();
+                return true;
+            case R.id.cancel_download_queue:
+                DownloadService.cancelAllDownloads();
+                showView(false, -1);
                 return true;
             case R.id.download_selected:
                 downloadSelected();
@@ -502,28 +573,73 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         mSearchView.setQuery("", false);
         mSearchView.setIconified(true);
         mCamera.setImageFilter(null);
+
+        int emptyViewText = R.string.no_pictures_in_camera;
         if(show) {
             switch (itemId) {
                 case R.id.view_downloads_only:
                     mCamera.setImageFilter(DownloadService.DownloadQueueFilter);
+                    emptyViewText = R.string.all_pictures_transferred;
                     break;
                 case R.id.view_downloaded_only:
                     mCamera.setImageFilter(FilteredImageList.DownloadedFilter);
+                    emptyViewText = R.string.no_pictures_transferred;
                     break;
                 case R.id.view_flagged_only:
                     mCamera.setImageFilter(FilteredImageList.FlaggedFilter);
+                    emptyViewText = R.string.no_flagged_pictures;
                     break;
                 case R.id.view_raw_only:
                     mCamera.setImageFilter(FilteredImageList.RawFilter);
+                    emptyViewText = R.string.no_raw_pictures;
                     break;
                 case R.id.view_jpg_only:
                     mCamera.setImageFilter(FilteredImageList.JpgFilter);
+                    emptyViewText = R.string.no_jpg_pictures;
                     break;
             }
         }
+
+        updateViews(emptyViewText);
+
         mAdapter.notifyDataSetChanged();
         updateMenuItems();
         updateActionBarTitle();
+    }
+
+    private void updateProgressText(String text) {
+        if(text != null) {
+            mProgressLabel.setText(text);
+            mProgressLabel.setVisibility(View.VISIBLE);
+        } else {
+            mProgressLabel.setVisibility(View.GONE);
+        }
+        mEmptyViewLabel.setVisibility(View.GONE);
+    }
+
+    private void updateProgressText(int textId) {
+        if(textId != 0) {
+            updateProgressText(getString(textId));
+        } else {
+            updateProgressText(null);
+        }
+    }
+    private void updateViews(int stringgResourceId) {
+        ImageList imageList = mCamera.getImageList();
+        if(imageList != null) {
+            if (imageList.length() == 0) {
+                if(stringgResourceId != 0) {
+                    mEmptyViewLabel.setText(stringgResourceId);
+                } else {
+                    mEmptyViewLabel.setText("");
+                }
+                mEmptyViewLabel.setVisibility(View.VISIBLE);
+                mSwipeRefreshLayout.setVisibility(View.GONE);
+            } else {
+                mEmptyViewLabel.setVisibility(View.GONE);
+                mSwipeRefreshLayout.setVisibility(View.VISIBLE);
+            }
+        }
     }
 
     private void downloadJpgs() {
@@ -532,8 +648,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     /*package*/ void downloadJpgs(boolean forceRefresh) {
 
-        List<ImageData> enqueue = getDownloadList();
-        Logger.debug(TAG, "mNeedUpdateImageList:"+mNeedUpdateImageList);
+
+        List<ImageData> enqueue = getDownloadList();        
         if((mNeedUpdateImageList && (enqueue == null || enqueue.size() == 0)) || forceRefresh) {
             syncPictureList(mCamera.getCurrentStorageIndex(), true, false, new OnRefreshDoneListener() {
                 @Override
@@ -653,22 +769,41 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 .show();
     }
 
-    private void syncPictureList(boolean ignoreCache) {
-        syncPictureList(-1, ignoreCache, true);
+    private void syncPictureList(boolean loadImageListOnly) {
+        syncPictureList(-1, loadImageListOnly, true);
     }
 
-    private void syncPictureList(int storageIndex, boolean ignoreCache, boolean showProgressBar) {
-        syncPictureList(storageIndex, ignoreCache, showProgressBar, null);
+    private void syncPictureList(int storageIndex, boolean loadImageListOnly, boolean showProgressBar) {
+        syncPictureList(storageIndex, loadImageListOnly, showProgressBar, null);
     }
 
-    private void syncPictureList(int storageIndex, boolean ignoreCache, boolean showProgressBar, OnRefreshDoneListener refreshDoneListener) {
+    private void syncPictureList(int storageIndex, boolean loadImageListOnly, boolean showProgressBar,
+                                 OnRefreshDoneListener refreshDoneListener) {
         if(mImageListTask == null) {
             if(showProgressBar) {
-                mProgressBar.setVisibility(View.VISIBLE);
-                mSwipeRefreshLayout.setVisibility(View.GONE);
+                mDontShowProgressBar = false;
+                TaskExecutor.executeOnUIThread(new Runnable() {
+                    @Override
+                    public void run() {
+                          if(!mDontShowProgressBar) {
+                              mProgressBar.setVisibility(View.VISIBLE);
+                              mSwipeRefreshLayout.setVisibility(View.GONE);
+                          }
+                    }
+                 }, 300);
             }
             mImageListTask = new ImageListTask(refreshDoneListener);
-            mImageListTask.execute(ignoreCache, storageIndex);
+            mImageListTask.execute(loadImageListOnly, storageIndex);
+        }
+    }
+
+    private void setCurrentCamera(String cameraId) {
+        if(mImageListTask == null) {
+            mProgressBar.setVisibility(View.VISIBLE);
+            mSwipeRefreshLayout.setVisibility(View.GONE);
+
+            mImageListTask = new ImageListTask(null);
+            mImageListTask.execute(false, -1, cameraId);
         }
     }
 
@@ -676,6 +811,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     public void onDownloadFinished(ImageData imageData, long donloadId, int remainingDownloads, boolean wasCanceled) {
         Logger.debug(TAG, "onDownloadFinished: " + donloadId + " Remaining: " + remainingDownloads);
         if(mCamera.isFiltered()) {
+            if(mCamera.hasFilter(FilteredImageList.DownloadedFilter) && mCamera.getImageList() instanceof FilteredImageList) {
+                    ((FilteredImageList)mCamera.getImageList()).rebuildFilter();
+            }
             mAdapter.notifyDataSetChanged();
         }
         updateActionBarTitle();
@@ -724,7 +862,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     @Override
     public void onRefresh() {
         mCamera.setCameraData(null);
-        syncPictureList(mCamera.getCurrentStorageIndex(), true, false);
+        syncPictureList(mCamera.getCurrentStorageIndex(), false, false);
     }
 
     @Override
@@ -1005,15 +1143,16 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 ActionBar actionBar = getActivity().getActionBar();
                 actionBar.setTitle(cameraData.getDisplayName());
                 StorageData storageData = mCamera.getCurrentStorage();
-
-                if(mAdapter.isInSelectMode()) {
-                    actionBar.setSubtitle(String.format("%d SELECTED", mAdapter.getSelectedItems().size()));
-                } else if(mCamera.hasFilter(DownloadService.DownloadQueueFilter)) {
-                    actionBar.setSubtitle(String.format("DOWNLOAD QUEUE (%d)", mCamera.imageCount()));
-                } else if(mCamera.hasFilter(FilteredImageList.DownloadedFilter)) {
-                    actionBar.setSubtitle(String.format("%s (%d/%s) - Downloaded", storageData.name, mCamera.imageCount(), storageData.format).toUpperCase());
-                } else {
-                    actionBar.setSubtitle(String.format("%s (%d/%s)", storageData.name, mCamera.imageCount(), storageData.format).toUpperCase());
+                if(storageData.getImageList() != null) {
+                    if (mAdapter.isInSelectMode()) {
+                        actionBar.setSubtitle(String.format("%d SELECTED", mAdapter.getSelectedItems().size()));
+                    } else if (mCamera.hasFilter(DownloadService.DownloadQueueFilter)) {
+                        actionBar.setSubtitle(String.format("DOWNLOAD QUEUE (%d)", mCamera.imageCount()));
+                    } else if (mCamera.hasFilter(FilteredImageList.DownloadedFilter)) {
+                        actionBar.setSubtitle(String.format("%s (%d/%s) - Downloaded", storageData.name, mCamera.imageCount(), storageData.format).toUpperCase());
+                    } else {
+                        actionBar.setSubtitle(String.format("%s (%d/%s)", storageData.name, mCamera.imageCount(), storageData.format).toUpperCase());
+                    }
                 }
             }
         }
@@ -1023,9 +1162,12 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         void onRefreshDone();
     }
 
-    private  class ImageListTask extends AsyncTask<Object, Object, ImageList> {
+    private  class ImageListTask extends AsyncTask<Object, Object, ImageList> implements Camera.OnWifiConnectionAttemptListener {
 
         private static final int PROGRESS_CONNECTED = 0;
+        private static final int PROGRESS_CONNECTING = 1;
+        private static final int PROGRESS_LOADING_LOCAL_DATA = 2;
+        private static final int PROGRESS_LOADING_PICTURE_LIST = 3;
 
         private OnRefreshDoneListener refreshDoneListener;
 
@@ -1033,6 +1175,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
         public ImageListTask(OnRefreshDoneListener refreshDoneListener) {
             this.refreshDoneListener = refreshDoneListener;
+            updateProgressText(R.string.connecting);
         }
 
         private void debug(String message) {
@@ -1048,41 +1191,132 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                     Toast.makeText(ImageGridFragment.this.getContext(),
                             String.format(getString(R.string.connected_to), cameraData.model, cameraData.serialNo),
                             Toast.LENGTH_SHORT).show();
+                    updateProgressText(R.string.loading_picture_list);
+                    updateActionBarTitle();
                     break;
+                case PROGRESS_LOADING_PICTURE_LIST:
+                    updateProgressText(R.string.loading_picture_list);
+                    break;
+                case PROGRESS_CONNECTING:
+                    updateProgressText(String.format(getString(R.string.connecting_to), values[1]));
+                    break;
+                case PROGRESS_LOADING_LOCAL_DATA:
+                    updateProgressText(R.string.loading_local_data);
+                    break;
+
             }
         }
 
         @Override
         protected ImageList doInBackground(Object... params) {
 
-            boolean ignoreCache = params.length > 0 ? (Boolean) params[0] : false;
+            boolean loadImageListOnly = params.length > 0 ? (Boolean) params[0] : false;
+            int newStorageIndex = params.length > 1 ? (int) params[1] : -1;
+            String cameraId = params.length > 2 ? String.valueOf(params[2]) : null;
 
             DefaultSettings.getsInstance().load();
 
-            CameraData cameraData =  mCamera.connect();
-            if(mCamera.isConnected()) {
-                publishProgress(PROGRESS_CONNECTED, cameraData);
-            }
-          
-           if (params.length > 1 && (int) params[1] >= 0) {
-              mCamera.setCurrentStorageIndex((int) params[1]);
-           }
-
-           ImageList imageList = mCamera.loadImageList(ignoreCache);
-
-            if (imageList != null) {
-                DownloadService.loadQueueFromCache(imageList, ignoreCache);
-                for(int c = 0; c < imageList.length(); c++) {
-                    ImageData imageData = imageList.getImage(c);
-                    imageData.setIsFlagged(CacheUtils.keyExists(imageData.flaggedCacheKey));
+            CameraData cameraData;
+            if (mCamera.getCameraData() != null && loadImageListOnly) {
+                cameraData = mCamera.getCameraData();
+                publishProgress(PROGRESS_LOADING_PICTURE_LIST, cameraData);
+            } else {
+                cameraData = mCamera.connect(cameraId, this);
+                if (mCamera.isConnected()) {
+                    publishProgress(PROGRESS_CONNECTED, cameraData);
                 }
             }
 
-           return imageList;
+            ImageList imageList = null;
+            if (newStorageIndex >= 0 && newStorageIndex != mCamera.getCurrentStorageIndex()) {
+                mCamera.setCurrentStorageIndex(newStorageIndex);
+                if(loadImageListOnly) {
+                    imageList = mCamera.getCurrentStorage().getImageList();
+                    mDontShowProgressBar = imageList != null;
+                }                
+            }
+
+            if (BuildConfig.DEBUG) {
+                Logger.debug(TAG, "Load image list START");
+            }
+
+            boolean needToLoadLocalData = !loadImageListOnly;
+            if (mNeedUpdateImageList || imageList == null || imageList.length() == 0) {
+                imageList = mCamera.loadImageList();
+                needToLoadLocalData = true;
+            }
+
+            if (imageList != null && needToLoadLocalData) {
+                publishProgress(PROGRESS_LOADING_LOCAL_DATA);
+
+                Map<String, String> downloadedList = loadDownloadedList(imageList);
+                for (int c = 0; c < imageList.length(); c++) {
+                    ImageData imageData = imageList.getImage(c);
+                    imageData.readData();
+
+                    String id = downloadedList.get(imageData.uniqueFileName);
+                    if (id != null) {
+                        imageData.setLocalStorageUri(Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id));
+                    }
+                }
+                downloadedList.clear();
+                DownloadService.loadQueueFromFile(imageList, cameraData);
+            }
+
+            if (BuildConfig.DEBUG) {
+                Logger.debug(TAG, "Load image list END");
+            }
+
+            return imageList;
+        }
+
+        private Map<String, String> loadDownloadedList(ImageList imageList) {
+            final String orderByMediaStoreCursor = MediaStore.Images.Media.DATE_TAKEN;
+            final String[] projectionMediaStoreCursor = new String[] {
+                    MediaStore.Images.Media._ID,
+                    MediaStore.Images.Media.DISPLAY_NAME
+            };
+
+            StringBuilder whereSb = new StringBuilder();
+            whereSb.append(MediaStore.Images.Media.DISPLAY_NAME);
+            whereSb.append(" IN (");
+            for(int c = 0; c < imageList.length(); c++) {
+                whereSb.append("'");
+                whereSb.append(imageList.getImage(c).uniqueFileName);
+                whereSb.append("'");
+                if(c < imageList.length() - 1) {
+                    whereSb.append(",");
+                }
+            }
+            whereSb.append(")");
+
+            Cursor cursor = MediaStore.Images.Media.query(
+                    getContext().getContentResolver(),
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    projectionMediaStoreCursor,
+                    whereSb.toString(),
+                    orderByMediaStoreCursor);
+
+            whereSb.setLength(0);
+
+            HashMap<String, String> table = new HashMap<>();
+
+            while(cursor.moveToNext()) {
+                int idIndex = cursor.getColumnIndex(MediaStore.Images.Media._ID);
+                int displayNameIndex = cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME);
+
+                String id =  cursor.getString(idIndex);
+                String uniqueName =  cursor.getString(displayNameIndex);
+                table.put(uniqueName, id);
+            }
+
+            cursor.close();
+
+            return table;
         }
 
         @Override
-        protected void onPostExecute(ImageList imageList) {            
+        protected void onPostExecute(ImageList imageList) {
 
             String from = "cache";
             String cameraDisplayName = null;
@@ -1116,7 +1350,13 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 showNoConnectedDialog();
                 mCamera.setCameraData(null);
             }
+            updateProgressText(null);
             mImageListTask = null;
+        }
+
+        @Override
+        public void onWifiConnectionAttempt(String ssid) {
+            publishProgress(PROGRESS_CONNECTING, ssid);
         }
     }
 

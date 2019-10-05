@@ -71,7 +71,7 @@ public class DefaultSettings {
         if(mProperties != null) {
             File dwnldLocation = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "Pentax Gallery");
             mProperties.setProperty(DOWNLOAD_LOCATION, dwnldLocation.getAbsolutePath());
-            mProperties.setProperty(THUMB_THREAD_NUMBER, "1");
+            mProperties.setProperty(THUMB_THREAD_NUMBER, "3");
             mProperties.setProperty(DEFAULT_CONNECT_TIME_OUT, "3");
             mProperties.setProperty(DEFAULT_READ_TIME_OUT, "30");
             mProperties.setProperty(AUTO_DOWNLOAD_JPGS, Boolean.toString(false));            

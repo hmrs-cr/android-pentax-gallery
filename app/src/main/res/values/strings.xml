@@ -7,7 +7,7 @@
     <string name="pictures_loaded">%d pictures loaded from %s.</string>
     <string name="download">Download</string>
     <string name="download_jpgs">Download JPGs</string>
-    <string name="find_in_gallery">Find in Gallery</string>
+    <string name="find_in_gallery">Open in Gallery</string>
     <string name="not_found_in_gallery">%s not found in gallery</string>
     <string name="download_title">Pentax Gallery Download (%d)</string>
     <string name="download_description">Downloading %s...</string>
@@ -42,9 +42,23 @@
     <string name="donwload_done_notification_title">All pictures transferred</string>
     <string name="download_done_notification_title">Transfer done.</string>
     <string name="download_done_notification_text">%d images transferred</string>
+    <string name="download_done_with_fails_notification_text">%d images transferred. %d images failed</string>
+    <string name="download_done_failed_notification_text">%d images failed to transfer</string>
     <string name="no_new_images_to_transfer">No new images to transfer.</string>
     <string name="connected_to">Connected to %s (%s)</string>
     <string name="raw_only">RAW only</string>
     <string name="jpg_only">JPG only</string>
     <string name="flagged_images">Flagged images</string>
+    <string name="cancel_all_transfers">Cancel all transfers</string>
+    <string name="shutdown_camera_when_done">Shutdown camera when done</string>
+    <string name="all_pictures_transferred">All pictures transferred</string>
+    <string name="no_pictures_transferred">No pictures transferred</string>
+    <string name="no_flagged_pictures">No flagged pictures</string>
+    <string name="no_raw_pictures">No RAW pictures</string>
+    <string name="no_jpg_pictures">No JPG pictures</string>
+    <string name="no_pictures_in_camera">No pictures in camera</string>
+    <string name="connecting">Connecting...</string>
+    <string name="loading_picture_list">Loading picture list...</string>
+    <string name="connecting_to">Trying to connect to %s...</string>
+    <string name="loading_local_data">Loading local data...</string>
 </resources>

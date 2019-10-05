@@ -19,21 +19,43 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent">
 
-    <ProgressBar
-        android:id="@+id/progressbarGrid"
-        style="?android:attr/progressBarStyleLarge"
+
+
+        <ProgressBar
+            android:id="@+id/progressbarGrid"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center" />
+
+    <TextView
+        android:id="@+id/progressLabel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center" />
+        android:layout_gravity="center"
+        android:layout_marginTop="@dimen/image_thumbnail_size"
+        android:clickable="false"
+        android:textColor="@android:color/tertiary_text_light"
+        android:textSize="14sp" />
+
+
+    <TextView
+        android:id="@+id/emptyViewLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:clickable="true"
+        android:focusable="true"
+        android:textColor="@android:color/tertiary_text_light"
+        android:textSize="18sp" />
 
     <android.support.v4.widget.SwipeRefreshLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/swiperefresh"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
 
-        <GridView xmlns:android="http://schemas.android.com/apk/res/android"
+        <GridView
             android:id="@+id/gridView"
             style="@style/PhotoGridLayout"
             android:layout_width="fill_parent"

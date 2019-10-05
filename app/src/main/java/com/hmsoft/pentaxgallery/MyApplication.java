@@ -43,6 +43,7 @@ public class MyApplication extends Application {
     @Override
     public void onCreate() {
         ApplicationContext = this;
+        CrashCatcher.init();
         TaskExecutor.init();
         DownloadService.createNotificationChannel();
         super.onCreate();

@@ -19,18 +19,12 @@ package com.hmsoft.pentaxgallery.util.cache;
 import android.content.Context;
 import android.os.Environment;
 
-import com.hmsoft.pentaxgallery.BuildConfig;
-import com.hmsoft.pentaxgallery.MyApplication;
-import com.hmsoft.pentaxgallery.util.Logger;
-import com.hmsoft.pentaxgallery.util.TaskExecutor;
-
 import java.io.File;
-import java.io.IOException;
 
 public class CacheUtils {
 
     private static final int MISC_CACHE_SIZE = 10 * 1024 * 1024; // 10MB
-    private static final String MISC_CACHE_DIR = "misc";
+    //private static final String MISC_CACHE_DIR = "misc";
 
     private static final String TAG = "CacheUtils";
 
@@ -54,6 +48,7 @@ public class CacheUtils {
         return path.getUsableSpace();
     }
 
+/*
     public static void init() {
         TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
             @Override
@@ -131,6 +126,7 @@ public class CacheUtils {
         });
     }
 
+
     private static void waitUntilCacheReady() {
         synchronized (sMiscDiskCacheLock) {
             // Wait for disk cache to initialize
@@ -142,6 +138,7 @@ public class CacheUtils {
             }
         }
     }
+*/
 
     /**
      * Check if external storage is built-in or removable.
@@ -181,6 +178,7 @@ public class CacheUtils {
         return new File(cachePath + File.separator + uniqueName);
     }
 
+    /*
     public static void saveString(String keyName, String data) {
         if(sMiscDiskCache != null) {
             waitUntilCacheReady();
@@ -226,6 +224,7 @@ public class CacheUtils {
         return null;
     }
 
+
     private static boolean keyExists(DiskLruCache lruCache, String keyName) {
         DiskLruCache.Snapshot snapshot = null;
         try {
@@ -250,4 +249,5 @@ public class CacheUtils {
             }
         }
     }
+    */
 }

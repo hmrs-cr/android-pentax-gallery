@@ -24,6 +24,8 @@ import com.hmsoft.pentaxgallery.camera.model.ImageListData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
 
+import org.json.JSONException;
+
 public interface CameraController {
 
     interface OnAsyncCommandExecutedListener {
@@ -52,18 +54,18 @@ public interface CameraController {
         }
     }
 
-    CameraData getDeviceInfo(boolean ignoreCache);
-
-    ImageListData getImageList();
-    ImageListData getImageList(StorageData storage, boolean ignoreCache);
-
-    BaseResponse powerOff();
-    void powerOff(final CameraController.OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
-
     BaseResponse ping();
     void ping(final CameraController.OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
-
+  
     boolean connectToCamera();
+    CameraData getDeviceInfo();
+
+    ImageListData getImageList();
+    ImageListData getImageList(StorageData storage);
+    ImageListData createImageList(String json) throws JSONException;
+
+    BaseResponse powerOff();
+    void powerOff(final CameraController.OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);    
 
     ImageMetaData getImageInfo(ImageData imageData);
     void getImageInfo(final ImageData imageData, final CameraController.OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);

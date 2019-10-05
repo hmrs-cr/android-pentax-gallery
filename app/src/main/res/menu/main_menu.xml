@@ -44,54 +44,49 @@
             android:title="@string/process_downloads" />
 
         <item
+            android:id="@+id/shutdown_when_download_done_queue"
+            android:checkable="true"
+            android:title="@string/shutdown_camera_when_done" />
+
+        <item
+            android:id="@+id/cancel_download_queue"
+            android:title="@string/cancel_all_transfers" />
+
+        <item
             android:id="@+id/downloadFilter"
             android:icon="@drawable/ic_filter_list_white_24dp"
             android:title="@string/downloads_filter">
             <menu>
+                <group
+                    android:id="@+id/filter_menu1">
                 <item
                     android:id="@+id/view_flagged_only"
                     android:checkable="true"
-                    android:icon="@drawable/ic_filter_list_white_24dp"
                     android:title="@string/flagged"/>
                 <item
                     android:id="@+id/view_downloads_only"
                     android:checkable="true"
-                    android:icon="@drawable/ic_filter_list_white_24dp"
                     android:title="@string/in_queue"/>
                 <item
                     android:id="@+id/view_downloaded_only"
                     android:checkable="true"
-                    android:icon="@drawable/ic_filter_list_white_24dp"
                     android:title="@string/downloaded"/>
-                <item
-                    android:id="@+id/view_separator_only"
-                    android:title=""/>
+                </group>
+
+                <group
+                    android:id="@+id/filter_menu2">
                 <item
                     android:id="@+id/view_raw_only"
                     android:checkable="true"
-                    android:icon="@drawable/ic_filter_list_white_24dp"
                     android:title="@string/raw_only"/>
                 <item
                     android:id="@+id/view_jpg_only"
                     android:checkable="true"
-                    android:icon="@drawable/ic_filter_list_white_24dp"
                     android:title="@string/jpg_only"/>
+                </group>
             </menu>
         </item>
 
-    </group>
-
-    <group
-        android:id="@+id/sync_menu_group">
-        <item
-            android:id="@+id/sync_images_1"
-            android:icon="@drawable/ic_sync_white_24dp"
-            android:title="@string/sync_images" />
-
-        <item
-            android:id="@+id/sync_images_2"
-            android:icon="@drawable/ic_sync_white_24dp"
-            android:title="@string/sync_images" />
     </group>
 
     <group
@@ -120,6 +115,26 @@
     </group>
 
     <group
+        android:orderInCategory="1"
+        android:id="@+id/sync_menu_group">
+        <item
+            android:id="@+id/sync_images_1"
+            android:icon="@drawable/ic_sync_white_24dp"
+            android:title="@string/sync_images" />
+
+        <item
+            android:id="@+id/sync_images_2"
+            android:icon="@drawable/ic_sync_white_24dp"
+            android:title="@string/sync_images" />
+    </group>
+
+    <group
+        android:orderInCategory="2"
+        android:id="@+id/camera_menu_list">
+    </group>
+
+    <group
+        android:orderInCategory="3"
         android:id="@+id/misc_menu_group">
         <item
             android:id="@+id/about"

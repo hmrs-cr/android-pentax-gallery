@@ -16,17 +16,23 @@
 
 package com.hmsoft.pentaxgallery.camera.model;
 
+import com.hmsoft.pentaxgallery.BuildConfig;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 
 public class BaseResponse {
 
     public final int errCode;
     public final String errMsg;
     public final boolean success;
-  
-    private JSONObject mJSONObject;
+
+    protected JSONObject mJSONObject;
 
     public BaseResponse(String response) throws JSONException {
         this(new JSONTokener(response));
@@ -47,8 +53,19 @@ public class BaseResponse {
         success = errCode == 200;
         mJSONObject = null;
     }
-  
+
     public JSONObject getJSONObject() {
         return mJSONObject;
+    }
+  
+    public void saveData(File file) {
+       JSONObject jsonObject = getJSONObject();
+       try {
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(file));
+            outputStreamWriter.write(BuildConfig.DEBUG ? jsonObject.toString(4) : jsonObject.toString());
+            outputStreamWriter.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }        
     }
 }

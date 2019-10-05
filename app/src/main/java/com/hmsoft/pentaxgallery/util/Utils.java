@@ -27,6 +27,14 @@ import android.provider.Settings;
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+
 
 /**
  * Class containing some static utility methods.
@@ -96,6 +104,26 @@ public class Utils {
             String[] permissions = getAllNeededPermissions();
             activity.requestPermissions(permissions,0);
         }
+    }
+
+    public static void saveTextFile(File file, String text) throws IOException {
+
+        OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(file));
+        outputStreamWriter.write(text);
+        outputStreamWriter.close();
+    }
+
+    public static String readTextFile(File file) throws IOException {
+        FileInputStream fi = new FileInputStream(file);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(fi));
+        StringBuilder sb = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            sb.append(line).append("\n");
+        }
+        reader.close();
+
+        return sb.toString();
     }
 
 }

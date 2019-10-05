@@ -16,23 +16,29 @@
 
 package com.hmsoft.pentaxgallery.camera.implementation.pentax.model;
 
-import android.media.ExifInterface;
+import android.net.Uri;
+import android.os.ParcelFileDescriptor;
 
+import com.hmsoft.pentaxgallery.BuildConfig;
+import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.camera.implementation.pentax.UrlHelper;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.util.DefaultSettings;
+import com.hmsoft.pentaxgallery.util.Logger;
 
 import java.io.File;
 import java.io.IOException;
 
+import androidx.exifinterface.media.ExifInterface;
+
 public class PentaxImageData extends ImageData {
 
     private File mLocalPath;
+    private Uri mLocalUri = null;
 
-    public PentaxImageData(String directory, String fileName) {
+    PentaxImageData(String directory, String fileName) {
         super(directory, fileName);
-        updateExistsOnLocasStorage();
     }
   
     @Override
@@ -40,13 +46,27 @@ public class PentaxImageData extends ImageData {
         if(existsOnLocalStorage()) {
             ExifInterface exifInterface = null;
             try {
-                exifInterface = new ExifInterface(getLocalPath().getAbsolutePath());
+                ParcelFileDescriptor fd = MyApplication.ApplicationContext.getContentResolver().openFileDescriptor(getLocalStorageUri(), "r");
+                exifInterface = new ExifInterface(fd.getFileDescriptor());
                 setMetaData(new PentaxImageMetaData(getLocalPath(), exifInterface));
+                fd.close();
+                if(BuildConfig.DEBUG) Logger.debug(fileName, "Image metadata loaded from downloaded picture");
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
         return getMetaData();
+    }
+
+    @Override
+    public Uri getLocalStorageUri() {
+        return mLocalUri;
+    }
+
+    @Override
+    public void setLocalStorageUri(Uri localUri) {
+        mLocalUri = localUri;
+        mExistsOnLocalStorage = mLocalUri != null;
     }
 
     @Override

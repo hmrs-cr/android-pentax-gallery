@@ -30,12 +30,10 @@ import com.hmsoft.pentaxgallery.camera.util.HttpHelper;
 import com.hmsoft.pentaxgallery.util.DefaultSettings;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
-import com.hmsoft.pentaxgallery.util.cache.CacheUtils;
 
 import org.json.JSONException;
 
 import java.io.EOFException;
-import java.net.HttpURLConnection;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -44,10 +42,7 @@ import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 
 public class PentaxController implements CameraController {
-
-    private final static String METADATA_CACHE_KEY = ".metadata";
-    private final static String IMAGELIST_CACHE_KEY = "image_list_";
-
+    
     private static final int NORMAL_CLOSURE_STATUS = 1000;
 
     private final int connectTimeOut;
@@ -130,79 +125,10 @@ public class PentaxController implements CameraController {
         }
     };
 
-    public  CameraData getDeviceInfo(boolean ignoreCache) {
-
-
-        String cacheKey = "camera.data";
-
-        String cachedResponse = null;
-        String response = ignoreCache || (cachedResponse = CacheUtils.getString(cacheKey)) == null
-                ? getDeviceInfoJson() : cachedResponse;
-
-        CameraData cameraData = null;
-
-        if(response != null) {
-            if(response != cachedResponse) {
-                CacheUtils.saveString(cacheKey, response);
-            }
-            try {
-                return new CameraData(response);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-        
-        return cameraData;
+    public boolean connectToCamera() {
+        return HttpHelper.bindToWifi();
     }
-
-    public ImageListData getImageList() {
-        return getImageList(StorageData.DefaultStorage, false);
-    }
-
-    public ImageListData getImageList(StorageData storage, boolean ignoreCache) {
-
-        String cacheKey = IMAGELIST_CACHE_KEY + storage.name;
-
-        String cachedResponse = null;
-        String response = ignoreCache || (cachedResponse = CacheUtils.getString(cacheKey)) == null
-                ? getImageListJson(storage) : cachedResponse;
-
-        if(response != null) {
-            if(response != cachedResponse) {
-                CacheUtils.saveString(cacheKey, response);
-            }
-            try {
-                return new PentaxImageListData(response);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return null;
-    }
-
-    public BaseResponse powerOff() {
-        String response = powerOffJson();
-        try {
-            return  response != null ? new BaseResponse(response) : null;
-        } catch (JSONException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    // Not working on K-1
-    public void powerOff(final CameraController.OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {
-        TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
-            @Override
-            public void run() {
-                BaseResponse response = powerOff();
-                TaskExecutor.executeOnUIThread(new CameraController.AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, response));
-
-            }
-        });
-    }
-
+  
     public BaseResponse ping() {
         String response = pingJson();
         try {
@@ -223,41 +149,61 @@ public class PentaxController implements CameraController {
             }
         });
     }
-
-    public boolean connectToCamera() {
-        return HttpHelper.bindToWifi();
+    
+    public  CameraData getDeviceInfo() {
+        CameraData cameraData = null;
+        String response = getDeviceInfoJson();
+        if(response != null) {            
+            try {
+                return new CameraData(response);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        
+        return cameraData;
     }
 
-    public ImageMetaData getImageInfo(ImageData imageData) {        
-        ImageMetaData imageMetaData;
+    public ImageListData getImageList() {
+        return getImageList(null);
+    }
+
+    public ImageListData getImageList(StorageData storage) {        
+        
+        String response = getImageListJson(storage);
+        if(response != null) {
+            try {
+                return createImageList(response);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return null;
+    }
+
+    public ImageListData createImageList(String json) throws JSONException {
+        return new PentaxImageListData(json);
+    }
+
+    public ImageMetaData getImageInfo(ImageData imageData) {
         synchronized (imageData) {
-            imageMetaData = imageData.getMetaData();
-            if (imageMetaData == null) {
+            if (imageData.getMetaData() == null) {
                 try {
-                    String cacheKey = imageData.directory + "_" + imageData.fileName + METADATA_CACHE_KEY;
-                    String response = CacheUtils.getString(cacheKey);
+                    String response = getImageInfoJson(imageData);
                     if (response != null) {
-                        imageMetaData = new ImageMetaData(response);
-                        if(BuildConfig.DEBUG) Logger.debug(imageData.fileName, "Image metadata loaded from disk cache");
-                    } else {
-                        response = getImageInfoJson(imageData);
-                        if (response != null) {
-                            imageMetaData = new ImageMetaData(response);
-                            if(BuildConfig.DEBUG) Logger.debug(imageData.fileName, "Image metadata loaded from camera");
-                            if (imageMetaData.errCode == HttpURLConnection.HTTP_OK) {
-                                CacheUtils.saveString(cacheKey, response);
-                            }
-                        } else  {
-                            imageMetaData = imageData.readMetadata();
-                        }
+                        imageData.setMetaData(new ImageMetaData(response));
+                        imageData.saveData();
+                        if(BuildConfig.DEBUG) Logger.debug(imageData.fileName, "Image metadata loaded from camera");
+                    } else  {
+                        imageData.setMetaData(imageData.readMetadata());
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                imageData.setMetaData(imageMetaData);
             }
         }
-        return imageMetaData;
+        return imageData.getMetaData();
     }
 
     public void getImageInfo(final ImageData imageData, final CameraController.OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {
@@ -266,6 +212,29 @@ public class PentaxController implements CameraController {
             public void run() {
                 ImageMetaData imageMetaData = getImageInfo(imageData);
                 TaskExecutor.executeOnUIThread(new CameraController.AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, imageMetaData));
+            }
+        });
+    }
+
+    public BaseResponse powerOff() {
+        String response = powerOffJson();
+        try {
+            return  response != null ? new BaseResponse(response) : null;
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public void powerOff(final CameraController.OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {
+        TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
+            @Override
+            public void run() {
+                BaseResponse response = powerOff();
+                if(onAsyncCommandExecutedListener != null) {
+                    TaskExecutor.executeOnUIThread(new CameraController.AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, response));
+                }
+
             }
         });
     }

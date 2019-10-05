@@ -19,8 +19,6 @@ package com.hmsoft.pentaxgallery.camera.model;
 import org.json.JSONObject;
 
 public class StorageData {
-    public static final StorageData DefaultStorage = new StorageData();
-
     public final boolean active;
     public final boolean available;
     public final boolean equipped;
@@ -32,8 +30,9 @@ public class StorageData {
     public final String displayName;
 
     private ImageList mImageList;
+    private final CameraData mCameraData;
 
-    public StorageData(JSONObject jsonObject) {
+    public StorageData(CameraData cameraData, JSONObject jsonObject) {
         active = jsonObject.optBoolean("active");
         available = jsonObject.optBoolean("available");
         equipped = jsonObject.optBoolean("equipped");
@@ -44,9 +43,11 @@ public class StorageData {
         writable = jsonObject.optBoolean("writable");
 
         displayName = String.format("%s (%s)", name, format).toUpperCase();
+
+        mCameraData = cameraData;
     }
 
-    private StorageData() {
+    public StorageData(CameraData cameraData) {
         String defaultVal = "";
         active = false;
         available = false;
@@ -57,6 +58,11 @@ public class StorageData {
         reservePriority = defaultVal;
         writable = false;
         displayName = "";
+        mCameraData = cameraData;
+    }
+
+    public CameraData getCameraData() {
+        return mCameraData;
     }
 
     public ImageList getImageList() {

@@ -10,6 +10,7 @@
         <item name="android:windowActionBarOverlay">true</item>
         <item name="android:windowBackground">@android:color/black</item>
         <item name="android:actionBarStyle">@style/TranslucentDarkActionBar</item>
+        <item name="android:itemBackground">@color/overflow_background</item>
     </style>
 
     <style name="AppThemeDark.FullScreen" />
@@ -18,4 +19,5 @@
         <item name="android:background">#5a000000</item>
         <item name="android:logo">@android:color/transparent</item>
     </style>
+
 </resources>

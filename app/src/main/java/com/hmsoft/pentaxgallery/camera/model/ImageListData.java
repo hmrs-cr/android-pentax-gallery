@@ -21,8 +21,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
+import java.io.File;
+
 public abstract  class ImageListData extends BaseResponse {
 
+    private File dataFile;
     public final ImageList dirList;
 
     public abstract ImageList createImageList(JSONArray jsonArray) throws JSONException;
@@ -38,5 +41,24 @@ public abstract  class ImageListData extends BaseResponse {
     public ImageListData(JSONObject jsonObject) throws JSONException {
         super(jsonObject);
         dirList =  createImageList(jsonObject.optJSONArray("dirs")); //PentaxImageList(jsonObject.optJSONArray("dirs"));
+    }
+
+    public static File getDataFile(StorageData storage) {
+        CameraData cameraData = storage.getCameraData();
+        File parentDir = new File(cameraData.getStorageDirectory(), ImageData.FOLDER_IMAGES);
+        parentDir.mkdirs();
+        return new File(parentDir, storage.name + ".list");
+    }
+
+    private File getDataFile() {
+        if(dataFile == null) {
+            StorageData storage = dirList.getStorageData();
+            dataFile = getDataFile(storage);
+        }
+        return dataFile;
+    }
+  
+    public void saveData() {
+        saveData(getDataFile());
     }
 }
