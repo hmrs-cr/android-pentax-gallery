@@ -32,10 +32,12 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.MenuCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.Html;
 import android.util.TypedValue;
@@ -140,7 +142,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         mImageFetcher = new ImageRotatorFetcher(getActivity(), mImageThumbSize);
         mImageFetcher.setLoadingImage(R.drawable.empty_photo);
         mImageFetcher.addImageCache(getActivity().getSupportFragmentManager(), cacheParams);
-        //CacheUtils.init();
     }
 
     @Override
@@ -327,6 +328,11 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
         inflater.inflate(R.menu.main_menu, menu);
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            menu.setGroupDividerEnabled(true);
+        } else {
+            MenuCompat.setGroupDividerEnabled(menu, true);
+        }
 
         MenuItem downloadFilter = menu.findItem(R.id.downloadFilter);
         downloadFilter.setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
@@ -383,8 +389,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     private void updateMenuItems() {
         if(mMenu != null) {
-
-
             if(mAdapter.isInSelectMode()) {
                 int s = mMenu.size();
                 for(int i = 0; i < s; i++) {
@@ -394,6 +398,19 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                    item.setVisible(visibleOnSelectMode);
                 }
                 return;
+            }
+
+            List<CameraData> cameras = mCamera.getRegisteredCameras();
+            if(cameras != null && cameras.size() > 1) {
+                for(CameraData cameraData : cameras) {
+                    MenuItem menuItem = mMenu.findItem(cameraData.hashCode);
+                    if(menuItem == null) {
+                        menuItem = mMenu.add(R.id.camera_menu_list, cameraData.hashCode, 1, cameraData.getDisplayName());
+                        menuItem.setCheckable(true);
+                    }
+                    CameraData currentCamera = mCamera.getCameraData();
+                    menuItem.setChecked(currentCamera != null && currentCamera.hashCode == cameraData.hashCode);
+                }
             }
 
             MenuItem downloadItem = mMenu.findItem(R.id.download_selected);
@@ -445,16 +462,25 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             boolean multyStorage =  cameraData != null && cameraData.storages.size() > 1;
 
 
+            int currentStorageIndex = mCamera.getCurrentStorageIndex();
             String syncText = getString(R.string.sync_images);
             MenuItem syncItem = mMenu.findItem(R.id.sync_images_1);
             syncItem.setTitle(multyStorage ? cameraData.storages.get(0).displayName :  syncText);
             syncItem.setVisible(!mCamera.hasFilter(DownloadService.DownloadQueueFilter));
-            if(multyStorage) syncItem.setIcon(null);
+            if(multyStorage) {
+                syncItem.setCheckable(true);
+                syncItem.setChecked(currentStorageIndex == 0);
+                syncItem.setIcon(null);
+            }
 
             syncItem = mMenu.findItem(R.id.sync_images_2);
             syncItem.setVisible(multyStorage && !mCamera.hasFilter(DownloadService.DownloadQueueFilter));
             syncItem.setTitle(multyStorage ? cameraData.storages.get(1).displayName :  syncText);
-            if(multyStorage) syncItem.setIcon(null);
+            if(multyStorage) {
+                syncItem.setCheckable(true);
+                syncItem.setChecked(currentStorageIndex == 1);
+                syncItem.setIcon(null);
+            }
 
             MenuItem proccessDownloadQueueItem = mMenu.findItem(R.id.proccess_download_queue);
             proccessDownloadQueueItem.setVisible(isShowDownloadQueueOnly);
@@ -485,6 +511,16 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         if(mCamera.getImageList() == null) {
             if(BuildConfig.DEBUG) Logger.debug(TAG, "No images loaded yet.");
             return false;
+        }
+
+        if(item.getGroupId() == R.id.camera_menu_list) {
+            for (CameraData cameraData :  mCamera.getRegisteredCameras()) {
+                if(cameraData.hashCode == itemId) {
+                    setCurrentCamera(cameraData.cameraId);
+                    return true;
+                }
+            }
+            return true;
         }
 
         switch (itemId) {
@@ -754,10 +790,20 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                               mSwipeRefreshLayout.setVisibility(View.GONE);
                           }
                     }
-                 }, 0.3);
+                 }, 300);
             }
             mImageListTask = new ImageListTask(refreshDoneListener);
             mImageListTask.execute(loadImageListOnly, storageIndex);
+        }
+    }
+
+    private void setCurrentCamera(String cameraId) {
+        if(mImageListTask == null) {
+            mProgressBar.setVisibility(View.VISIBLE);
+            mSwipeRefreshLayout.setVisibility(View.GONE);
+
+            mImageListTask = new ImageListTask(null);
+            mImageListTask.execute(false, -1, cameraId);
         }
     }
 
@@ -1166,6 +1212,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
             boolean loadImageListOnly = params.length > 0 ? (Boolean) params[0] : false;
             int newStorageIndex = params.length > 1 ? (int) params[1] : -1;
+            String cameraId = params.length > 2 ? String.valueOf(params[2]) : null;
 
             DefaultSettings.getsInstance().load();
 
@@ -1174,7 +1221,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 cameraData = mCamera.getCameraData();
                 publishProgress(PROGRESS_LOADING_PICTURE_LIST, cameraData);
             } else {
-                cameraData = mCamera.connect(this);
+                cameraData = mCamera.connect(cameraId, this);
                 if (mCamera.isConnected()) {
                     publishProgress(PROGRESS_CONNECTED, cameraData);
                 }

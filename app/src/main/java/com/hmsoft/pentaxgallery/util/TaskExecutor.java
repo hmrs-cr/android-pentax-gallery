@@ -64,9 +64,8 @@ public final class TaskExecutor
 		sExecuteOnUIHandler.post(runnable);
 	}
 	
-	public synchronized static void executeOnUIThread(Runnable runnable, double seconds) {
-		long m = (long)(seconds * 1000);
-		sExecuteOnUIHandler.postDelayed(runnable, m);
+	public synchronized static void executeOnUIThread(Runnable runnable, long milis) {
+		sExecuteOnUIHandler.postDelayed(runnable, milis);
 	}
 
 	public static void sleep(long milis) {

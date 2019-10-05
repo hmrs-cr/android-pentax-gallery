@@ -47,13 +47,15 @@ public class CameraData extends BaseResponse {
     public final String macAddress;
     public final String serialNo;
     public final String dateAdded;
+    public final String cameraId;
 
     public final String key;
     public final String ssid;
 
+    public final int hashCode;
+
     public final List<StorageData> storages = new LinkedList<>();
     private File storageDirectory;
-    private final String cameraId;
 
     public CameraData(String response) throws JSONException {
         this(new JSONTokener(response));
@@ -74,6 +76,8 @@ public class CameraData extends BaseResponse {
         this.key = null;
         this.ssid = null;
 
+        hashCode = 0;
+
         storages.add(new StorageData(this));
     }
 
@@ -91,6 +95,7 @@ public class CameraData extends BaseResponse {
         dateAdded = jsonObject.optString("dataAdded");
 
         cameraId = macAddress.replace(":", "") + "." + serialNo;
+        hashCode = cameraId.hashCode();
 
         key = jsonObject.optString("key");
         ssid = jsonObject.optString("ssid");
@@ -195,5 +200,10 @@ public class CameraData extends BaseResponse {
         });
 
         return result;
+    }
+
+    @Override
+    public int hashCode() {
+        return hashCode;
     }
 }

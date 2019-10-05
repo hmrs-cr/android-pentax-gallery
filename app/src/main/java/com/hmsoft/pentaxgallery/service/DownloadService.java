@@ -626,27 +626,30 @@ public class DownloadService extends IntentService {
         }
 
         /*public*/ static void loadFromFile(ImageList sourceImageList, CameraData cameraData) {
-            if(sourceImageList == null || sourceImageList.length() == 0) {
+            if (sourceImageList == null || sourceImageList.length() == 0) {
                 return;
             }
 
-            if(sDownloadQueue == null) {
+            if (sDownloadQueue == null) {
                 sDownloadQueue = new ArrayList<>();
-                try {
-                    String json = Utils.readTextFile(new File(cameraData.getStorageDirectory(), FILE_NAME_DOWNLOAD_QUEUE));
-                    JSONArray jsonArray = new JSONArray(json);
-                    for (int c = 0; c < jsonArray.length(); c++) {
-                        JSONObject jsonObject = jsonArray.getJSONObject(c);
-                        String fileName = jsonObject.getString(DownloadEntry.UNIQUE_FILE_NAME);
-                        ImageData imageData = sourceImageList.findByUniqueFileName(fileName);
-                        if (imageData != null && !imageData.existsOnLocalStorage()) {
-                            DownloadEntry downloadEntry = new DownloadEntry(imageData);
-                            sDownloadQueue.add(downloadEntry);
-                        }
+            } else {
+                sDownloadQueue.clear();
+            }
+
+            try {
+                String json = Utils.readTextFile(new File(cameraData.getStorageDirectory(), FILE_NAME_DOWNLOAD_QUEUE));
+                JSONArray jsonArray = new JSONArray(json);
+                for (int c = 0; c < jsonArray.length(); c++) {
+                    JSONObject jsonObject = jsonArray.getJSONObject(c);
+                    String fileName = jsonObject.getString(DownloadEntry.UNIQUE_FILE_NAME);
+                    ImageData imageData = sourceImageList.findByUniqueFileName(fileName);
+                    if (imageData != null && !imageData.existsOnLocalStorage()) {
+                        DownloadEntry downloadEntry = new DownloadEntry(imageData);
+                        sDownloadQueue.add(downloadEntry);
                     }
-                } catch (IOException | JSONException e) {
-                    e.printStackTrace();
                 }
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
             }
         }
 

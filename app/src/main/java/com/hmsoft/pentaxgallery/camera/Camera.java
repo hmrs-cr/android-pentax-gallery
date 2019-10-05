@@ -33,6 +33,7 @@ public class Camera {
     private CameraData mCameraData;
     private int mCurrentStorageIndex;
     private FilteredImageList mFilteredImageList = null;
+    private List<CameraData> mCameras;
 
     public interface OnWifiConnectionAttemptListener {
         void onWifiConnectionAttempt(String ssid);
@@ -60,83 +61,92 @@ public class Camera {
     public CameraData connect(String cameraId, OnWifiConnectionAttemptListener listener) {
       CameraData cameraData = null;
       mCameraConnected = false;
+      CameraData latestConnectedCamera = null;
 
-      int retryes = 3;
-      int ci = 0;
-      CameraData latesteConnectedCamera = null;
-      List<CameraData> cameras = null;
-      while (!mCameraConnected) {
-
-          if (mController.connectToCamera()) {
-              BaseResponse response = mController.ping();
-              if (response != null && response.success) {
-                  cameraData = mController.getDeviceInfo();
-              }
-          } else {
-              Logger.warning(TAG, "Could not bind to WiFi");
-          }
-
-          if (cameraData == null) {
-
-              if(retryes-- == 0) {
-                  Logger.warning(TAG, "Too many failed attempts to connect");
+      if(cameraId != null) {
+          for(CameraData camera : getRegisteredCameras()) {
+              if(camera.cameraId.equals(cameraId)) {
+                  latestConnectedCamera = camera;
                   break;
               }
+          }
+      } else {
+          int retryes = 3;
+          int ci = 0;
 
-              if (cameras == null) {
-                  cameras = CameraData.getRegisteredCameras();
+          while (!mCameraConnected) {
+
+              if (mController.connectToCamera()) {
+                  BaseResponse response = mController.ping();
+                  if (response != null && response.success) {
+                      cameraData = mController.getDeviceInfo();
+                  }
+              } else {
+                  Logger.warning(TAG, "Could not bind to WiFi");
               }
 
-              if (cameras != null && cameras.size() > 0) {
-                  if(latesteConnectedCamera == null) {
-                      latesteConnectedCamera = cameras.get(0);
-                  }
+              if (cameraData == null) {
 
-                  WifiHelper.turnWifiOn(MyApplication.ApplicationContext, 1000);
-
-                  if(ci == cameras.size()) {
-                      Logger.warning(TAG, "All registered cameras failed to connect");
+                  if (retryes-- == 0) {
+                      Logger.warning(TAG, "Too many failed attempts to connect");
                       break;
                   }
 
-                  cameraData = cameras.get(ci++);
+                  List<CameraData> cameras = getRegisteredCameras();
 
-                  if(listener != null) {
-                      listener.onWifiConnectionAttempt(cameraData.ssid);
-                  }
+                  if (cameras != null && cameras.size() > 0) {
+                      if (latestConnectedCamera == null) {
+                          latestConnectedCamera = cameras.get(0);
+                      }
 
-                  if(ci == 0) {                    
-                     WifiHelper.startWifiScan(MyApplication.ApplicationContext);
-                     WifiHelper.waitForScanResultsAvailable(7500);
-                  }
-                
-                  if(!WifiHelper.isWifiInRange(cameraData.ssid)) {
-                      if(BuildConfig.DEBUG) Logger.debug(TAG, cameraData.ssid + " not in range.");
-                      cameraData = null;
-                      continue;
-                  }
-                
-                  if(BuildConfig.DEBUG) Logger.debug(TAG, "Attempting to connect to " + cameraData.ssid);
+                      WifiHelper.turnWifiOn(MyApplication.ApplicationContext, 1000);
 
-                  boolean success = WifiHelper.connectToWifi(MyApplication.ApplicationContext,
-                          cameraData.ssid, cameraData.key);
-                  if (!success) {
-                      Logger.warning(TAG, "Could not connect to " + cameraData.ssid);
-                      cameraData = null;
+                      if (ci == cameras.size()) {
+                          Logger.warning(TAG, "All registered mCameras failed to connect");
+                          break;
+                      }
+
+                      cameraData = cameras.get(ci++);
+
+                      if (listener != null) {
+                          listener.onWifiConnectionAttempt(cameraData.ssid);
+                      }
+
+                      if (ci == 0) {
+                          WifiHelper.startWifiScan(MyApplication.ApplicationContext);
+                          WifiHelper.waitForScanResultsAvailable(7500);
+                      }
+
+                      if (!WifiHelper.isWifiInRange(cameraData.ssid)) {
+                          if (BuildConfig.DEBUG)
+                              Logger.debug(TAG, cameraData.ssid + " not in range.");
+                          cameraData = null;
+                          continue;
+                      }
+
+                      if (BuildConfig.DEBUG)
+                          Logger.debug(TAG, "Attempting to connect to " + cameraData.ssid);
+
+                      boolean success = WifiHelper.connectToWifi(MyApplication.ApplicationContext,
+                              cameraData.ssid, cameraData.key);
+                      if (!success) {
+                          Logger.warning(TAG, "Could not connect to " + cameraData.ssid);
+                          cameraData = null;
+                      } else {
+                          Logger.warning(TAG, "Connected to " + cameraData.ssid);
+                      }
                   } else {
-                      Logger.warning(TAG, "Connected to " + cameraData.ssid);
+                      Logger.warning(TAG, "No previously connected mCameras found.");
+                      break;
                   }
-              } else {
-                  Logger.warning(TAG, "No previously connected cameras found.");
-                  break;
               }
-          }
 
-          mCameraConnected = cameraData != null;
+              mCameraConnected = cameraData != null;
+          }
       }
 
       if(cameraData == null) {
-          cameraData = latesteConnectedCamera;
+          cameraData = latestConnectedCamera;
           if(BuildConfig.DEBUG) Logger.debug(TAG, "Camera data from cache: " + cameraData);
       }
 
@@ -160,6 +170,13 @@ public class Camera {
         }
       
       return cameraData;
+    }
+
+    public List<CameraData> getRegisteredCameras() {
+        if (mCameras == null) {
+            mCameras = CameraData.getRegisteredCameras();
+        }
+        return mCameras;
     }
 
     @WorkerThread
