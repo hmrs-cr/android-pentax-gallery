@@ -277,6 +277,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
 
     private void downloadNow() {        
         DownloadService.downloadDown(imageData);
+        updateCurrentImageData();
         updateUiElements();
     }
 
@@ -300,6 +301,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
 
     private void download() {        
         DownloadService.addDownloadQueue(imageData);
+        updateCurrentImageData();
         updateUiElements();
     }
 
