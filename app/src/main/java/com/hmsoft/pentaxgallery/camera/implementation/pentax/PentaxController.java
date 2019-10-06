@@ -67,11 +67,11 @@ public class PentaxController implements CameraController {
     }
 
     protected String powerOffJson() {
-        return HttpHelper.getStringResponse(UrlHelper.URL_POWEROFF, HttpHelper.RequestMethod.POST);
+        return HttpHelper.getStringResponse(UrlHelper.URL_POWEROFF, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.POST);
     }
 
     protected String pingJson() {
-        return HttpHelper.getStringResponse(UrlHelper.URL_PING, HttpHelper.RequestMethod.GET);
+        return HttpHelper.getStringResponse(UrlHelper.URL_PING, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.GET);
     }
 
     private WebSocket cameraWebSocket;
