@@ -57,6 +57,8 @@ public class ImageFetcher extends ImageResizer {
     private boolean mCancel;
     protected ContentResolver mContentResolver;
 
+    private final boolean loadLocalImageData;
+
     /**
      * Initialize providing a target image width and height for the processing images.
      *
@@ -66,6 +68,7 @@ public class ImageFetcher extends ImageResizer {
      */
     public ImageFetcher(Context context, int imageWidth, int imageHeight) {
         super(context, imageWidth, imageHeight);
+        loadLocalImageData = DefaultSettings.getsInstance().getBoolValue(DefaultSettings.LOAD_LOCAL_IMAGE_DATA);
         init(context);
     }
 
@@ -77,6 +80,7 @@ public class ImageFetcher extends ImageResizer {
      */
     public ImageFetcher(Context context, int imageSize) {
         super(context, imageSize);
+        loadLocalImageData = DefaultSettings.getsInstance().getBoolValue(DefaultSettings.LOAD_LOCAL_IMAGE_DATA);
         init(context);
     }
 
@@ -247,7 +251,7 @@ public class ImageFetcher extends ImageResizer {
             }
         }
 
-        /*if (fileInputStream == null && fileDescriptor == null && imageData.existsOnLocalStorage()) {
+        if (loadLocalImageData && fileInputStream == null && imageData.existsOnLocalStorage()) {
             try {
                 if(BuildConfig.DEBUG) Logger.debug(TAG, "Loading picture from " + imageData.getLocalStorageUri());
                 fileDescriptor = mContentResolver.openFileDescriptor(imageData.getLocalStorageUri(), "r").getFileDescriptor();
@@ -255,7 +259,7 @@ public class ImageFetcher extends ImageResizer {
                 if(BuildConfig.DEBUG) Logger.warning(TAG, "ERROR: Loading picture from " + imageData.getLocalStorageUri(), e);
                 e.printStackTrace();
             }
-        }*/
+        }
 
         Bitmap bitmap = null;
         if (fileDescriptor != null) {

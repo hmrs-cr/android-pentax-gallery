@@ -19,6 +19,7 @@ public class DefaultSettings {
     public static String DEFAULT_CONNECT_TIME_OUT = "default_connect_time_out";
     public static String DEFAULT_READ_TIME_OUT = "default_read_time_out";
     public static String AUTO_DOWNLOAD_JPGS = "auto_download_jpgs";
+    public static String LOAD_LOCAL_IMAGE_DATA = "load_local_image_data";
 
     private static DefaultSettings sInstance;
 
@@ -74,7 +75,8 @@ public class DefaultSettings {
             mProperties.setProperty(THUMB_THREAD_NUMBER, "3");
             mProperties.setProperty(DEFAULT_CONNECT_TIME_OUT, "1");
             mProperties.setProperty(DEFAULT_READ_TIME_OUT, "30");
-            mProperties.setProperty(AUTO_DOWNLOAD_JPGS, Boolean.toString(false));            
+            mProperties.setProperty(AUTO_DOWNLOAD_JPGS, Boolean.toString(false));
+            mProperties.setProperty(LOAD_LOCAL_IMAGE_DATA, Boolean.toString(false));
 
             try {
                 FileOutputStream outputStream = new FileOutputStream(getSettingFile());
