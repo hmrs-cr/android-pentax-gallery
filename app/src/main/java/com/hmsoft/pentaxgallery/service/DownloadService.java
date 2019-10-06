@@ -91,8 +91,8 @@ public class DownloadService extends IntentService {
 
     public interface OnDownloadFinishedListener {
         void onDownloadProgress(ImageData imageData, long donloadId, int progress);
-        void onDownloadFinished(ImageData imageData, long donloadId, int remainingDownloads, 
-                                boolean wasCanceled);        
+        void onDownloadFinished(ImageData imageData, long donloadId, int remainingDownloads,
+                                int downloadCount, int errorCount, boolean wasCanceled);
     }
   
     public static final FilteredImageList.ImageFilter DownloadQueueFilter = new FilteredImageList.ImageFilter() {
@@ -533,7 +533,8 @@ public class DownloadService extends IntentService {
         private static void doDownloadFinished(ImageData imageData, long donloadId, boolean wasCanceled) {
 
             if(onDownloadFinishedListener != null) {
-                onDownloadFinishedListener.onDownloadFinished(imageData, donloadId, sDownloadQueue.size(), wasCanceled);
+                onDownloadFinishedListener.onDownloadFinished(imageData, donloadId, sDownloadQueue.size(),
+                        Queue.downloadCount, Queue.errorCount, wasCanceled);
             }
 
             if(sDownloadQueue.size() == 0) {
@@ -612,6 +613,7 @@ public class DownloadService extends IntentService {
 
                 if(contentText != null) {
                     builder.setContentText(contentText)
+                            .setAutoCancel(true)
                             .setContentTitle(context.getString(R.string.download_done_notification_title));
                     notificationManager.notify(DONE_NOTIFICATION_ID, builder.build());
                 }

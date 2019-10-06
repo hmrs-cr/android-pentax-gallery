@@ -220,6 +220,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                     }
                 });
 
+        updateEmptyViewText("");
         return v;
     }
 
@@ -253,7 +254,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         }
         DownloadService.setOnDownloadFinishedListener(this);
         updateActionBarTitle();
-        updateViews(0);
     }
 
     @Override
@@ -600,7 +600,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             }
         }
 
-        updateViews(emptyViewText);
+        updateEmptyViewText(emptyViewText);
 
         mAdapter.notifyDataSetChanged();
         updateMenuItems();
@@ -624,12 +624,13 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             updateProgressText(null);
         }
     }
-    private void updateViews(int stringgResourceId) {
+
+    private void updateEmptyViewText(String text) {
         ImageList imageList = mCamera.getImageList();
         if(imageList != null) {
             if (imageList.length() == 0) {
-                if(stringgResourceId != 0) {
-                    mEmptyViewLabel.setText(stringgResourceId);
+                if(text != null && text.length() > 0) {
+                    mEmptyViewLabel.setText(text);
                 } else {
                     mEmptyViewLabel.setText("");
                 }
@@ -640,6 +641,10 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 mSwipeRefreshLayout.setVisibility(View.VISIBLE);
             }
         }
+    }
+
+    private void updateEmptyViewText(int stringResourceId) {
+        updateEmptyViewText(getString(stringResourceId));
     }
 
     private void downloadJpgs() {
@@ -808,7 +813,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     }
 
     @Override
-    public void onDownloadFinished(ImageData imageData, long donloadId, int remainingDownloads, boolean wasCanceled) {
+    public void onDownloadFinished(ImageData imageData, long donloadId, int remainingDownloads,
+                                   int downloadCount, int errorCount, boolean wasCanceled) {
         Logger.debug(TAG, "onDownloadFinished: " + donloadId + " Remaining: " + remainingDownloads);
         if(mCamera.isFiltered()) {
             if(mCamera.hasFilter(FilteredImageList.DownloadedFilter) && mCamera.getImageList() instanceof FilteredImageList) {
@@ -818,7 +824,20 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         }
         updateActionBarTitle();
         if(remainingDownloads == 0) {
-            //ControllerFactory.DefaultController.powerOff(null);
+            if(mCamera.hasFilter(DownloadService.DownloadQueueFilter)) {
+                String viewText;
+                if(downloadCount > 0 && errorCount > 0) {
+                    viewText = String.format(getString(R.string.download_done_with_fails_notification_text),
+                            downloadCount, errorCount);
+                } else if (downloadCount > 0) {
+                    viewText = String.format(getString(R.string.download_done_notification_text), downloadCount);
+                } else if (errorCount > 0) {
+                    viewText = String.format(getString(R.string.download_done_failed_notification_text), errorCount);
+                } else {
+                    viewText = getString(R.string.all_pictures_transferred);
+                }
+                updateEmptyViewText(viewText);
+            }
         }
     }
 

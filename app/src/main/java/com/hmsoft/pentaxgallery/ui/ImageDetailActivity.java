@@ -437,7 +437,8 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
     }
 
     @Override
-    public void onDownloadFinished(ImageData imageData, long donloadId, int remainingDownloads, boolean wasCanceled) {
+    public void onDownloadFinished(ImageData imageData, long donloadId, int remainingDownloads,
+                                   int downloadCount, int errorCount, boolean wasCanceled) {
         updateCurrentImageData();
         if(mCamera.isFiltered()) {
             mAdapter.notifyDataSetChanged();
