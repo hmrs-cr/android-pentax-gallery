@@ -247,7 +247,7 @@ public class ImageFetcher extends ImageResizer {
             }
         }
 
-        if (fileInputStream == null && fileDescriptor == null && imageData.existsOnLocalStorage()) {
+        /*if (fileInputStream == null && fileDescriptor == null && imageData.existsOnLocalStorage()) {
             try {
                 if(BuildConfig.DEBUG) Logger.debug(TAG, "Loading picture from " + imageData.getLocalStorageUri());
                 fileDescriptor = mContentResolver.openFileDescriptor(imageData.getLocalStorageUri(), "r").getFileDescriptor();
@@ -255,7 +255,7 @@ public class ImageFetcher extends ImageResizer {
                 if(BuildConfig.DEBUG) Logger.warning(TAG, "ERROR: Loading picture from " + imageData.getLocalStorageUri(), e);
                 e.printStackTrace();
             }
-        }
+        }*/
 
         Bitmap bitmap = null;
         if (fileDescriptor != null) {
