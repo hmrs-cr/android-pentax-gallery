@@ -259,6 +259,12 @@ public class Camera {
         StorageData storageData = getCurrentStorage();
         return storageData != null ? storageData.getImageList() : null;
     }
+
+    public boolean imageListHasMixedFormats() {
+        StorageData storageData = getCurrentStorage();
+        return storageData != null && storageData.getImageList() != null &&
+                storageData.getImageList().hasMixedFormats;
+    }
   
     public void setImageFilter(FilteredImageList.ImageFilter filter) {
         if(filter != null) {

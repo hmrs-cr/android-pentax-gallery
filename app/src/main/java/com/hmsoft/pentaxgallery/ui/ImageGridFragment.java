@@ -119,6 +119,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     private boolean mNeedUpdateImageList;
     private volatile boolean mDontShowProgressBar;
 
+    private final int DEFAULT_MULTIFORMAT_FILTER =  R.id.view_raw_only;
+
     /**
      * Empty constructor as per the Fragment documentation
      */
@@ -442,9 +444,11 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
             MenuItem jpgsOnlyItem = mMenu.findItem(R.id.view_jpg_only);
             jpgsOnlyItem.setChecked(isShowJpgOnly);
+            jpgsOnlyItem.setVisible(mCamera.imageListHasMixedFormats());
 
             MenuItem rawOnlyItem = mMenu.findItem(R.id.view_raw_only);
             rawOnlyItem.setChecked(isShowRawOnly);
+            rawOnlyItem.setVisible(mCamera.imageListHasMixedFormats());
 
             MenuItem dowloadedOnlyItem = mMenu.findItem(R.id.view_downloaded_only);
             dowloadedOnlyItem.setChecked(isShowDownloadedOnly);
@@ -597,6 +601,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                     emptyViewText = R.string.no_jpg_pictures;
                     break;
             }
+        } else if (itemId != DEFAULT_MULTIFORMAT_FILTER && mCamera.imageListHasMixedFormats()) {
+            showView(true, DEFAULT_MULTIFORMAT_FILTER);
         }
 
         updateEmptyViewText(emptyViewText);
@@ -688,10 +694,15 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             showView(false, -1);
         }
 
-        boolean includeRaw = mCamera.hasFilter(FilteredImageList.FlaggedFilter);
-        ImageList imageList = mCamera.getImageList();
-        List<ImageData> enqueue = new ArrayList<>();
+        boolean includeRaw = false;
+        ImageList imageList = mCamera.getCurrentStorage().getImageList();
+        if(mCamera.hasFilter(FilteredImageList.FlaggedFilter)) {
+            // If downloaded flagged images use only the flagged ones include raw.
+            imageList = mCamera.getImageList();
+            includeRaw = true;
+        }
 
+        List<ImageData> enqueue = new ArrayList<>();
         if(imageList != null) {
             for (int c = imageList.length() - 1; c >= 0; c--) {
                 ImageData imageData = imageList.getImage(c);
@@ -1363,6 +1374,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 mGridView.smoothScrollToPosition(0);
                 if(refreshDoneListener != null) {
                     refreshDoneListener.onRefreshDone();
+                }
+                if(imageList.hasMixedFormats) {
+                    showView(true, DEFAULT_MULTIFORMAT_FILTER);
                 }
             } else {
                 showNoConnectedDialog();

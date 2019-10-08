@@ -29,7 +29,15 @@ public abstract class ImageList {
     protected final List<ImageData> mImageList = new ArrayList<>();
     private StorageData mStorage;
 
-    public ImageList() { }
+    public final boolean hasJpg;
+    public final boolean hasRaw;
+    public final boolean hasMixedFormats;
+
+    public ImageList() {
+        hasJpg = false;
+        hasRaw = false;
+        hasMixedFormats = false;
+    }
 
     public ImageList(String jsonData) throws JSONException {
         this(new JSONObject(new JSONTokener(jsonData)));
@@ -41,6 +49,10 @@ public abstract class ImageList {
 
     public ImageList(JSONArray jsonArray) throws JSONException {
         int len = jsonArray != null ? jsonArray.length() : 0;
+
+        boolean hasRaw = false;
+        boolean hasJpg = false;
+
         for(int c = len-1; c > -1; c--) {
             JSONObject jsonObject = jsonArray.getJSONObject(c);
             String dirName = jsonObject.getString("name");
@@ -48,14 +60,24 @@ public abstract class ImageList {
             int fileCount = fileArray.length();
             for(int i = fileCount - 1; i > -1; i--) {
                 String fileName = fileArray.getString(i);
-                addImage(dirName, fileName);
+                ImageData imageData = addImage(dirName, fileName);
+                if(imageData.isRaw) {
+                    hasRaw = true;
+                } else {
+                    hasJpg = true;
+                }
             }
         }
+
+        this.hasRaw = hasRaw;
+        this.hasJpg = hasJpg;
+        hasMixedFormats = hasJpg && hasRaw;
     }
 
-    private boolean addImage(String dirName, String fileName) {
+    private ImageData addImage(String dirName, String fileName) {
         ImageData imageData = createImageData(dirName, fileName);
-        return mImageList.add(imageData);
+        mImageList.add(imageData);
+        return imageData;
     }
 
     public ImageData insertImage(String dirName, String fileName) {
