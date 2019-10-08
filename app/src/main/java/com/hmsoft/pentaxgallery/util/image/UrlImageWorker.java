@@ -34,6 +34,7 @@ import android.widget.ImageView;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.R;
+import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.util.DefaultSettings;
 import com.hmsoft.pentaxgallery.util.Logger;
 
@@ -103,7 +104,7 @@ public abstract class UrlImageWorker {
      * @param imageView The ImageView to bind the downloaded image to.
      * @param listener A listener that will be called back once the image has been loaded.
      */
-    public void loadImage(String url, Object param, ImageView imageView, OnImageLoadedListener listener) {
+    public void loadImage(String url, ImageData imageData, ImageView imageView, OnImageLoadedListener listener) {
         if (url == null) {
             return;
         }
@@ -117,7 +118,7 @@ public abstract class UrlImageWorker {
             }
         } else if (cancelPotentialWork(url, imageView)) {
             //BEGIN_INCLUDE(execute_background_task)
-            final BitmapWorkerTask task = new BitmapWorkerTask(url, param, imageView, listener);
+            final BitmapWorkerTask task = new BitmapWorkerTask(url, imageData, imageView, listener);
             final AsyncDrawable asyncDrawable =
                     new AsyncDrawable(mResources, mLoadingBitmap, task);
             imageView.setImageDrawable(asyncDrawable);
@@ -144,7 +145,7 @@ public abstract class UrlImageWorker {
      * @param url The URL of the image to downloadDown.
      * @param imageView The ImageView to bind the downloaded image to.
      */
-    public void loadImage(String url, Object param, ImageView imageView) {
+    public void loadImage(String url, ImageData param, ImageView imageView) {
         loadImage(url, param, imageView, null);
     }
 
@@ -214,7 +215,7 @@ public abstract class UrlImageWorker {
      *            { UrlImageWorker#loadImage(Object, ImageView)}
      * @return The processed bitmap
      */
-    protected abstract Bitmap processBitmap(String url, Object param);
+    protected abstract Bitmap processBitmap(String url, ImageData imageData);
 
     /**
      * @return The {@link ImageCache} object currently being used by this UrlImageWorker.
@@ -294,13 +295,13 @@ public abstract class UrlImageWorker {
      */
     private class BitmapWorkerTask extends AsyncTask<Void, Void, BitmapDrawable> {
         private final String mUrl;
-        private final Object mParam;
+        private final ImageData mImageData;
         private final WeakReference<ImageView> imageViewReference;
         private final OnImageLoadedListener mOnImageLoadedListener;
 
-        public BitmapWorkerTask(String url, Object param, ImageView imageView, OnImageLoadedListener listener) {
+        public BitmapWorkerTask(String url, ImageData imageData, ImageView imageView, OnImageLoadedListener listener) {
             mUrl = url;
-            mParam = param;
+            this.mImageData = imageData;
             imageViewReference = new WeakReference<ImageView>(imageView);
             mOnImageLoadedListener = listener;
         }
@@ -312,7 +313,7 @@ public abstract class UrlImageWorker {
         protected BitmapDrawable doInBackground(Void... params) {
             //BEGIN_INCLUDE(load_bitmap_in_background)
             if (BuildConfig.DEBUG) {
-                Logger.debug(TAG, "doInBackground - start work " + mParam);
+                Logger.debug(TAG, "doInBackground - start work " + mImageData);
             }
 
             Bitmap bitmap = null;
@@ -342,7 +343,7 @@ public abstract class UrlImageWorker {
             // process method (as implemented by a subclass)
             if (bitmap == null && !isCancelled() && getAttachedImageView() != null
                     && !mExitTasksEarly) {
-                bitmap = processBitmap(mUrl, mParam);
+                bitmap = processBitmap(mUrl, mImageData);
             }
 
             // If the bitmap was processed and the image cache is available, then add the processed
@@ -358,7 +359,7 @@ public abstract class UrlImageWorker {
             }
 
             if (BuildConfig.DEBUG) {
-                Logger.debug(TAG, "doInBackground - finished work " + mParam);
+                Logger.debug(TAG, "doInBackground - finished work " + mImageData);
             }
 
             return drawable;

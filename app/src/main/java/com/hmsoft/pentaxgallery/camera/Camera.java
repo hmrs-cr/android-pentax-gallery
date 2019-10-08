@@ -5,6 +5,7 @@ import android.support.annotation.WorkerThread;
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.camera.controller.CameraController;
+import com.hmsoft.pentaxgallery.camera.implementation.pentax.PentaxController;
 import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
 import com.hmsoft.pentaxgallery.camera.model.FilteredImageList;
@@ -24,7 +25,9 @@ import java.io.IOException;
 import java.util.List;
 
 public class Camera {
-    
+
+    public static final Camera instance = new Camera(new PentaxController());
+
     private static final String TAG = "Camera";
   
     private final CameraController mController;
@@ -39,7 +42,7 @@ public class Camera {
         void onWifiConnectionAttempt(String ssid);
     }
 
-    public Camera(CameraController controller) {
+    /*package*/ Camera(CameraController controller) {
         this.mController = controller;
     }
 

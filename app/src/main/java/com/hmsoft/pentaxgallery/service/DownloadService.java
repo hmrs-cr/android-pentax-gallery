@@ -22,7 +22,7 @@ import android.widget.Toast;
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.R;
-import com.hmsoft.pentaxgallery.camera.CameraFactory;
+import com.hmsoft.pentaxgallery.camera.Camera;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
 import com.hmsoft.pentaxgallery.camera.model.FilteredImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
@@ -200,7 +200,7 @@ public class DownloadService extends IntentService {
             // this will be useful so that you can show a typical 0-100% progress bar
             fileLength = connection.getContentLength();
 
-            ImageMetaData imageMetaData = CameraFactory.DefaultCamera.getImageInfo(imageData);
+            ImageMetaData imageMetaData = Camera.instance.getImageInfo(imageData);
             uri = imageData.getLocalStorageUri();
 
             if (uri == null) {
@@ -545,7 +545,7 @@ public class DownloadService extends IntentService {
                     if(BuildConfig.DEBUG) Logger.debug(TAG, "WakeLock released");
                 }
                 if(sShutCameraDownWhenDone) {
-                    CameraFactory.DefaultCamera.powerOff();
+                    Camera.instance.powerOff();
                 }
                 downloadNotification(null, donloadId > 0 ? 0 : -1);
             }
@@ -583,7 +583,6 @@ public class DownloadService extends IntentService {
 
             PendingIntent pi = ImageGridActivity.getPendingIntent();
             builder.setSmallIcon(R.drawable.ic_cloud_download_white_24dp)
-                       .setLocalOnly(true)
                        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                        .setContentIntent(pi);
 

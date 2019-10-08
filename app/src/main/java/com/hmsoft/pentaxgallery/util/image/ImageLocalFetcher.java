@@ -7,7 +7,7 @@ import android.os.ParcelFileDescriptor;
 import android.widget.ImageView;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
-import com.hmsoft.pentaxgallery.camera.CameraFactory;
+import com.hmsoft.pentaxgallery.camera.Camera;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.util.Logger;
@@ -26,11 +26,9 @@ public class ImageLocalFetcher extends ImageRotatorFetcher {
     }
 
     @Override
-    public void loadImage(String url, Object param, ImageView imageView, OnImageLoadedListener listener) {
-        if(param instanceof  ImageData){
-            mImageData = (ImageData)param;
-        }
-        super.loadImage(url, param, imageView, listener);
+    public void loadImage(String url, ImageData imageData, ImageView imageView, OnImageLoadedListener listener) {
+        mImageData = imageData;
+        super.loadImage(url, imageData, imageView, listener);
     }
 
     @Override
@@ -77,7 +75,7 @@ public class ImageLocalFetcher extends ImageRotatorFetcher {
                       mImageHeight, getImageCache());
             
               if(bitmap != null && imageData != null) {
-                  ImageMetaData metaData =  CameraFactory.DefaultCamera.getImageInfo(imageData);
+                  ImageMetaData metaData =  Camera.instance.getImageInfo(imageData);
                   if(metaData != null) {
                       bitmap = rotateBitmap(bitmap, metaData.orientationDegrees);
                   }

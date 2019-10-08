@@ -274,11 +274,6 @@ public class ImageFetcher extends ImageResizer {
         return bitmap;
     }
 
-    @Override
-    protected Bitmap processBitmap(String url, Object param) {
-        return processBitmap(url, (ImageData)param);
-    }
-
     /**
      * Download a bitmap from a URL and write the content to an output stream.
      *

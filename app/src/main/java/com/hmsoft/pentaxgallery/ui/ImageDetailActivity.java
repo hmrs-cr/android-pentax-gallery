@@ -42,7 +42,6 @@ import android.widget.Toast;
 
 import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.Camera;
-import com.hmsoft.pentaxgallery.camera.CameraFactory;
 import com.hmsoft.pentaxgallery.camera.controller.CameraController;
 import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
@@ -64,11 +63,11 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
     private static final String IMAGE_CACHE_DIR = "images";
     public static final String EXTRA_IMAGE = "extra_image";
 
+    private Camera mCamera = Camera.instance;
     private ImagePagerAdapter mAdapter;
     private ImageFetcher mImageFetcher;
     private ViewPager mPager;
     private Menu mMenu;
-    private Camera mCamera = CameraFactory.DefaultCamera;
     private ImageData imageData;
     private DownloadService.DownloadEntry downloadEntry;
 

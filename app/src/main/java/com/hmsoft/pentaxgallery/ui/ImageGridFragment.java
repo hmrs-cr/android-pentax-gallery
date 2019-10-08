@@ -63,7 +63,6 @@ import android.widget.Toast;
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.Camera;
-import com.hmsoft.pentaxgallery.camera.CameraFactory;
 import com.hmsoft.pentaxgallery.camera.controller.CameraController;
 import com.hmsoft.pentaxgallery.camera.model.CameraChange;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
@@ -116,7 +115,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     private Menu mMenu;
     private SearchView mSearchView;
     private SwipeRefreshLayout mSwipeRefreshLayout;
-    private Camera mCamera = CameraFactory.DefaultCamera;
+    private Camera mCamera = Camera.instance;
     private boolean mNeedUpdateImageList;
     private volatile boolean mDontShowProgressBar;
 
