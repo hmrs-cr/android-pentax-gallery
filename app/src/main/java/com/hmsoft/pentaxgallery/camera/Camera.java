@@ -324,7 +324,8 @@ public class Camera {
                 }
             }
             if(imageData != null && imageData.getStorageData().equals(getCurrentStorage())) {
-                if((imageData.isRaw && hasFilter(FilteredImageList.RawFilter)) || hasFilter(FilteredImageList.JpgFilter)) {
+                if((imageData.isRaw && hasFilter(FilteredImageList.RawFilter)) ||
+                        (!imageData.isRaw && hasFilter(FilteredImageList.JpgFilter))) {
                     rebuildFilter();
                 }
             }
