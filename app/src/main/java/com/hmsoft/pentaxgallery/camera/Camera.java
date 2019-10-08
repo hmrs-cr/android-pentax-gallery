@@ -311,17 +311,32 @@ public class Camera {
     }
 
     public ImageData addImageToStorage(String storage, String filepath) {
+        ImageData imageData = null;
         if(mCameraData != null) {
             for (StorageData storageData : mCameraData.storages) {
                 if(storageData.name.equals(storage)) {
                     File file = new File(filepath);
                     String dirName = file.getParent();
                     String fileName = file.getName();
-                    return storageData.getImageList().insertImage(dirName, fileName);
+                    imageData = storageData.getImageList().insertImage(dirName, fileName);
+                    imageData.setStorageData(storageData);
+                    break;
+                }
+            }
+            if(imageData != null && imageData.getStorageData().equals(getCurrentStorage())) {
+                if((imageData.isRaw && hasFilter(FilteredImageList.RawFilter)) || hasFilter(FilteredImageList.JpgFilter)) {
+                    rebuildFilter();
                 }
             }
         }
-        return null;
+        return imageData;
+    }
+
+    public void rebuildFilter() {
+        ImageList imageList = getImageList();
+        if(imageList instanceof FilteredImageList) {
+            ((FilteredImageList)imageList).rebuildFilter();
+        }
     }
 
     public void powerOff() {

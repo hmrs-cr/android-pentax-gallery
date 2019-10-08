@@ -242,9 +242,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
         ImageList imageList = mCamera.getImageList();
 
-        if(imageList instanceof FilteredImageList) {
-            ((FilteredImageList)imageList).rebuildFilter();
-        }
+        mCamera.rebuildFilter();
 
         mAdapter.notifyDataSetChanged();
 
