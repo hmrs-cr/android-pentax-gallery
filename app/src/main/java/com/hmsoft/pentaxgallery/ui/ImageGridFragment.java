@@ -79,6 +79,7 @@ import com.hmsoft.pentaxgallery.util.image.ImageCache;
 import com.hmsoft.pentaxgallery.util.image.ImageFetcher;
 import com.hmsoft.pentaxgallery.util.image.ImageRotatorFetcher;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -271,6 +272,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         mImageFetcher.setPauseWork(false);
         mImageFetcher.setExitTasksEarly(true);
         mImageFetcher.flushCache();
+        cancelCacheThread = true;
         //CacheUtils.flush();
     }
 
@@ -912,6 +914,35 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         if(BuildConfig.DEBUG) Logger.debug(TAG, change.toString());
     }
 
+    private static Thread cacheThread = null;
+    private volatile boolean cancelCacheThread;
+    private void cacheThumbnails(final ImageList imageList) {
+        if (mCamera.isConnected() && cacheThread == null) {
+            cacheThread = TaskExecutor.executeOnNewThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        for (int c = 0; c < imageList.length(); c++) {
+                            if(cancelCacheThread) {
+                                if(BuildConfig.DEBUG) Logger.debug(TAG, "cancelCacheThread");
+                                break;
+                            }
+                            ImageData imageData = imageList.getImage(c);
+                            String url = imageData.getThumbUrl();
+                            try {
+                                mImageFetcher.downloadUrlToCacheIfNeeded(url);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        cacheThread = null;
+                        cancelCacheThread = false;
+                    }
+                });
+        } else if(BuildConfig.DEBUG && cacheThread != null) {
+            Logger.debug(TAG, "Cache thread is running");
+        }
+    }
+
 
     /**
      * The main adapter that backs the GridView. This is fairly standard except the number of
@@ -1270,6 +1301,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             boolean needToLoadLocalData = !loadImageListOnly;
             if (mNeedUpdateImageList || imageList == null || imageList.length() == 0) {
                 imageList = mCamera.loadImageList();
+                cacheThumbnails(imageList);
                 needToLoadLocalData = true;
             }
 

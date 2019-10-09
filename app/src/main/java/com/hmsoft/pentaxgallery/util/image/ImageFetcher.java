@@ -45,7 +45,7 @@ import java.net.URL;
  */
 public class ImageFetcher extends ImageResizer {
     private static final String TAG = "ImageFetcher";
-    private static final int HTTP_CACHE_SIZE = 20 * 1024 * 1024; // 20MB
+    private static final int HTTP_CACHE_SIZE = 512 * 1024 * 1024; // 512MB
     private static final String HTTP_CACHE_DIR = "http";
     private static final int IO_BUFFER_SIZE = 8 * 1024;
 
@@ -174,6 +174,48 @@ public class ImageFetcher extends ImageResizer {
         }
     }
 
+    public boolean downloadUrlToCacheIfNeeded(String url) throws IOException {
+        DiskLruCache.Editor editor = null;
+        synchronized (mHttpDiskCacheLock) { 
+           while (mHttpDiskCacheStarting) {
+                try {
+                    mHttpDiskCacheLock.wait();
+                } catch (InterruptedException e) {
+                }
+            }
+            final String key = ImageCache.hashKeyForDisk(url);
+            if (!mHttpDiskCache.hasKey(key)) {
+                if(BuildConfig.DEBUG) Logger.debug(TAG, "Cache Key not found for " + url);
+                editor = mHttpDiskCache.edit(key);
+            } else if(BuildConfig.DEBUG) Logger.debug(TAG, "Cache Key found for " + url);
+        }
+      
+        boolean downloaded = false;
+        if(editor != null) {
+            downloaded = downloadUrlToCache(editor, url);
+        }
+      
+        return downloaded;
+    }
+  
+    private boolean downloadUrlToCache(DiskLruCache.Editor editor, String url) throws IOException {
+        boolean success = false;
+        if (editor != null && !isCancel()) {
+            success = (downloadUrlToStream(url,
+                    editor.newOutputStream(DISK_CACHE_INDEX)));
+
+            synchronized (mHttpDiskCacheLock) {
+                if (success) {
+                    editor.commit();
+                    if(BuildConfig.DEBUG) Logger.debug(TAG, "Downloaded to cache " + url);
+                } else {
+                    editor.abort();
+                }
+            }
+        }
+        return success;
+    }
+  
     /**
      * The main process method, which will be called by the UrlImageWorker in the AsyncTask background
      * thread.
@@ -202,37 +244,27 @@ public class ImageFetcher extends ImageResizer {
 
         if (mHttpDiskCache != null) {
             try {
+                DiskLruCache.Editor editor = null;
                 synchronized (mHttpDiskCacheLock) {
                     snapshot = mHttpDiskCache.get(key);
+                    if (snapshot == null) {
+                        editor = mHttpDiskCache.edit(key);                      
+                    }
                 }
 
                 if (snapshot == null) {
                     if (BuildConfig.DEBUG) {
                         Logger.debug(TAG, "processBitmap, not found in http cache, downloading... " + imageData);
                     }
-                    DiskLruCache.Editor editor;
-                    synchronized (mHttpDiskCacheLock) {
-                        editor = mHttpDiskCache.edit(key);
-                    }
-
-                    if (editor != null && !isCancel()) {
-                        boolean success = (downloadUrlToStream(url,
-                                editor.newOutputStream(DISK_CACHE_INDEX)));
-
-                        synchronized (mHttpDiskCacheLock) {
-                            if (success) {
-                                editor.commit();
-                            } else {
-                                editor.abort();
-                            }
-                        }
-                    }
+                    downloadUrlToCache(editor, url);
                     synchronized (mHttpDiskCacheLock) {
                         snapshot = mHttpDiskCache.get(key);
                     }
                 } else if (BuildConfig.DEBUG) {
                     Logger.debug(TAG, "processBitmap, found in http cache " + imageData);
                 }
+              
+              
                 if (snapshot != null) {
                     fileInputStream =
                             (FileInputStream) snapshot.getInputStream(DISK_CACHE_INDEX);
