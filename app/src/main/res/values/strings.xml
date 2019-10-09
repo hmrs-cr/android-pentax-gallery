@@ -20,7 +20,7 @@
     <string name="share">Share</string>
     <string name="share_in">Share in...</string>
     <string name="download_again">Download again</string>
-    <string name="picture_number">Picture Number</string>
+    <string name="picture_number">Picture name</string>
     <string name="about">About...</string>
     <string name="not_found">%s not found.</string>
     <string name="process_downloads">Process Downloads</string>

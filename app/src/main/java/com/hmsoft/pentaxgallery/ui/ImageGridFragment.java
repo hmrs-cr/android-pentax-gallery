@@ -40,6 +40,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.view.MenuCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.Html;
+import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -98,7 +99,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         SearchView.OnQueryTextListener,
         ActionBar.OnNavigationListener,
         SwipeRefreshLayout.OnRefreshListener,
-        CameraController.OnCameraChangeListener {
+        CameraController.OnCameraChangeListener,
+        SearchView.OnCloseListener {
     private static final String TAG = "ImageGridFragment";
     private static final String IMAGE_CACHE_DIR = "thumbs";
 
@@ -377,6 +379,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 searchManager.getSearchableInfo(getActivity().getComponentName()));
 
         mSearchView.setOnQueryTextListener(this);
+        mSearchView.setOnCloseListener(this);
 
         mMenu = menu;
     }
@@ -861,24 +864,38 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         mSearchView.setQuery("", false);
         mSearchView.setIconified(true);
         if(mCamera.getImageList() != null) {
-            mCamera.setImageFilterText(query);
-            mAdapter.notifyDataSetChanged();
-            updateMenuItems();
+            if(query != null && query.length() > 0) {
+                mCamera.setImageFilterText(query);
+                mAdapter.notifyDataSetChanged();
+                updateMenuItems();
+            }
         }
         return true;
     }
 
+    private boolean isSearching;
+
     @Override
     public boolean onQueryTextChange(String newText) {
-        if(newText.length() == 4 && mCamera.getImageList() != null) {
-            int i = mCamera.getImageList().getFirstMatchIntex(newText);
-            if(i >= 0) {
-                startDetailActivity(null, i);
+        if(mCamera.getImageList() != null && !TextUtils.isEmpty(newText)) {
+            mCamera.setImageFilterText(newText);
+            mAdapter.notifyDataSetChanged();
+            updateMenuItems();
+            isSearching = true;
+        }
+        return false;
+    }
 
-            } else {
-                Toast.makeText(getActivity(), String.format(getString(R.string.not_found), newText) , Toast.LENGTH_LONG).show();
-            }
-            mSearchView.setQuery("", false);
+    @Override
+    public boolean onClose() {
+        if(isSearching) {
+            TaskExecutor.executeOnUIThread(new Runnable() {
+                @Override
+                public void run() {
+                    showView(false, -1);
+                }
+            });
+            isSearching = false;
         }
         return false;
     }
@@ -942,7 +959,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             Logger.debug(TAG, "Cache thread is running");
         }
     }
-
 
     /**
      * The main adapter that backs the GridView. This is fairly standard except the number of
