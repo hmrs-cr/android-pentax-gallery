@@ -61,4 +61,5 @@
     <string name="loading_picture_list">Loading picture list...</string>
     <string name="connecting_to">Trying to connect to %s...</string>
     <string name="loading_local_data">Loading local data...</string>
+    <string name="load_cache">Load cache</string>
 </resources>

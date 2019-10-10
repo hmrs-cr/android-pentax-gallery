@@ -543,7 +543,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 removeFilters();
                 int currentStorageIndex = mCamera.getCurrentStorageIndex();
                 int newStorageIndex = itemId == R.id.sync_images_1 ? 0 : 1;
-                syncPictureList(newStorageIndex, currentStorageIndex != newStorageIndex, true);
+                syncPictureList(newStorageIndex, currentStorageIndex != newStorageIndex,
+                        true, currentStorageIndex == newStorageIndex, null);
                 return true;
             case R.id.shutdown_when_download_done_queue:
                 DownloadService.toggleShutCameraDownWhenDone();
@@ -662,15 +663,16 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     /*package*/ void downloadJpgs(boolean forceRefresh) {
 
 
-        List<ImageData> enqueue = getDownloadList();        
-        if((mNeedUpdateImageList && (enqueue == null || enqueue.size() == 0)) || forceRefresh) {
-            syncPictureList(mCamera.getCurrentStorageIndex(), true, false, new OnRefreshDoneListener() {
-                @Override
-                public void onRefreshDone() {
-                    showView(true,-1);
-                    addToDownloadQueue(getDownloadList());
-                }
-            });
+        List<ImageData> enqueue = getDownloadList();
+        if ((mNeedUpdateImageList && (enqueue == null || enqueue.size() == 0)) || forceRefresh) {
+            syncPictureList(mCamera.getCurrentStorageIndex(), true, false, true,
+                    new OnRefreshDoneListener() {
+                        @Override
+                        public void onRefreshDone() {
+                            showView(true, -1);
+                            addToDownloadQueue(getDownloadList());
+                        }
+                    });
         } else {
             addToDownloadQueue(enqueue);
         }
@@ -765,7 +767,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 .show();
     }
 
-    private void showNoConnectedDialog() {
+    private void showNoConnectedDialog(final String cameraID) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), android.R.style.Theme_Material_Dialog_Alert);
 
         builder.setTitle("Connection error")
@@ -783,6 +785,23 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                         getActivity().finish();
                     }
                 })
+                .setNeutralButton(R.string.load_cache, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (cameraID != null) {
+                            setCurrentCamera(cameraID);
+                        } else {
+                            syncPictureList(true);
+                        }
+                    }
+                })
+                .setCancelable(true)
+                .setOnCancelListener(new DialogInterface.OnCancelListener() {
+                    @Override
+                    public void onCancel(DialogInterface dialog) {
+                        getActivity().finish();
+                    }
+                })
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .show();
     }
@@ -792,26 +811,26 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     }
 
     private void syncPictureList(int storageIndex, boolean loadImageListOnly, boolean showProgressBar) {
-        syncPictureList(storageIndex, loadImageListOnly, showProgressBar, null);
+        syncPictureList(storageIndex, loadImageListOnly, showProgressBar, false, null);
     }
 
     private void syncPictureList(int storageIndex, boolean loadImageListOnly, boolean showProgressBar,
-                                 OnRefreshDoneListener refreshDoneListener) {
-        if(mImageListTask == null) {
-            if(showProgressBar) {
+                                boolean connectionNeeded, OnRefreshDoneListener refreshDoneListener) {
+        if (mImageListTask == null) {
+            if (showProgressBar) {
                 mDontShowProgressBar = false;
                 TaskExecutor.executeOnUIThread(new Runnable() {
                     @Override
                     public void run() {
-                          if(!mDontShowProgressBar) {
-                              mProgressBar.setVisibility(View.VISIBLE);
-                              mSwipeRefreshLayout.setVisibility(View.GONE);
-                          }
+                        if (!mDontShowProgressBar) {
+                            mProgressBar.setVisibility(View.VISIBLE);
+                            mSwipeRefreshLayout.setVisibility(View.GONE);
+                        }
                     }
-                 }, 300);
+                }, 300);
             }
             mImageListTask = new ImageListTask(refreshDoneListener);
-            mImageListTask.execute(loadImageListOnly, storageIndex);
+            mImageListTask.execute(loadImageListOnly, storageIndex, null, connectionNeeded);
         }
     }
 
@@ -908,7 +927,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     @Override
     public void onRefresh() {
         mCamera.setCameraData(null);
-        syncPictureList(mCamera.getCurrentStorageIndex(), false, false);
+        syncPictureList(mCamera.getCurrentStorageIndex(), false, false, true, null);
     }
 
     @Override
@@ -931,7 +950,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         if(BuildConfig.DEBUG) Logger.debug(TAG, change.toString());
     }
 
-    private static Thread cacheThread = null;
+    private volatile static Thread cacheThread = null;
     private volatile boolean cancelCacheThread;
     private void cacheThumbnails(final ImageList imageList) {
         if (mCamera.isConnected() && cacheThread == null) {
@@ -1286,7 +1305,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
             boolean loadImageListOnly = params.length > 0 ? (Boolean) params[0] : false;
             int newStorageIndex = params.length > 1 ? (int) params[1] : -1;
-            String cameraId = params.length > 2 ? String.valueOf(params[2]) : null;
+            String cameraId = params.length > 2 && params[2] != null ? String.valueOf(params[2]) : null;
+            boolean connectionNeeded = params.length > 3 ? (Boolean) params[3] : false;
 
             DefaultSettings.getsInstance().load();
 
@@ -1299,6 +1319,10 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 if (mCamera.isConnected()) {
                     publishProgress(PROGRESS_CONNECTED, cameraData);
                 }
+            }
+
+            if(connectionNeeded && !mCamera.isConnected()) {
+                return null;
             }
 
             ImageList imageList = null;
@@ -1401,9 +1425,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 from = cameraDisplayName + " " + mCamera.getCurrentStorage().displayName;
             }
 
-            updateActionBarTitle();
-            updateMenuItems();
-
             if(mCamera.isConnected()) {
                 mCamera.getController().setCameraChangeListener(ImageGridFragment.this);
             }
@@ -1425,9 +1446,14 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                     showView(true, DEFAULT_MULTIFORMAT_FILTER);
                 }
             } else {
-                showNoConnectedDialog();
+                CameraData camera = mCamera.getCameraData();
+                showNoConnectedDialog(camera != null ? camera.cameraId : null);
                 mCamera.setCameraData(null);
             }
+
+            updateActionBarTitle();
+            updateMenuItems();
+
             updateProgressText(null);
             mImageListTask = null;
         }
