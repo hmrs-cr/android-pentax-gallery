@@ -250,7 +250,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         mAdapter.notifyDataSetChanged();
 
         if(imageList == null) {
-            syncPictureList(false);
+            //syncPictureList(false);
+            loadPictureList();
+
         } else {
             mProgressBar.setVisibility(View.GONE);
         }
@@ -770,10 +772,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     private void showNoConnectedDialog(final String cameraID) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), android.R.style.Theme_Material_Dialog_Alert);
 
-        builder.setTitle("Connection error")
-                .setMessage(Html.fromHtml(String.format("<center><br/><p><b>Can not connect to camera.</b></p><p>Open WiFi settings?</p></center>",
-                        getString(R.string.app_name), getString(R.string.intro_message), Utils.VERSION_STRING)))
-                .setPositiveButton("WiFi Settings", new DialogInterface.OnClickListener() {
+        builder.setTitle(getString(R.string.connection_error))
+                .setMessage(Html.fromHtml(getString(R.string.camera_not_connected)))
+                .setPositiveButton(getString(R.string.wifi_settings), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
@@ -785,16 +786,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                         getActivity().finish();
                     }
                 })
-                .setNeutralButton(R.string.load_cache, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (cameraID != null) {
-                            setCurrentCamera(cameraID);
-                        } else {
-                            syncPictureList(true);
-                        }
-                    }
-                })
                 .setCancelable(true)
                 .setOnCancelListener(new DialogInterface.OnCancelListener() {
                     @Override
@@ -802,12 +793,30 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                         getActivity().finish();
                     }
                 })
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .show();
+                .setIcon(android.R.drawable.ic_dialog_alert);
+
+                if(mCamera.getRegisteredCameras().size() > 0) {
+                    builder.setNeutralButton(R.string.load_cache, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if (cameraID != null) {
+                                setCurrentCamera(cameraID);
+                            } else {
+                                syncPictureList(true);
+                            }
+                        }
+                    });
+                }
+
+                builder.show();
     }
 
     private void syncPictureList(boolean loadImageListOnly) {
         syncPictureList(-1, loadImageListOnly, true);
+    }
+
+    private void loadPictureList() {
+        syncPictureList(-1, false, false, true, null);
     }
 
     private void syncPictureList(int storageIndex, boolean loadImageListOnly, boolean showProgressBar) {

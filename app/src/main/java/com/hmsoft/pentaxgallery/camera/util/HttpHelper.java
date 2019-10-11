@@ -94,7 +94,7 @@ public final class HttpHelper {
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (IOException e) {
-            Logger.warning(TAG, "getStringResponse", e);
+            if(BuildConfig.DEBUG) Logger.warning(TAG, "getStringResponse", e);
         }
         return null;
     }

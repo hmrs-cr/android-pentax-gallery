@@ -15,6 +15,7 @@ import com.hmsoft.pentaxgallery.camera.model.ImageListData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
 import com.hmsoft.pentaxgallery.util.Logger;
+import com.hmsoft.pentaxgallery.util.TaskExecutor;
 import com.hmsoft.pentaxgallery.util.Utils;
 import com.hmsoft.pentaxgallery.util.WifiHelper;
 
@@ -32,6 +33,7 @@ public class Camera {
   
     private final CameraController mController;
 
+    private CameraData mLatestConnectedCamera;
     private boolean mCameraConnected;
     private CameraData mCameraData;
     private int mCurrentStorageIndex;
@@ -77,6 +79,7 @@ public class Camera {
           int retryes = 3;
           int ci = 0;
 
+          latestConnectedCamera = mLatestConnectedCamera;
           while (!mCameraConnected) {
 
               if (mController.connectToCamera()) {
@@ -105,7 +108,7 @@ public class Camera {
                       WifiHelper.turnWifiOn(MyApplication.ApplicationContext, 1000);
 
                       if (ci == cameras.size()) {
-                          Logger.warning(TAG, "All registered mCameras failed to connect");
+                          if(BuildConfig.DEBUG) Logger.debug(TAG, "All registered mCameras failed to connect");
                           break;
                       }
 
@@ -153,6 +156,7 @@ public class Camera {
           if(BuildConfig.DEBUG) Logger.debug(TAG, "Camera data from cache: " + cameraData);
       }
 
+      mLatestConnectedCamera = cameraData;
       setCameraData(cameraData);
       
        int activeStorageIndex = -1;
@@ -176,7 +180,7 @@ public class Camera {
     }
 
     public List<CameraData> getRegisteredCameras() {
-        if (mCameras == null) {
+        if (mCameras == null && !TaskExecutor.isMainUIThread()) {
             mCameras = CameraData.getRegisteredCameras();
         }
         return mCameras;

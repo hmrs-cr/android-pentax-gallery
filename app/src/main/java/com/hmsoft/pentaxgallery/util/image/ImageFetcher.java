@@ -335,7 +335,7 @@ public class ImageFetcher extends ImageResizer {
             }
             return true;
         } catch (final IOException e) {
-            Logger.error(TAG, "Error in downloadBitmap - " + e);
+            if(BuildConfig.DEBUG) Logger.error(TAG, "Error in downloadBitmap - " + e);
         } finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();

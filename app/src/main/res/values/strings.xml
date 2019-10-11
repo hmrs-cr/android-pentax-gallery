@@ -62,4 +62,7 @@
     <string name="connecting_to">Trying to connect to %s...</string>
     <string name="loading_local_data">Loading local data...</string>
     <string name="load_cache">Load cache</string>
+    <string name="connection_error">Connection error</string>
+    <string name="camera_not_connected"><![CDATA[<center><br/><p><b>Camera not connected.</b></p></center>]]></string>
+    <string name="wifi_settings">WiFi Settings</string>
 </resources>
