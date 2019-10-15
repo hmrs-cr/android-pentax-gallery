@@ -19,6 +19,7 @@
 
 package com.hmsoft.pentaxgallery.ui;
 
+import android.annotation.SuppressLint;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.ActivityOptions;
@@ -51,6 +52,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.ViewTreeObserver;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
@@ -80,7 +83,6 @@ import com.hmsoft.pentaxgallery.util.image.ImageCache;
 import com.hmsoft.pentaxgallery.util.image.ImageFetcher;
 import com.hmsoft.pentaxgallery.util.image.ImageRotatorFetcher;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -258,6 +260,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         }
         DownloadService.setOnDownloadFinishedListener(this);
         updateActionBarTitle();
+
+        DownloadService.setDisplayNotification(false);
     }
 
     @Override
@@ -277,7 +281,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         mImageFetcher.setExitTasksEarly(true);
         mImageFetcher.flushCache();
         cancelCacheThread = true;
-        //CacheUtils.flush();
+
+        DownloadService.setOnDownloadFinishedListener(null);
+        DownloadService.setDisplayNotification(true);
     }
 
     @Override
@@ -582,12 +588,16 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         mSearchView.setQuery("", false);
         mSearchView.setIconified(true);
         mCamera.setImageFilter(null);
+        removeScreenOnFlag();
 
         int emptyViewText = R.string.no_pictures_in_camera;
         if(show) {
             switch (itemId) {
                 case R.id.view_downloads_only:
                     mCamera.setImageFilter(DownloadService.DownloadQueueFilter);
+                    if(mCamera.imageCount() > 0) {
+                        addScreenOnFlag();
+                    }
                     emptyViewText = R.string.all_pictures_transferred;
                     break;
                 case R.id.view_downloaded_only:
@@ -758,12 +768,22 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         mAdapter.clearSelection();
     }
 
+    @SuppressLint("DefaultLocale")
     private void showAboutDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), android.R.style.Theme_Material_Dialog_Alert);
 
+        String message = String.format("<center><br/><p><b>%s</b> by hmrs.cr.</p><p>%s</p><p><i>%s</i></p></center>",
+                getString(R.string.app_name), getString(R.string.intro_message), Utils.VERSION_STRING);
+
+        if(mCamera.isConnected()) {
+            CameraData cameraData = mCamera.getCameraData();
+            message += String.format("<p><b>Connected to %s (%s).</b> Battery: %d%s.</p>",
+                    cameraData.model, cameraData.serialNo, cameraData.battery, "%");
+        }
+
         builder.setTitle(R.string.about)
-                .setMessage(Html.fromHtml(String.format("<center><br/><p><b>%s</b> by hmrs.cr.</p><p>%s</p><p><i>%s</i></p></center>",
-                        getString(R.string.app_name), getString(R.string.intro_message), Utils.VERSION_STRING)))
+
+                .setMessage(Html.fromHtml(message))
                 .setPositiveButton(android.R.string.ok, null)
                 .setIcon(R.mipmap.ic_launcher)
                 .show();
@@ -879,12 +899,42 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 }
                 updateEmptyViewText(viewText);
             }
+            removeScreenOnFlag();
         }
     }
 
+    private void removeScreenOnFlag() {
+        Window window = getActivity().getWindow();
+        int flags = window.getAttributes().flags;
+        if((flags & WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) != 0) {
+            getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            if (Logger.DEBUG) Logger.debug(TAG, "removeScreenOnFlag");
+        }
+    }
+
+    private void addScreenOnFlag() {
+        Window window = getActivity().getWindow();
+        int flags = window.getAttributes().flags;
+        if((flags & WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) == 0) {
+            getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            if (Logger.DEBUG) Logger.debug(TAG, "addScreenOnFlag");
+        }
+    }
+
+    @SuppressLint("DefaultLocale")
     @Override
     public void onDownloadProgress(ImageData imageData, long donloadId, int progress) {
-
+        if (mCamera.hasFilter(DownloadService.DownloadQueueFilter)) {
+            CameraData cameraData = mCamera.getCameraData();
+            if (cameraData != null) {
+                Activity activity = getActivity();
+                if (activity != null) {
+                    ActionBar actionBar = getActivity().getActionBar();
+                    actionBar.setSubtitle(String.format("%s - %s (%d)",
+                            imageData.fileName, progress + "%", mCamera.imageCount()));
+                }
+            }
+        }
     }
 
     @Override
@@ -974,9 +1024,10 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                             ImageData imageData = imageList.getImage(c);
                             String url = imageData.getThumbUrl();
                             try {
+
                                 mImageFetcher.downloadUrlToCacheIfNeeded(url);
-                            } catch (IOException e) {
-                                e.printStackTrace();
+                            } catch (Exception e) {
+                                Logger.warning(TAG, "cacheThumbnails", e);
                             }
                         }
                         cacheThread = null;
@@ -1350,7 +1401,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             boolean needToLoadLocalData = !loadImageListOnly;
             if (mNeedUpdateImageList || imageList == null || imageList.length() == 0) {
                 imageList = mCamera.loadImageList();
-                cacheThumbnails(imageList);
+                //cacheThumbnails(imageList);
                 needToLoadLocalData = true;
             }
 

@@ -89,6 +89,16 @@ public class DownloadService extends IntentService {
     private static int downloadErrorCount = 0;
     private static boolean sShutCameraDownWhenDone;
 
+    private static boolean displayNotification;
+
+    public static boolean isDisplayingNotification() {
+        return displayNotification;
+    }
+
+    public static void setDisplayNotification(boolean displayNotification) {
+        DownloadService.displayNotification = displayNotification;
+    }
+
     public interface OnDownloadFinishedListener {
         void onDownloadProgress(ImageData imageData, long donloadId, int progress);
         void onDownloadFinished(ImageData imageData, long donloadId, int remainingDownloads,
@@ -165,9 +175,9 @@ public class DownloadService extends IntentService {
         DownloadEntry downloadEntry = Queue.findDownloadEntry(downloadId);
         if (downloadEntry == null) {
             if (BuildConfig.DEBUG) {
-                Logger.debug(TAG, "No downloadDown with id " + downloadId + " found");
-                return;
+                Logger.debug(TAG, "No download with id " + downloadId + " found");
             }
+            return;
         }
 
         boolean canceled = false;
@@ -221,14 +231,14 @@ public class DownloadService extends IntentService {
                     }
                 }
 
-                if (Build.VERSION.SDK_INT < /*Build.VERSION_CODES.Q*/ 29) {
+                //if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                     File localPath = imageData.getLocalPath();
                     values.put(MediaStore.MediaColumns.DATA, localPath.getAbsolutePath());
                     localPath.getParentFile().mkdirs();
-                } else {
+                //} else {
                     //MediaStore.MediaColumns.RELATIVE_PATH
                     //values.put(MediaStore.Images.Media.IS_PENDING, 1);
-                }
+                //}
 
                 uri = cr.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
                 if (uri == null) {
@@ -544,7 +554,7 @@ public class DownloadService extends IntentService {
                     sWackeLock = null;
                     if(BuildConfig.DEBUG) Logger.debug(TAG, "WakeLock released");
                 }
-                if(sShutCameraDownWhenDone) {
+                if(sShutCameraDownWhenDone && !wasCanceled) {
                     Camera.instance.powerOff();
                 }
                 downloadNotification(null, donloadId > 0 ? 0 : -1);
@@ -572,14 +582,25 @@ public class DownloadService extends IntentService {
             doDownloadFinished(downloadEntry.mImageData, downloadEntry.getDownloadId(), canceled);
         }
               
-        /*public*/ static boolean inBatchDownload;        
+        /*public*/ static boolean inBatchDownload;
+
+        private static NotificationManagerCompat notificationManager;
         
         public static ResultReceiver DownloadResultReceiver = new DownloadReceiver(new Handler());
 
         public static void downloadNotification(ImageData imageData, int progress) {
+
             Context context = MyApplication.ApplicationContext;
+            if(notificationManager == null) {
+                notificationManager = NotificationManagerCompat.from(context);
+            }
+
+            if(!displayNotification) {
+                notificationManager.cancel(PROGRESS_NOTIFICATION_ID);
+                return;
+            }
+
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID);
-            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
 
             PendingIntent pi = ImageGridActivity.getPendingIntent();
             builder.setSmallIcon(R.drawable.ic_cloud_download_white_24dp)

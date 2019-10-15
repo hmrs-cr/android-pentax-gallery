@@ -48,6 +48,8 @@ public class CameraData extends BaseResponse {
     public final String serialNo;
     public final String dateAdded;
     public final String cameraId;
+    public final int battery;
+    public final boolean hot;
 
     public final String key;
     public final String ssid;
@@ -77,6 +79,8 @@ public class CameraData extends BaseResponse {
         this.ssid = null;
 
         hashCode = 0;
+        battery = -1;
+        hot = false;
 
         storages.add(new StorageData(this));
     }
@@ -99,6 +103,9 @@ public class CameraData extends BaseResponse {
 
         key = jsonObject.optString("key");
         ssid = jsonObject.optString("ssid");
+
+        battery = jsonObject.optInt("battery", -1);
+        hot = jsonObject.optBoolean("hot");
 
         JSONArray storajesArray = jsonObject.optJSONArray("storages");
         if (storajesArray != null) {
