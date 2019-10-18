@@ -10,7 +10,7 @@
     <string name="find_in_gallery">Open in Gallery</string>
     <string name="not_found_in_gallery">%s not found in gallery</string>
     <string name="download_title">Pentax Gallery Download (%d)</string>
-    <string name="download_description">Downloading %s...</string>
+    <string name="download_description">Downloading %s…</string>
     <string name="cancel_download">Cancel download</string>
     <string name="download_now">Download now</string>
     <string name="view_all">View All</string>
@@ -18,10 +18,10 @@
     <string name="in_download_queue">In download queue…</string>
     <string name="downloading">Downloading…</string>
     <string name="share">Share</string>
-    <string name="share_in">Share in...</string>
+    <string name="share_in">Share in…</string>
     <string name="download_again">Download again</string>
     <string name="picture_number">Picture name</string>
-    <string name="about">About...</string>
+    <string name="about">Settings</string>
     <string name="not_found">%s not found.</string>
     <string name="process_downloads">Process Downloads</string>
     <string name="info">Info</string>
@@ -50,19 +50,23 @@
     <string name="jpg_only">JPG only</string>
     <string name="flagged_images">Flagged images</string>
     <string name="cancel_all_transfers">Cancel all transfers</string>
-    <string name="shutdown_camera_when_done">Shutdown camera when done</string>
+    <string name="shutdown_camera_when_done">Shutdown when done</string>
     <string name="all_pictures_transferred">All pictures transferred</string>
     <string name="no_pictures_transferred">No pictures transferred</string>
     <string name="no_flagged_pictures">No flagged pictures</string>
     <string name="no_raw_pictures">No RAW pictures</string>
     <string name="no_jpg_pictures">No JPG pictures</string>
     <string name="no_pictures_in_camera">No pictures in camera</string>
-    <string name="connecting">Connecting...</string>
-    <string name="loading_picture_list">Loading picture list...</string>
-    <string name="connecting_to">Trying to connect to %s...</string>
-    <string name="loading_local_data">Loading local data...</string>
+    <string name="connecting">Connecting…</string>
+    <string name="loading_picture_list">Loading picture list…</string>
+    <string name="connecting_to">Trying to connect to %s…</string>
+    <string name="loading_local_data">Loading local data…</string>
     <string name="load_cache">Load cache</string>
     <string name="connection_error">Connection error</string>
     <string name="camera_not_connected"><![CDATA[<center><br/><p><b>Camera not connected.</b></p></center>]]></string>
     <string name="wifi_settings">WiFi Settings</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="setting_title">Settings</string>
 </resources>

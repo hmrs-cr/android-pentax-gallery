@@ -1,7 +1,5 @@
 package com.hmsoft.pentaxgallery.camera;
 
-import android.support.annotation.WorkerThread;
-
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.camera.controller.CameraController;
@@ -24,6 +22,8 @@ import org.json.JSONException;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+
+import androidx.annotation.WorkerThread;
 
 public class Camera {
 

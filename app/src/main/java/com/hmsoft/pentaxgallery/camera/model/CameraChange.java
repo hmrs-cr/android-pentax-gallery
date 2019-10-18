@@ -1,6 +1,6 @@
 package com.hmsoft.pentaxgallery.camera.model;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import org.json.JSONException;
 import org.json.JSONObject;

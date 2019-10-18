@@ -23,13 +23,6 @@ import android.app.ActionBar;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.app.NavUtils;
-import android.support.v4.view.ViewPager;
 import android.util.DisplayMetrics;
 import android.view.GestureDetector;
 import android.view.Menu;
@@ -53,6 +46,14 @@ import com.hmsoft.pentaxgallery.util.image.ImageCache;
 import com.hmsoft.pentaxgallery.util.image.ImageFetcher;
 import com.hmsoft.pentaxgallery.util.image.ImageLocalFetcher;
 import com.hmsoft.pentaxgallery.util.image.ImageRotatorFetcher;
+
+import androidx.annotation.NonNull;
+import androidx.core.app.NavUtils;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentStatePagerAdapter;
+import androidx.viewpager.widget.ViewPager;
 
 public class ImageDetailActivity extends FragmentActivity implements OnClickListener,
         GestureDetector.OnGestureListener,

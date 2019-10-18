@@ -20,6 +20,7 @@ public class DefaultSettings {
     public static String DEFAULT_READ_TIME_OUT = "default_read_time_out";
     public static String AUTO_DOWNLOAD_JPGS = "auto_download_jpgs";
     public static String LOAD_LOCAL_IMAGE_DATA = "load_local_image_data";
+    public static String SHUTDOWN_CAMERA_AFTER_DOWNLOAD = "shutdown_camera_after_download";
 
     private static DefaultSettings sInstance;
 
@@ -48,7 +49,7 @@ public class DefaultSettings {
             filesPath.mkdirs();
         }
 
-        return new File(filesPath, "params.properties");
+        return new File(filesPath, "default.properties");
     }
 
     public void load() {
@@ -77,6 +78,7 @@ public class DefaultSettings {
             mProperties.setProperty(DEFAULT_READ_TIME_OUT, "30");
             mProperties.setProperty(AUTO_DOWNLOAD_JPGS, Boolean.toString(false));
             mProperties.setProperty(LOAD_LOCAL_IMAGE_DATA, Boolean.toString(false));
+            mProperties.setProperty(SHUTDOWN_CAMERA_AFTER_DOWNLOAD, Boolean.toString(true));
 
             try {
                 FileOutputStream outputStream = new FileOutputStream(getSettingFile());

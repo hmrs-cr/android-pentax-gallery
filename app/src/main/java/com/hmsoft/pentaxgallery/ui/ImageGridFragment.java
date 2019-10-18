@@ -37,9 +37,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.provider.Settings;
-import android.support.v4.app.Fragment;
-import android.support.v4.view.MenuCompat;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.Html;
 import android.text.TextUtils;
 import android.util.TypedValue;
@@ -75,6 +72,7 @@ import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageList;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
 import com.hmsoft.pentaxgallery.service.DownloadService;
+import com.hmsoft.pentaxgallery.ui.preferences.PreferencesActivity;
 import com.hmsoft.pentaxgallery.util.DefaultSettings;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
@@ -87,6 +85,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import androidx.core.view.MenuCompat;
+import androidx.fragment.app.Fragment;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 /**
  * The main fragment that powers the ImageGridActivity screen. Fairly straight forward GridView
@@ -518,7 +520,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         int itemId = item.getItemId();
 
         if(itemId == R.id.about) {
-            showAboutDialog();
+            PreferencesActivity.start(getActivity());
             return true;
         }
 
@@ -585,8 +587,11 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     }
 
     private void showView(boolean show, int itemId) {
-        mSearchView.setQuery("", false);
-        mSearchView.setIconified(true);
+        if(mSearchView != null) {
+            mSearchView.setQuery("", false);
+            mSearchView.setIconified(true);
+        }
+
         mCamera.setImageFilter(null);
         removeScreenOnFlag();
 
@@ -1516,6 +1521,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
             updateProgressText(null);
             mImageListTask = null;
+
+            DownloadService.setShutCameraDownWhenDone(DefaultSettings.getsInstance().getBoolValue(DefaultSettings.SHUTDOWN_CAMERA_AFTER_DOWNLOAD));
         }
 
         @Override

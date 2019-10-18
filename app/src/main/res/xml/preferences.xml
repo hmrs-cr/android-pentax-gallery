@@ -1,0 +1,21 @@
+<PreferenceScreen
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        app:key="cameras_category"
+        app:title="Cameras">
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:key="help_category"
+        app:title="Help">
+
+        <Preference
+            app:key="about"
+            app:summary="Version information"
+            app:title="About..."/>
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

@@ -15,8 +15,8 @@ import android.os.Handler;
 import android.os.PowerManager;
 import android.os.ResultReceiver;
 import android.provider.MediaStore;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import android.widget.Toast;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
@@ -53,13 +53,6 @@ import java.util.List;
 
 import androidx.annotation.Nullable;
 
-/**
- * An {@link IntentService} subclass for handling asynchronous task requests in
- * a service on a separate handler thread.
- * <p>
- * TODO: Customize class - update intent actions, extra parameters and static
- * helper methods.
- */
 public class DownloadService extends IntentService {
 
     private static final String TAG = "DownloadService";
