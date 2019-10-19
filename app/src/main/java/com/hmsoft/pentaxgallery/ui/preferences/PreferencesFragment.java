@@ -30,7 +30,7 @@ public class PreferencesFragment extends PreferenceFragmentCompat {
             preference.setTitle(camera.getDisplayName());
             preference.setKey(camera.key);
             preference.setSummary(camera.serialNo);
-            preference.setFragment("com.hmsoft.pentaxgallery.ui.preferences.CameraPreferenceFragment");
+            preference.setFragment(CameraPreferenceFragment.class.getName());
             preferenceCategory.addPreference(preference);
         }
 

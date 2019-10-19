@@ -73,7 +73,6 @@ import com.hmsoft.pentaxgallery.camera.model.ImageList;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
 import com.hmsoft.pentaxgallery.service.DownloadService;
 import com.hmsoft.pentaxgallery.ui.preferences.PreferencesActivity;
-import com.hmsoft.pentaxgallery.util.DefaultSettings;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 import com.hmsoft.pentaxgallery.util.Utils;
@@ -786,7 +785,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                     cameraData.model, cameraData.serialNo, cameraData.battery, "%");
         }
 
-        builder.setTitle(R.string.about)
+        builder.setTitle(R.string.settings)
 
                 .setMessage(Html.fromHtml(message))
                 .setPositiveButton(android.R.string.ok, null)
@@ -1002,8 +1001,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 ImageData imageData = mCamera.addImageToStorage(change.storage, change.filepath);
                 added = imageData != null;
                 if(added) {
-                    if (!imageData.isRaw &&
-                        DefaultSettings.getsInstance().getBoolValue(DefaultSettings.AUTO_DOWNLOAD_JPGS)) {
+                    if ((imageData.isRaw && mCamera.getCameraData().preferences.autoDownloadRaw()) ||
+                            (!imageData.isRaw && mCamera.getCameraData().preferences.autoDownloadJpg())) {
                             DownloadService.addDownloadQueue(imageData);
                     }
                     mAdapter.notifyDataSetChanged();
@@ -1373,8 +1372,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             String cameraId = params.length > 2 && params[2] != null ? String.valueOf(params[2]) : null;
             boolean connectionNeeded = params.length > 3 ? (Boolean) params[3] : false;
 
-            DefaultSettings.getsInstance().load();
-
             CameraData cameraData;
             if (mCamera.getCameraData() != null && loadImageListOnly) {
                 cameraData = mCamera.getCameraData();
@@ -1510,6 +1507,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 if(imageList.hasMixedFormats) {
                     showView(true, DEFAULT_MULTIFORMAT_FILTER);
                 }
+                DownloadService.setShutCameraDownWhenDone(mCamera.getCameraData().preferences.shutdownAfterTransfer());
             } else {
                 CameraData camera = mCamera.getCameraData();
                 showNoConnectedDialog(camera != null ? camera.cameraId : null);
@@ -1521,8 +1519,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
             updateProgressText(null);
             mImageListTask = null;
-
-            DownloadService.setShutCameraDownWhenDone(DefaultSettings.getsInstance().getBoolValue(DefaultSettings.SHUTDOWN_CAMERA_AFTER_DOWNLOAD));
         }
 
         @Override

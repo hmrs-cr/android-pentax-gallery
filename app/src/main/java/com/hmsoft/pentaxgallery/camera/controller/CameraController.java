@@ -19,6 +19,7 @@ package com.hmsoft.pentaxgallery.camera.controller;
 import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
 import com.hmsoft.pentaxgallery.camera.model.CameraChange;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
+import com.hmsoft.pentaxgallery.camera.model.CameraPreferences;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageListData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
@@ -53,6 +54,8 @@ public interface CameraController {
             }
         }
     }
+
+    void setPreferences(CameraPreferences preferences);
 
     BaseResponse ping();
     void ping(final CameraController.OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);

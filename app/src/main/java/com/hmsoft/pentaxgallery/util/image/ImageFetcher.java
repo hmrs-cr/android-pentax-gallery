@@ -24,8 +24,9 @@ import android.content.Context;
 import android.graphics.Bitmap;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
+import com.hmsoft.pentaxgallery.camera.Camera;
+import com.hmsoft.pentaxgallery.camera.model.CameraPreferences;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
-import com.hmsoft.pentaxgallery.util.DefaultSettings;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.cache.CacheUtils;
 import com.hmsoft.pentaxgallery.util.cache.DiskLruCache;
@@ -57,8 +58,6 @@ public class ImageFetcher extends ImageResizer {
     private boolean mCancel;
     protected ContentResolver mContentResolver;
 
-    private final boolean loadLocalImageData;
-
     /**
      * Initialize providing a target image width and height for the processing images.
      *
@@ -68,7 +67,6 @@ public class ImageFetcher extends ImageResizer {
      */
     public ImageFetcher(Context context, int imageWidth, int imageHeight) {
         super(context, imageWidth, imageHeight);
-        loadLocalImageData = DefaultSettings.getsInstance().getBoolValue(DefaultSettings.LOAD_LOCAL_IMAGE_DATA);
         init(context);
     }
 
@@ -80,7 +78,6 @@ public class ImageFetcher extends ImageResizer {
      */
     public ImageFetcher(Context context, int imageSize) {
         super(context, imageSize);
-        loadLocalImageData = DefaultSettings.getsInstance().getBoolValue(DefaultSettings.LOAD_LOCAL_IMAGE_DATA);
         init(context);
     }
 
@@ -283,6 +280,7 @@ public class ImageFetcher extends ImageResizer {
             }
         }
 
+        boolean loadLocalImageData = Camera.instance.getCameraData().preferences.loadLocalImageData();
         if (loadLocalImageData && fileInputStream == null && imageData.existsOnLocalStorage()) {
             try {
                 if(BuildConfig.DEBUG) Logger.debug(TAG, "Loading picture from " + imageData.getLocalStorageUri());
@@ -320,12 +318,12 @@ public class ImageFetcher extends ImageResizer {
 
         try {
 
-            DefaultSettings settings = DefaultSettings.getsInstance();
+            CameraPreferences preferences = Camera.instance.getCameraData().preferences;
 
             final URL url = new URL(urlString);
             urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setConnectTimeout(settings.getIntValue(DefaultSettings.DEFAULT_CONNECT_TIME_OUT) * 1000);
-            urlConnection.setReadTimeout(settings.getIntValue(DefaultSettings.DEFAULT_READ_TIME_OUT) * 1000);
+            urlConnection.setConnectTimeout(preferences.getConnectTimeout());
+            urlConnection.setReadTimeout(preferences.getReadTimeout());
             in = new BufferedInputStream(urlConnection.getInputStream(), IO_BUFFER_SIZE);
             out = new BufferedOutputStream(outputStream, IO_BUFFER_SIZE);
 

@@ -32,8 +32,8 @@ import android.widget.ImageView;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.R;
+import com.hmsoft.pentaxgallery.camera.Camera;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
-import com.hmsoft.pentaxgallery.util.DefaultSettings;
 import com.hmsoft.pentaxgallery.util.Logger;
 
 import java.lang.ref.WeakReference;
@@ -125,7 +125,7 @@ public abstract class UrlImageWorker {
             imageView.setImageDrawable(asyncDrawable);
 
             if(mExecutor == null) {
-                int numThreads = DefaultSettings.getsInstance().getIntValue(DefaultSettings.THUMB_THREAD_NUMBER);
+                int numThreads = Camera.instance.getCameraData().preferences.getThreadNumber();
                 mExecutor = Executors.newFixedThreadPool(numThreads);
             }
 

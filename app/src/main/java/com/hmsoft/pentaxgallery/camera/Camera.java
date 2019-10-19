@@ -6,6 +6,7 @@ import com.hmsoft.pentaxgallery.camera.controller.CameraController;
 import com.hmsoft.pentaxgallery.camera.implementation.pentax.PentaxController;
 import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
+import com.hmsoft.pentaxgallery.camera.model.CameraPreferences;
 import com.hmsoft.pentaxgallery.camera.model.FilteredImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageList;
@@ -27,7 +28,7 @@ import androidx.annotation.WorkerThread;
 
 public class Camera {
 
-    public static final Camera instance = new Camera(new PentaxController());
+    public static final Camera instance = new Camera(new PentaxController(CameraPreferences.Default));
 
     private static final String TAG = "Camera";
   
@@ -39,6 +40,20 @@ public class Camera {
     private int mCurrentStorageIndex;
     private FilteredImageList mFilteredImageList = null;
     private List<CameraData> mCameras;
+
+    public File getImageLocalPath(ImageData imageData) {
+
+        CameraData cameraData = getCameraData();
+        String base = null;
+        if (cameraData != null) {
+            if(imageData.isRaw) {
+                base = cameraData.preferences.getRawAlbumName();
+            } else {
+                base = cameraData.preferences.getAlbumName();
+            }
+        }
+        return new File(base, imageData.uniqueFileName);
+    }
 
     public interface OnWifiConnectionAttemptListener {
         void onWifiConnectionAttempt(String ssid);
@@ -72,6 +87,7 @@ public class Camera {
           for(CameraData camera : getRegisteredCameras()) {
               if(camera.cameraId.equals(cameraId)) {
                   latestConnectedCamera = camera;
+                  mController.setPreferences(camera.preferences);
                   break;
               }
           }
@@ -91,7 +107,9 @@ public class Camera {
                   Logger.warning(TAG, "Could not bind to WiFi");
               }
 
-              if (cameraData == null) {
+              if (cameraData != null) {
+                  mController.setPreferences(cameraData.preferences);
+              } else {
 
                   if (retryes-- == 0) {
                       Logger.warning(TAG, "Too many failed attempts to connect");
@@ -113,6 +131,7 @@ public class Camera {
                       }
 
                       cameraData = cameras.get(ci++);
+                      mController.setPreferences(cameraData.preferences);
 
                       if (listener != null) {
                           listener.onWifiConnectionAttempt(cameraData.ssid);

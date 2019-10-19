@@ -40,7 +40,6 @@ import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.service.DownloadService;
-import com.hmsoft.pentaxgallery.util.DefaultSettings;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 import com.hmsoft.pentaxgallery.util.image.ImageCache;
 import com.hmsoft.pentaxgallery.util.image.ImageFetcher;
@@ -93,7 +92,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
         cacheParams.setMemCacheSizePercent(0.40f); // Set memory cache to 35% of app memory
 
         // The ImageFetcher takes care of loading images into our ImageView children asynchronously
-        boolean loadLocalImageData = DefaultSettings.getsInstance().getBoolValue(DefaultSettings.LOAD_LOCAL_IMAGE_DATA);
+        boolean loadLocalImageData = Camera.instance.getCameraData().preferences.loadLocalImageData();
 
         mImageFetcher = loadLocalImageData ? new ImageLocalFetcher(this, longest) : new ImageRotatorFetcher(this, longest);
         mImageFetcher.addImageCache(getSupportFragmentManager(), cacheParams);

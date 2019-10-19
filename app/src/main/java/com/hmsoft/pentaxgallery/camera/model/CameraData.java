@@ -53,6 +53,7 @@ public class CameraData extends BaseResponse {
 
     public final String key;
     public final String ssid;
+    public final CameraPreferences preferences;
 
     public final int hashCode;
 
@@ -83,6 +84,8 @@ public class CameraData extends BaseResponse {
         hot = false;
 
         storages.add(new StorageData(this));
+
+        preferences = CameraPreferences.Default;
     }
 
     public CameraData(JSONTokener jsonTokener) throws JSONException {
@@ -107,6 +110,9 @@ public class CameraData extends BaseResponse {
         battery = jsonObject.optInt("battery", -1);
         hot = jsonObject.optBoolean("hot");
 
+        preferences = new CameraPreferences(this);
+        preferences.load();
+
         JSONArray storajesArray = jsonObject.optJSONArray("storages");
         if (storajesArray != null) {
             int len = storajesArray.length();
@@ -122,6 +128,8 @@ public class CameraData extends BaseResponse {
         if(storages.size() == 0) {
             storages.add(new StorageData(this));
         }
+
+
     }
 
     @Override

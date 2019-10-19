@@ -20,8 +20,6 @@ package com.hmsoft.pentaxgallery.camera.implementation.pentax.model;
 
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 
-import java.io.File;
-
 import androidx.exifinterface.media.ExifInterface;
 
 public class PentaxImageMetaData extends ImageMetaData {
@@ -32,10 +30,10 @@ public class PentaxImageMetaData extends ImageMetaData {
         return mExifInterface;
     }
   
-    public PentaxImageMetaData(File file, ExifInterface exifInterface) {
+    public PentaxImageMetaData(ExifInterface exifInterface) {
         super(
-            file.getParent(),
-            file.getName(),
+            "",
+            "",
             true,
             exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, 0),
             "Pentax",

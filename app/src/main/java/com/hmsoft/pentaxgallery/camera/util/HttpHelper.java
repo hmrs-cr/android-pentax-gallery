@@ -65,16 +65,16 @@ public final class HttpHelper {
         return getStringResponse(url, 0,0, method);
     }
 
-    public static String getStringResponse(String url, int connectTimeoutInSeconds, int readTimeoutInSeconds) {
-        return getStringResponse(url, connectTimeoutInSeconds, readTimeoutInSeconds, RequestMethod.DEFAULT);
+    public static String getStringResponse(String url, int connectTimeout, int readTimeout) {
+        return getStringResponse(url, connectTimeout, readTimeout, RequestMethod.DEFAULT);
     }
 
-    public static String getStringResponse(String url, int connectTimeoutInSeconds, int readTimeoutInSeconds, RequestMethod method) {
+    public static String getStringResponse(String url, int connectTimeout, int readTimeout, RequestMethod method) {
         try {
                 HttpURLConnection urlConnection = (HttpURLConnection) new URL(url).openConnection();
                 try {
-                    urlConnection.setConnectTimeout(connectTimeoutInSeconds * 1000);
-                    urlConnection.setReadTimeout(readTimeoutInSeconds * 1000);
+                    urlConnection.setConnectTimeout(connectTimeout);
+                    urlConnection.setReadTimeout(readTimeout);
                     if(method != RequestMethod.DEFAULT) {
                         urlConnection.setRequestMethod(method.toString());
                     }

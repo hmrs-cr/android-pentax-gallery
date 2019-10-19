@@ -93,8 +93,6 @@ public abstract class ImageData {
     public abstract String getThumbUrl();
 
     public abstract String getDownloadUrl();
-
-    public abstract File getLocalPath();
   
     public abstract ImageMetaData readMetadata();
 

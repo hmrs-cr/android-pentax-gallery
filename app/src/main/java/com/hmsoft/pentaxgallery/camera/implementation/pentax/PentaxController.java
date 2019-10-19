@@ -22,12 +22,12 @@ import com.hmsoft.pentaxgallery.camera.implementation.pentax.model.PentaxImageLi
 import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
 import com.hmsoft.pentaxgallery.camera.model.CameraChange;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
+import com.hmsoft.pentaxgallery.camera.model.CameraPreferences;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageListData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
 import com.hmsoft.pentaxgallery.camera.util.HttpHelper;
-import com.hmsoft.pentaxgallery.util.DefaultSettings;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 
@@ -45,13 +45,16 @@ public class PentaxController implements CameraController {
     
     private static final int NORMAL_CLOSURE_STATUS = 1000;
 
-    private final int connectTimeOut;
-    private final int readTimeOut;
+    private int connectTimeOut;
+    private int readTimeOut;
 
-    public PentaxController() {
-        DefaultSettings settings = DefaultSettings.getsInstance();
-        connectTimeOut = settings.getIntValue(DefaultSettings.DEFAULT_CONNECT_TIME_OUT);
-        readTimeOut = settings.getIntValue(DefaultSettings.DEFAULT_READ_TIME_OUT);
+    public PentaxController(CameraPreferences preferences) {
+        setPreferences(preferences);
+    }
+
+    public void setPreferences(CameraPreferences preferences) {
+        connectTimeOut = preferences.getConnectTimeout();
+        readTimeOut = preferences.getReadTimeout();
     }
 
     protected String getDeviceInfoJson() {

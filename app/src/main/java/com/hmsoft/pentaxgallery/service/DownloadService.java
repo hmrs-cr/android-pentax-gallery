@@ -11,12 +11,11 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.os.ResultReceiver;
 import android.provider.MediaStore;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import android.widget.Toast;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
@@ -29,7 +28,6 @@ import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.ui.ImageGridActivity;
-import com.hmsoft.pentaxgallery.util.DefaultSettings;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.Utils;
 
@@ -52,6 +50,8 @@ import java.util.Hashtable;
 import java.util.List;
 
 import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 public class DownloadService extends IntentService {
 
@@ -194,16 +194,15 @@ public class DownloadService extends IntentService {
             URL url = new URL(imageData.getDownloadUrl());
             URLConnection connection = url.openConnection();
 
-            DefaultSettings settings = DefaultSettings.getsInstance();
-            int connectTimeOut = settings.getIntValue(DefaultSettings.DEFAULT_CONNECT_TIME_OUT);
-            connection.setConnectTimeout(connectTimeOut * 500);
+            Camera camera =Camera.instance;
 
+            connection.setConnectTimeout(camera.getCameraData().preferences.getConnectTimeout() / 2);
             connection.connect();
 
             // this will be useful so that you can show a typical 0-100% progress bar
             fileLength = connection.getContentLength();
 
-            ImageMetaData imageMetaData = Camera.instance.getImageInfo(imageData);
+            ImageMetaData imageMetaData = camera.getImageInfo(imageData);
             uri = imageData.getLocalStorageUri();
 
             if (uri == null) {
@@ -225,7 +224,8 @@ public class DownloadService extends IntentService {
                 }
 
                 //if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-                    File localPath = imageData.getLocalPath();
+                    File localPath = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+                            camera.getImageLocalPath(imageData).getPath());
                     values.put(MediaStore.MediaColumns.DATA, localPath.getAbsolutePath());
                     localPath.getParentFile().mkdirs();
                 //} else {
