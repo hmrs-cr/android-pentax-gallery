@@ -19,7 +19,6 @@
 
 package com.hmsoft.pentaxgallery.ui;
 
-import android.app.ActionBar;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -47,14 +46,15 @@ import com.hmsoft.pentaxgallery.util.image.ImageLocalFetcher;
 import com.hmsoft.pentaxgallery.util.image.ImageRotatorFetcher;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NavUtils;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
-public class ImageDetailActivity extends FragmentActivity implements OnClickListener,
+public class ImageDetailActivity extends AppCompatActivity implements OnClickListener,
         GestureDetector.OnGestureListener,
         GestureDetector.OnDoubleTapListener, ViewPager.OnPageChangeListener,
         DownloadService.OnDownloadFinishedListener,
@@ -113,7 +113,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
         // Enable some additional newer visibility and ActionBar features to create a more
         // immersive photo viewing experience
 
-        final ActionBar actionBar = getActionBar();
+        final ActionBar actionBar = getSupportActionBar();
         if(actionBar != null) {
             // Hide title text and set home as up
             actionBar.setDisplayHomeAsUpEnabled(true);
@@ -407,7 +407,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
 
     private void updateActionBarTitle() {        
         if(imageData != null) {
-            ActionBar actionBar = getActionBar();
+            ActionBar actionBar = getSupportActionBar();
             if (actionBar != null) {
                 actionBar.setTitle(imageData.fileName);                
                 String subtitle = null;

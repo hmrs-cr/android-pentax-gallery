@@ -28,13 +28,14 @@ import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.util.Logger;
 
-import androidx.fragment.app.FragmentActivity;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentTransaction;
 
 /**
  * Simple FragmentActivity to hold the main {@link ImageGridFragment} and not much else.
  */
-public class ImageGridActivity extends FragmentActivity {
+public class ImageGridActivity extends AppCompatActivity {
     private static final String TAG = "ImageGridActivity";
 
     public static final String EXTRA_START_DOWNLOADS = "EXTRA_START_DOWNLOADS";
@@ -93,6 +94,9 @@ public class ImageGridActivity extends FragmentActivity {
             ft.commit();
         }
 
-
+        final ActionBar actionBar = getSupportActionBar();
+        if(actionBar != null) {
+            actionBar.setDisplayShowTitleEnabled(true);
+        }
     }
 }

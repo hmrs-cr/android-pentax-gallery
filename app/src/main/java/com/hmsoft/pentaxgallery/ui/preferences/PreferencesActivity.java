@@ -10,6 +10,7 @@ import com.hmsoft.pentaxgallery.service.DownloadService;
 
 import java.util.List;
 
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -33,6 +34,13 @@ public class PreferencesActivity extends AppCompatActivity implements
                 .beginTransaction()
                 .replace(android.R.id.content, new PreferencesFragment())
                 .commit();
+
+        final ActionBar actionBar = getSupportActionBar();
+        if(actionBar != null) {
+            // Hide title text and set home as up
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setDisplayShowTitleEnabled(true);
+        }
 
         getSupportFragmentManager().addOnBackStackChangedListener(this);
         setTitle(R.string.setting_title);

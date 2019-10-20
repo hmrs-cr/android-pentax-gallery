@@ -20,7 +20,6 @@
 package com.hmsoft.pentaxgallery.ui;
 
 import android.annotation.SuppressLint;
-import android.app.ActionBar;
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.app.AlertDialog;
@@ -85,6 +84,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.MenuCompat;
 import androidx.fragment.app.Fragment;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -933,7 +934,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             if (cameraData != null) {
                 Activity activity = getActivity();
                 if (activity != null) {
-                    ActionBar actionBar = getActivity().getActionBar();
+                    ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
                     actionBar.setSubtitle(String.format("%s - %s (%d)",
                             imageData.fileName, progress + "%", mCamera.imageCount()));
                 }
@@ -1297,7 +1298,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         if(cameraData != null) {
             Activity activity = getActivity();
             if(activity != null) {
-                ActionBar actionBar = getActivity().getActionBar();
+                ActionBar actionBar = ((AppCompatActivity)activity).getSupportActionBar();
                 actionBar.setTitle(cameraData.getDisplayName());
                 StorageData storageData = mCamera.getCurrentStorage();
                 if(storageData.getImageList() != null) {
