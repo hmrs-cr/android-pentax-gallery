@@ -2,19 +2,22 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <PreferenceCategory
-        app:key="cameras_category"
-        app:title="Cameras">
+        app:key="@string/key_cameras_category"
+        app:title="@string/cameras">
+
+        <Preference
+            app:key="loading"
+            app:title="@string/loading_camera_list"/>
 
     </PreferenceCategory>
 
     <PreferenceCategory
-        app:key="help_category"
+        app:key="@string/key_help_category"
         app:title="Help">
 
         <Preference
-            app:key="about"
-            app:summary="Version information"
-            app:title="About..."/>
+            app:key="@string/key_about"
+            app:title="@string/about_label"/>
 
     </PreferenceCategory>
 

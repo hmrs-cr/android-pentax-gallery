@@ -3,6 +3,7 @@ package com.hmsoft.pentaxgallery.ui.preferences;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.MenuItem;
 
 import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.Camera;
@@ -12,6 +13,7 @@ import java.util.List;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NavUtils;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.preference.Preference;
@@ -21,6 +23,7 @@ public class PreferencesActivity extends AppCompatActivity implements
         PreferenceFragmentCompat.OnPreferenceStartFragmentCallback,
         FragmentManager.OnBackStackChangedListener {
 
+    /*package*/ final PreferencesFragment preferencesFragment = new PreferencesFragment();
 
     public static void start(Activity activity) {
         Intent i = new Intent(activity, PreferencesActivity.class);
@@ -32,7 +35,7 @@ public class PreferencesActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         getSupportFragmentManager()
                 .beginTransaction()
-                .replace(android.R.id.content, new PreferencesFragment())
+                .replace(android.R.id.content, preferencesFragment)
                 .commit();
 
         final ActionBar actionBar = getSupportActionBar();
@@ -41,6 +44,7 @@ public class PreferencesActivity extends AppCompatActivity implements
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setDisplayShowTitleEnabled(true);
         }
+
 
         getSupportFragmentManager().addOnBackStackChangedListener(this);
         setTitle(R.string.setting_title);
@@ -53,6 +57,7 @@ public class PreferencesActivity extends AppCompatActivity implements
         final Fragment fragment = getSupportFragmentManager().getFragmentFactory().instantiate(
                 getClassLoader(),
                 pref.getFragment());
+
 
         setTitle(pref.getTitle());
 
@@ -80,5 +85,20 @@ public class PreferencesActivity extends AppCompatActivity implements
     protected void onPause() {
         super.onPause();
         DownloadService.setShutCameraDownWhenDone(Camera.instance.getCameraData().preferences.shutdownAfterTransfer());
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                List<Fragment>  fragments = getSupportFragmentManager().getFragments();
+                if(fragments.size() == 1 && fragments.get(0) instanceof PreferencesFragment) {
+                    NavUtils.navigateUpFromSameTask(this);
+                } else {
+                    getSupportFragmentManager().popBackStack();
+                }
+                return true;
+        }
+        return false;
     }
 }

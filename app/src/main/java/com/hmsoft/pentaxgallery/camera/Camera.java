@@ -39,7 +39,7 @@ public class Camera {
     private CameraData mCameraData;
     private int mCurrentStorageIndex;
     private FilteredImageList mFilteredImageList = null;
-    private List<CameraData> mCameras;
+    private volatile List<CameraData> mCameras;
 
     public File getImageLocalPath(ImageData imageData) {
 
@@ -200,9 +200,14 @@ public class Camera {
 
     public List<CameraData> getRegisteredCameras() {
         if (mCameras == null && !TaskExecutor.isMainUIThread()) {
-            mCameras = CameraData.getRegisteredCameras();
+            loadCameraList();
         }
         return mCameras;
+    }
+
+    @WorkerThread
+    public synchronized void loadCameraList() {
+        mCameras = CameraData.getRegisteredCameras();
     }
 
     @WorkerThread

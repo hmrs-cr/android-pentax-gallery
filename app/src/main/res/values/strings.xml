@@ -72,7 +72,6 @@
     <string name="auto_download_jpgs_label">Auto download JPGs</string>
     <string name="basic">Basic</string>
     <string name="advanced">Advanced</string>
-    <string name="about">About...</string>
     <string name="version_information">Version information</string>
     <string name="auto_download_raw_label">Auto Download RAWs</string>
     <string name="basic_camera_settings">Basic camera settings</string>
@@ -86,4 +85,7 @@
     <string name="shutdown_camera_after_transfer_label">Shutdown camera after transfer</string>
     <string name="shutdown_camera_after_transfer_summary">Shutdown camera when picture transfer done</string>
     <string name="remove_camera_confirmation">Do you really want to remove %s?</string>
+    <string name="cameras">Cameras</string>
+    <string name="loading_camera_list">Loading camera list…</string>
+    <string name="about_label">About…</string>
 </resources>

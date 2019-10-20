@@ -264,6 +264,10 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         updateActionBarTitle();
 
         DownloadService.setDisplayNotification(false);
+
+        if(mMenu != null) {
+            mMenu.removeGroup(R.id.camera_menu_list);
+        }
     }
 
     @Override
@@ -771,27 +775,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
         Toast.makeText (getActivity(), String.format(getString(R.string.added_to_download_queue), selectedImages.size()), Toast.LENGTH_LONG).show();
         mAdapter.clearSelection();
-    }
-
-    @SuppressLint("DefaultLocale")
-    private void showAboutDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), android.R.style.Theme_Material_Dialog_Alert);
-
-        String message = String.format("<center><br/><p><b>%s</b> by hmrs.cr.</p><p>%s</p><p><i>%s</i></p></center>",
-                getString(R.string.app_name), getString(R.string.intro_message), Utils.VERSION_STRING);
-
-        if(mCamera.isConnected()) {
-            CameraData cameraData = mCamera.getCameraData();
-            message += String.format("<p><b>Connected to %s (%s).</b> Battery: %d%s.</p>",
-                    cameraData.model, cameraData.serialNo, cameraData.battery, "%");
-        }
-
-        builder.setTitle(R.string.settings)
-
-                .setMessage(Html.fromHtml(message))
-                .setPositiveButton(android.R.string.ok, null)
-                .setIcon(R.mipmap.ic_launcher)
-                .show();
     }
 
     private void showNoConnectedDialog(final String cameraID) {
