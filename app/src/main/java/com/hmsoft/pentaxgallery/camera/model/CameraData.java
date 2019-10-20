@@ -128,8 +128,6 @@ public class CameraData extends BaseResponse {
         if(storages.size() == 0) {
             storages.add(new StorageData(this));
         }
-
-
     }
 
     @Override

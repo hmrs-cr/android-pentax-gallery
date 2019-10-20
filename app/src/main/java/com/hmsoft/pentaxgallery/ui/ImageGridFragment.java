@@ -264,10 +264,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         updateActionBarTitle();
 
         DownloadService.setDisplayNotification(false);
-
-        if(mMenu != null) {
-            mMenu.removeGroup(R.id.camera_menu_list);
-        }
     }
 
     @Override
@@ -523,11 +519,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
         int itemId = item.getItemId();
 
-        if(itemId == R.id.about) {
-            PreferencesActivity.start(getActivity());
-            return true;
-        }
-
         if(mCamera.getImageList() == null) {
             if(BuildConfig.DEBUG) Logger.debug(TAG, "No images loaded yet.");
             return false;
@@ -585,6 +576,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 return true;
             case R.id.download_jpgs:
                 downloadJpgs();
+                return true;
+            case R.id.settings:
+                PreferencesActivity.start(getActivity());
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -995,6 +989,12 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             mNeedUpdateImageList = !added;
         }
         if(BuildConfig.DEBUG) Logger.debug(TAG, change.toString());
+    }
+
+    /*package*/ void rebuildCameraListMenu() {
+        if (mMenu != null) {
+            mMenu.removeGroup(R.id.camera_menu_list);
+        }
     }
 
     private volatile static Thread cacheThread = null;

@@ -23,11 +23,15 @@ public class PreferencesActivity extends AppCompatActivity implements
         PreferenceFragmentCompat.OnPreferenceStartFragmentCallback,
         FragmentManager.OnBackStackChangedListener {
 
+    public static final int REQUEST_CODE = 0;
+    public static final int RESULT_OK = RESULT_FIRST_USER + 1;
+    public static final int RESULT_UPDATE_CAMERA_LIST = RESULT_FIRST_USER + 2;
+
     /*package*/ final PreferencesFragment preferencesFragment = new PreferencesFragment();
 
     public static void start(Activity activity) {
         Intent i = new Intent(activity, PreferencesActivity.class);
-        activity.startActivity(i);
+        activity.startActivityForResult(i, REQUEST_CODE);
     }
 
     @Override

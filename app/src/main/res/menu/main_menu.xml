@@ -137,7 +137,7 @@
         android:orderInCategory="3"
         android:id="@+id/misc_menu_group">
         <item
-            android:id="@+id/about"
+            android:id="@+id/settings"
             android:title="@string/settings" />
     </group>
 

@@ -26,8 +26,10 @@ import android.os.Bundle;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
+import com.hmsoft.pentaxgallery.ui.preferences.PreferencesActivity;
 import com.hmsoft.pentaxgallery.util.Logger;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentTransaction;
@@ -97,6 +99,18 @@ public class ImageGridActivity extends AppCompatActivity {
         final ActionBar actionBar = getSupportActionBar();
         if(actionBar != null) {
             actionBar.setDisplayShowTitleEnabled(true);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (resultCode) {
+            case PreferencesActivity.RESULT_UPDATE_CAMERA_LIST:
+                fragment.rebuildCameraListMenu();
+                break;
+            case PreferencesActivity.RESULT_OK:
+                break;
         }
     }
 }

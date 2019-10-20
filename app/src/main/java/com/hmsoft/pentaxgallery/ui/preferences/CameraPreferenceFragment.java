@@ -122,7 +122,8 @@ public class CameraPreferenceFragment extends PreferenceFragmentCompat {
             PreferencesActivity preferencesActivity = (PreferencesActivity) getActivity();
             assert preferencesActivity != null;
             preferencesActivity.preferencesFragment.addCameraList();
-            getActivity().getSupportFragmentManager().popBackStack();
+            preferencesActivity.getSupportFragmentManager().popBackStack();
+            preferencesActivity.setResult(PreferencesActivity.RESULT_UPDATE_CAMERA_LIST);
         }
     }
 }
