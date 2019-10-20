@@ -32,7 +32,7 @@ import android.util.LruCache;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.util.Logger;
-import com.hmsoft.pentaxgallery.util.cache.CacheUtils;
+import com.hmsoft.pentaxgallery.util.Utils;
 import com.hmsoft.pentaxgallery.util.cache.DiskLruCache;
 
 import java.io.File;
@@ -199,7 +199,7 @@ public class ImageCache {
                     if (!diskCacheDir.exists()) {
                         diskCacheDir.mkdirs();
                     }
-                    if (CacheUtils.getUsableSpace(diskCacheDir) > mCacheParams.diskCacheSize) {
+                    if (Utils.getUsableSpace(diskCacheDir) > mCacheParams.diskCacheSize) {
                         try {
                             mDiskLruCache = DiskLruCache.open(
                                     diskCacheDir, 1, 1, mCacheParams.diskCacheSize);
@@ -476,7 +476,7 @@ public class ImageCache {
          *                               is sufficient.
          */
         public ImageCacheParams(Context context, String diskCacheDirectoryName) {
-            diskCacheDir = CacheUtils.getDiskCacheDir(context, diskCacheDirectoryName);
+            diskCacheDir = Utils.getDiskCacheDir(context, diskCacheDirectoryName);
         }
 
         /**

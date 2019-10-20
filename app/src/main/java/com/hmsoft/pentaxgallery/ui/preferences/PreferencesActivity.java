@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import com.hmsoft.pentaxgallery.R;
+import com.hmsoft.pentaxgallery.camera.Camera;
+import com.hmsoft.pentaxgallery.service.DownloadService;
 
 import java.util.List;
 
@@ -64,5 +66,11 @@ public class PreferencesActivity extends AppCompatActivity implements
         if(fragments.size() == 1 && fragments.get(0) instanceof PreferencesFragment) {
             setTitle(R.string.setting_title);
         }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        DownloadService.setShutCameraDownWhenDone(Camera.instance.getCameraData().preferences.shutdownAfterTransfer());
     }
 }

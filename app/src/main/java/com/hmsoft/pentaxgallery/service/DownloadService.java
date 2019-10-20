@@ -194,7 +194,7 @@ public class DownloadService extends IntentService {
             URL url = new URL(imageData.getDownloadUrl());
             URLConnection connection = url.openConnection();
 
-            Camera camera =Camera.instance;
+            Camera camera = Camera.instance;
 
             connection.setConnectTimeout(camera.getCameraData().preferences.getConnectTimeout() / 2);
             connection.connect();

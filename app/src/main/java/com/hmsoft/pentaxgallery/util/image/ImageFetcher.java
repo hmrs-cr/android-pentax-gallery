@@ -28,7 +28,7 @@ import com.hmsoft.pentaxgallery.camera.Camera;
 import com.hmsoft.pentaxgallery.camera.model.CameraPreferences;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.util.Logger;
-import com.hmsoft.pentaxgallery.util.cache.CacheUtils;
+import com.hmsoft.pentaxgallery.util.Utils;
 import com.hmsoft.pentaxgallery.util.cache.DiskLruCache;
 
 import java.io.BufferedInputStream;
@@ -82,7 +82,7 @@ public class ImageFetcher extends ImageResizer {
     }
 
     private void init(Context context) {
-        mHttpCacheDir = CacheUtils.getDiskCacheDir(context, HTTP_CACHE_DIR);
+        mHttpCacheDir = Utils.getDiskCacheDir(context, HTTP_CACHE_DIR);
         mContentResolver = context.getContentResolver();
     }
 
@@ -97,7 +97,7 @@ public class ImageFetcher extends ImageResizer {
             mHttpCacheDir.mkdirs();
         }
         synchronized (mHttpDiskCacheLock) {
-            if (CacheUtils.getUsableSpace(mHttpCacheDir) > HTTP_CACHE_SIZE) {
+            if (Utils.getUsableSpace(mHttpCacheDir) > HTTP_CACHE_SIZE) {
                 try {
                     mHttpDiskCache = DiskLruCache.open(mHttpCacheDir, 1, 1, HTTP_CACHE_SIZE);
                     //CacheUtils.setDiskCache(mHttpDiskCache);
