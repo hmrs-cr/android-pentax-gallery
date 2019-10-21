@@ -40,7 +40,7 @@ public class PreferencesFragment extends PreferenceFragmentCompat {
 
     /*private*/ void addCameraList() {
         List<CameraData> cameras = camera.getRegisteredCameras();
-        if(cameras != null) {
+        if(cameras != null && cameras.size() > 0) {
             addCameraList(cameras);
         } else {
             new LoadCameraListTask().execute();
