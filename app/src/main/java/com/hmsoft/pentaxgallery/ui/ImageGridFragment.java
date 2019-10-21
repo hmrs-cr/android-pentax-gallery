@@ -211,11 +211,13 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                     @Override
                     public void onGlobalLayout() {
                         if (mAdapter.getNumColumns() == 0) {
-                            final int numColumns = (int) Math.floor(
-                                    mGridView.getWidth() / (mImageThumbSize + mImageThumbSpacing));
+                            int width = mGridView.getWidth();
+                            int numColumns = mGridView.getNumColumns();
+                            if (numColumns <= 0) {
+                                numColumns = (int) Math.floor(width / (mImageThumbSize + mImageThumbSpacing));
+                            }
                             if (numColumns > 0) {
-                                final int columnWidth =
-                                        (mGridView.getWidth() / numColumns) - mImageThumbSpacing;
+                                final int columnWidth = (width / numColumns) - mImageThumbSpacing;
                                 mAdapter.setNumColumns(numColumns);
                                 mAdapter.setItemHeight(columnWidth);
                                 if (BuildConfig.DEBUG) {

@@ -23,6 +23,9 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Display;
+import android.view.Surface;
+import android.view.WindowManager;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
@@ -99,6 +102,12 @@ public class ImageGridActivity extends AppCompatActivity {
         final ActionBar actionBar = getSupportActionBar();
         if(actionBar != null) {
             actionBar.setDisplayShowTitleEnabled(true);
+        }
+
+        Display display = ((WindowManager)getSystemService(WINDOW_SERVICE)).getDefaultDisplay();
+        int rotation = display.getRotation();
+        if(rotation == Surface.ROTATION_0 || rotation == Surface.ROTATION_180) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
         }
     }
 
