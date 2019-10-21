@@ -98,6 +98,16 @@ public abstract class ImageList {
         return -1;
     }
 
+    public int getDataKeyIndex(String dataKey) {
+        for (int c = 0; c < mImageList.size(); c++) {
+            ImageData imageData = getImage(c);
+            if (imageData.dataKey.equals(dataKey)) {
+                return c;
+            }
+        }
+        return -1;
+    }
+
     public ImageData getImage(int index) {
         if(index < mImageList.size()) {
             ImageData imageData = mImageList.get(index);

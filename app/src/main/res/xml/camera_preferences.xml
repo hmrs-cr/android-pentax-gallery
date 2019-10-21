@@ -70,6 +70,10 @@
 
     <PreferenceCategory>
         <Preference
+            app:key="@string/key_remove_old_images"
+            app:title="@string/remove_old_images_label"/>
+
+        <Preference
             app:key="@string/key_remove_camera"
             app:title="@string/remove_camera_label"/>
     </PreferenceCategory>

@@ -45,7 +45,7 @@ public abstract  class ImageListData extends BaseResponse {
 
     public static File getDataFile(StorageData storage) {
         CameraData cameraData = storage.getCameraData();
-        File parentDir = new File(cameraData.getStorageDirectory(), ImageData.FOLDER_IMAGES);
+        File parentDir = new File(cameraData.getStorageDirectory(), StorageData.FOLDER_IMAGES);
         parentDir.mkdirs();
         return new File(parentDir, storage.name + ".list");
     }

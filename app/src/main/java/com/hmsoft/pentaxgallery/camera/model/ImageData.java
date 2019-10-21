@@ -33,7 +33,6 @@ import java.io.IOException;
 public abstract class ImageData {
 
     private static final String TAG = "ImageData";
-    /*private*/ static final String FOLDER_IMAGES = "images";
 
     public final String directory;
     public final String fileName;
@@ -151,9 +150,7 @@ public abstract class ImageData {
 
     private File getDataFile() {
         if(dataFile == null) {
-            CameraData cameraData = mStorageData.getCameraData();
-            File parentDir = new File(cameraData.getStorageDirectory(), FOLDER_IMAGES + File.separator +
-                    mStorageData.name);
+            File parentDir = mStorageData.getImageDataDirectory();
             parentDir.mkdirs();
             dataFile = new File(parentDir, this.dataKey);
         }

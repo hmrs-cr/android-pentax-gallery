@@ -85,7 +85,9 @@
     <string name="shutdown_camera_after_transfer_label">Shutdown camera after transfer</string>
     <string name="shutdown_camera_after_transfer_summary">Shutdown camera when picture transfer done</string>
     <string name="remove_camera_confirmation">Do you really want to remove %s?</string>
+    <string name="remove_old_image_data_confirmation">Do you really want to remove old images of %s?</string>
     <string name="cameras">Cameras</string>
     <string name="loading_camera_list">Loading camera list…</string>
     <string name="about_label">About…</string>
+    <string name="remove_old_images_label">Remove old image data</string>
 </resources>
