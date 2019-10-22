@@ -133,6 +133,15 @@
         android:id="@+id/camera_menu_list">
     </group>
 
+
+    <group
+        android:orderInCategory="3"
+        android:id="@+id/camerag">
+        <item
+            android:id="@+id/cameraTrigger"
+            android:title="Camera" />
+    </group>
+
     <group
         android:orderInCategory="3"
         android:id="@+id/misc_menu_group">

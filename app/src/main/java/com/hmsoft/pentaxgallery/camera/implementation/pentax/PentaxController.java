@@ -34,6 +34,9 @@ import com.hmsoft.pentaxgallery.util.TaskExecutor;
 import org.json.JSONException;
 
 import java.io.EOFException;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -47,6 +50,8 @@ public class PentaxController implements CameraController {
 
     private int connectTimeOut;
     private int readTimeOut;
+
+    private OkHttpClient httpClient = new OkHttpClient();
 
     public PentaxController(CameraPreferences preferences) {
         setPreferences(preferences);
@@ -252,10 +257,102 @@ public class PentaxController implements CameraController {
         if (onCameraChangeListener != null) {
             Request request = new Request.Builder().url(UrlHelper.URL_WEBSOCKET).build();
 
-            OkHttpClient client = new OkHttpClient();
-            this.cameraWebSocket = client.newWebSocket(request, this.webSocketListener);
-            client.dispatcher().executorService().shutdown();
+            this.cameraWebSocket = httpClient.newWebSocket(request, this.webSocketListener);
         }
+    }
+
+
+    private static class LiveViewThread extends Thread {
+
+        private static LiveViewThread instance;
+
+        static synchronized void start(OkHttpClient httpClient,
+                                               OnLiveViewFrameReceivedListener listener) {
+
+            if(instance == null) {
+                instance = new LiveViewThread();
+                instance.httpClient = httpClient;
+                instance.listener = listener;
+                instance.start();
+            }
+        }
+
+        static synchronized void finish() {
+            if(instance != null) {
+                instance.isRunning = false;
+                instance = null;
+            }
+        }
+
+        private LiveViewThread() {
+
+        }
+
+        private volatile boolean isRunning;
+        private final byte[] buffer = new byte[LiveViewInputStream.MAX_FRAME_LENGTH];
+        private OkHttpClient httpClient;
+        private OnLiveViewFrameReceivedListener listener;
+
+        @Override
+        public synchronized void start() {
+            isRunning = true;
+            super.start();
+        }
+
+        private LiveViewInputStream getLiveViewInputStream() {
+            Request request = new Request.Builder().get().url(UrlHelper.URL_LIVE_VIEW).build();
+
+            OkHttpClient client = httpClient.newBuilder().readTimeout(0, TimeUnit.MILLISECONDS).build();
+            try {
+                Response response = client.newCall(request).execute();
+                if(response.code() == 200) {
+                    return new LiveViewInputStream(response.body().byteStream());
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        public void run() {
+            LiveViewInputStream inputStream = null;
+            try {
+                inputStream = getLiveViewInputStream();
+                if (inputStream != null) {
+                    while ((isRunning) || (!isInterrupted())) {
+                        int buffSize = inputStream.getMjpegFrame(buffer);
+                        if (buffSize > 0) {
+                            byte[] frame = Arrays.copyOf(buffer, buffSize);
+                            if(listener != null) {
+                                listener.onLiveViewFrameReceived(frame);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+
+            } finally {
+                if(inputStream != null) {
+                    try {
+                        inputStream.close();
+                    } catch (IOException ignored) {
+
+                    }
+                }
+                isRunning = false;
+                instance = null;
+            }
+        }
+
+    }
+
+    public void startLiveView(OnLiveViewFrameReceivedListener onLiveViewFrameReceivedListener) {
+        LiveViewThread.start(httpClient, onLiveViewFrameReceivedListener);
+    }
+
+    public void stopLiveView() {
+        LiveViewThread.finish();
     }
 
 }

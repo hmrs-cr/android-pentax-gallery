@@ -37,6 +37,10 @@ public interface CameraController {
         void onCameraChange(CameraChange change);
     }
 
+    interface OnLiveViewFrameReceivedListener {
+        void onLiveViewFrameReceived(byte[] frameData);
+    }
+
     class AsyncCommandExecutedListenerRunnable implements Runnable {
 
         private final OnAsyncCommandExecutedListener mOnAsyncCommandExecutedListener;
@@ -74,4 +78,7 @@ public interface CameraController {
     void getImageInfo(final ImageData imageData, final CameraController.OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
 
     void setCameraChangeListener(OnCameraChangeListener onCameraChangeListener);
+
+    void startLiveView(OnLiveViewFrameReceivedListener onLiveViewFrameReceivedListener);
+    void stopLiveView();
 }

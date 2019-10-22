@@ -71,6 +71,7 @@ import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageList;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
 import com.hmsoft.pentaxgallery.service.DownloadService;
+import com.hmsoft.pentaxgallery.ui.camera.CameraActivity;
 import com.hmsoft.pentaxgallery.ui.preferences.PreferencesActivity;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
@@ -581,6 +582,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 return true;
             case R.id.settings:
                 PreferencesActivity.start(getActivity());
+                return true;
+            case R.id.cameraTrigger:
+                CameraActivity.start(getActivity());
                 return true;
         }
         return super.onOptionsItemSelected(item);

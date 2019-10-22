@@ -23,10 +23,20 @@
         android:theme="@style/AppThemeDark"
         android:usesCleartextTraffic="true"
         tools:ignore="GoogleAppIndexingWarning">
+        <activity android:name=".ui.camera.CameraActivity"
+            android:keepScreenOn="true"
+            android:label="@string/app_name"
+            android:parentActivityName=".ui.ImageGridActivity"
+            android:theme="@style/AppThemeDark.CameraScreen">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ui.ImageGridActivity" />
+        </activity>
+
         <activity
             android:name=".ui.preferences.PreferencesActivity"
-            android:theme="@style/AppThemeDark.PreferenceScreen"
-            android:parentActivityName=".ui.ImageGridActivity"/>
+            android:parentActivityName=".ui.ImageGridActivity"
+            android:theme="@style/AppThemeDark.PreferenceScreen" />
         <activity
             android:name=".ui.ImageGridActivity"
             android:label="@string/app_name"
