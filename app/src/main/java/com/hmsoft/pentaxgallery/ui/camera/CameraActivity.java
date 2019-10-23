@@ -2,8 +2,11 @@ package com.hmsoft.pentaxgallery.ui.camera;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Display;
+import android.view.Surface;
 import android.view.WindowManager;
 
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
@@ -29,6 +32,15 @@ public class CameraActivity extends AppCompatActivity {
             ft.commit();
         }
 
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+        Display display = ((WindowManager)getSystemService(WINDOW_SERVICE)).getDefaultDisplay();
+        int rotation = display.getRotation();
+        if(rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            final ActionBar actionBar = getSupportActionBar();
+            if(actionBar != null) {
+                actionBar.hide();
+            }
+        }
     }
 }

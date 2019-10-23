@@ -92,7 +92,7 @@ public class ImageDetailActivity extends AppCompatActivity implements OnClickLis
         cacheParams.setMemCacheSizePercent(0.40f); // Set memory cache to 35% of app memory
 
         // The ImageFetcher takes care of loading images into our ImageView children asynchronously
-        boolean loadLocalImageData = Camera.instance.getCameraData().preferences.loadLocalImageData();
+        boolean loadLocalImageData = Camera.instance.getPreferences().loadLocalImageData();
 
         mImageFetcher = loadLocalImageData ? new ImageLocalFetcher(this, longest) : new ImageRotatorFetcher(this, longest);
         mImageFetcher.addImageCache(getSupportFragmentManager(), cacheParams);

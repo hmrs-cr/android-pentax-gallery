@@ -252,6 +252,10 @@ public class Camera {
         return mCameraData;
     }
 
+    public CameraPreferences getPreferences() {
+        return mCameraData != null ? mCameraData.preferences : CameraPreferences.Default;
+    }
+
     public void setCameraData(CameraData cameraData) {
         mCameraData = cameraData;
     }

@@ -125,7 +125,7 @@ public abstract class UrlImageWorker {
             imageView.setImageDrawable(asyncDrawable);
 
             if(mExecutor == null) {
-                int numThreads = Camera.instance.getCameraData().preferences.getThreadNumber();
+                int numThreads = Camera.instance.getPreferences().getThreadNumber();
                 mExecutor = Executors.newFixedThreadPool(numThreads);
             }
 

@@ -280,7 +280,7 @@ public class ImageFetcher extends ImageResizer {
             }
         }
 
-        boolean loadLocalImageData = Camera.instance.getCameraData().preferences.loadLocalImageData();
+        boolean loadLocalImageData = Camera.instance.getPreferences().loadLocalImageData();
         if (loadLocalImageData && fileInputStream == null && imageData.existsOnLocalStorage()) {
             try {
                 if(BuildConfig.DEBUG) Logger.debug(TAG, "Loading picture from " + imageData.getLocalStorageUri());
@@ -318,7 +318,7 @@ public class ImageFetcher extends ImageResizer {
 
         try {
 
-            CameraPreferences preferences = Camera.instance.getCameraData().preferences;
+            CameraPreferences preferences = Camera.instance.getPreferences();
 
             final URL url = new URL(urlString);
             urlConnection = (HttpURLConnection) url.openConnection();

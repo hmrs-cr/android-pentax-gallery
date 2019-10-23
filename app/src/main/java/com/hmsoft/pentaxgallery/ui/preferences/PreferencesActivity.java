@@ -88,7 +88,7 @@ public class PreferencesActivity extends AppCompatActivity implements
     @Override
     protected void onPause() {
         super.onPause();
-        DownloadService.setShutCameraDownWhenDone(Camera.instance.getCameraData().preferences.shutdownAfterTransfer());
+        DownloadService.setShutCameraDownWhenDone(Camera.instance.getPreferences().shutdownAfterTransfer());
     }
 
     @Override

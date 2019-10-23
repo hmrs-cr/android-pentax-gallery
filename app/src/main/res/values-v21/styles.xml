@@ -25,7 +25,7 @@
         <item name="actionBarStyle">@style/TranslucentDarkActionBar</item>
     </style>
 
-    <style name="AppThemeDark.CameraScreen" parent="Theme.AppCompat.NoActionBar">
+    <style name="AppThemeDark.CameraScreen">
     </style>
 
     <style name="AppThemeDark.PreferenceScreen"  parent="Theme.AppCompat"/>

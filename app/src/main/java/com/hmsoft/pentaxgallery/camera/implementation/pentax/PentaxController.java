@@ -321,7 +321,7 @@ public class PentaxController implements CameraController {
                 inputStream = getLiveViewInputStream();
                 if (inputStream != null) {
                     while ((isRunning) || (!isInterrupted())) {
-                        int buffSize = inputStream.getMjpegFrame(buffer);
+                        int buffSize = inputStream.getFrame(buffer);
                         if (buffSize > 0) {
                             byte[] frame = Arrays.copyOf(buffer, buffSize);
                             if(listener != null) {

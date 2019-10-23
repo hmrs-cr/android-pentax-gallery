@@ -196,7 +196,7 @@ public class DownloadService extends IntentService {
 
             Camera camera = Camera.instance;
 
-            connection.setConnectTimeout(camera.getCameraData().preferences.getConnectTimeout() / 2);
+            connection.setConnectTimeout(camera.getPreferences().getConnectTimeout() / 2);
             connection.connect();
 
             // this will be useful so that you can show a typical 0-100% progress bar

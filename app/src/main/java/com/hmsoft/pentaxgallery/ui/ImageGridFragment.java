@@ -985,8 +985,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 ImageData imageData = mCamera.addImageToStorage(change.storage, change.filepath);
                 added = imageData != null;
                 if(added) {
-                    if ((imageData.isRaw && mCamera.getCameraData().preferences.autoDownloadRaw()) ||
-                            (!imageData.isRaw && mCamera.getCameraData().preferences.autoDownloadJpg())) {
+                    if ((imageData.isRaw && mCamera.getPreferences().autoDownloadRaw()) ||
+                            (!imageData.isRaw && mCamera.getPreferences().autoDownloadJpg())) {
                             DownloadService.addDownloadQueue(imageData);
                     }
                     mAdapter.notifyDataSetChanged();
@@ -1497,7 +1497,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 if(imageList.hasMixedFormats) {
                     showView(true, DEFAULT_MULTIFORMAT_FILTER);
                 }
-                DownloadService.setShutCameraDownWhenDone(mCamera.getCameraData().preferences.shutdownAfterTransfer());
+                DownloadService.setShutCameraDownWhenDone(mCamera.getPreferences().shutdownAfterTransfer());
             } else {
                 CameraData camera = mCamera.getCameraData();
                 showNoConnectedDialog(camera != null ? camera.cameraId : null);
