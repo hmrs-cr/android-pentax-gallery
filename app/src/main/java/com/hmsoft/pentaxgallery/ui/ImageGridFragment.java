@@ -28,6 +28,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -39,6 +40,7 @@ import android.provider.Settings;
 import android.text.Html;
 import android.text.TextUtils;
 import android.util.TypedValue;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -53,6 +55,7 @@ import android.view.WindowManager;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.FrameLayout;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -60,6 +63,7 @@ import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.Camera;
@@ -120,6 +124,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     private TextView mEmptyViewLabel;
     private TextView mProgressLabel;
     private GridView mGridView;
+    private FloatingActionButton mCameraActionButton;
     private Menu mMenu;
     private SearchView mSearchView;
     private SwipeRefreshLayout mSwipeRefreshLayout;
@@ -153,6 +158,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         mImageFetcher.addImageCache(getActivity().getSupportFragmentManager(), cacheParams);
     }
 
+    @SuppressLint("RestrictedApi")
     @Override
     public View onCreateView(
             LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -169,6 +175,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 showView(false, -1);
             }
         });
+
 
         mGridView.setOnTouchListener(new View.OnTouchListener(){
 
@@ -230,6 +237,34 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                         }
                     }
                 });
+
+
+        Display display = ((WindowManager)getContext().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+
+        Point realSize = new Point();
+        display.getRealSize(realSize);
+
+        Point size = new Point();
+        display.getSize(size);
+
+        int barSize = 0;
+        if (size.y < realSize.y) {
+            barSize = realSize.y - size.y;
+        }
+
+        mCameraActionButton = v.findViewById(R.id.cameraActionButton);
+        FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams)mCameraActionButton.getLayoutParams();
+        layoutParams.setMargins(layoutParams.leftMargin, layoutParams.topMargin,layoutParams.rightMargin,
+                layoutParams.bottomMargin + barSize);
+        mCameraActionButton.setLayoutParams(layoutParams);
+        mCameraActionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                CameraActivity.start(getActivity());
+            }
+        });
+
+        mCameraActionButton.setVisibility(mCamera.isConnected() ? View.VISIBLE : View.GONE);
 
         updateEmptyViewText("");
         return v;
@@ -582,9 +617,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 return true;
             case R.id.settings:
                 PreferencesActivity.start(getActivity());
-                return true;
-            case R.id.cameraTrigger:
-                CameraActivity.start(getActivity());
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -1506,6 +1538,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
             updateActionBarTitle();
             updateMenuItems();
+
+            mCameraActionButton.setVisibility(mCamera.isConnected() ? View.VISIBLE : View.GONE);
 
             updateProgressText(null);
             mImageListTask = null;

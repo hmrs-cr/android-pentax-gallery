@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/background"
     tools:context=".ui.camera.CameraFragment">
 
     <ImageView
@@ -11,14 +12,26 @@
         android:layout_height="match_parent"
         android:layout_gravity="left"
         android:scaleType="fitStart"
-        tools:srcCompat="@tools:sample/avatars" />
+        tools:srcCompat="@drawable/liveview" />
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
+    <FrameLayout
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="right"
-        android:background="?attr/colorPrimary"
+        android:background="@color/translucent"
         android:minHeight="?attr/actionBarSize"
-        android:theme="?attr/actionBarTheme" />
+        android:orientation="vertical"
+        android:paddingLeft="@dimen/margin_large"
+        android:paddingRight="@dimen/margin_large"
+        android:theme="?attr/actionBarTheme">
+
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/shutterActionButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:clickable="true"
+            android:src="@mipmap/ic_launcher_circle" />
+    </FrameLayout>
 </FrameLayout>

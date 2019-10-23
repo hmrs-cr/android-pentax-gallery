@@ -78,6 +78,10 @@ public class PentaxController implements CameraController {
         return HttpHelper.getStringResponse(UrlHelper.URL_POWEROFF, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.POST);
     }
 
+    protected String shootJson() {
+        return HttpHelper.getStringResponse(UrlHelper.URL_SHOOT, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.POST);
+    }
+
     protected String pingJson() {
         return HttpHelper.getStringResponse(UrlHelper.URL_PING, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.GET);
     }
@@ -329,6 +333,10 @@ public class PentaxController implements CameraController {
                             }
                         }
                     }
+                } else {
+                    if(listener != null) {
+                        listener.onLiveViewFrameReceived(null);
+                    }
                 }
             } catch (Exception ignored) {
 
@@ -353,6 +361,29 @@ public class PentaxController implements CameraController {
 
     public void stopLiveView() {
         LiveViewThread.finish();
+    }
+
+    public BaseResponse shoot() {
+        String response = shootJson();
+        try {
+            return  response != null ? new BaseResponse(response) : null;
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public void shootAsync(final OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {
+        TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
+            @Override
+            public void run() {
+                BaseResponse response = shoot();
+                if(onAsyncCommandExecutedListener != null) {
+                    TaskExecutor.executeOnUIThread(new CameraController.AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, response));
+                }
+
+            }
+        });
     }
 
 }

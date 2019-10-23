@@ -81,4 +81,8 @@ public interface CameraController {
 
     void startLiveView(OnLiveViewFrameReceivedListener onLiveViewFrameReceivedListener);
     void stopLiveView();
+
+    BaseResponse shoot();
+    void shootAsync(OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
+
 }

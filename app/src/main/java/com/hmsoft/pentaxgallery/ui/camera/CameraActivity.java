@@ -6,6 +6,8 @@ import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
 
+import com.hmsoft.pentaxgallery.camera.Camera;
+
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentActivity;
@@ -25,6 +27,7 @@ public class CameraActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         if (getSupportFragmentManager().findFragmentByTag(TAG) == null) {
             final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
             fragment = new CameraFragment();
@@ -32,6 +35,7 @@ public class CameraActivity extends AppCompatActivity {
             ft.commit();
         }
 
+        setTitle(Camera.instance.getCameraData().getDisplayName());
 
         Display display = ((WindowManager)getSystemService(WINDOW_SERVICE)).getDefaultDisplay();
         int rotation = display.getRotation();
