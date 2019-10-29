@@ -22,12 +22,11 @@ import com.hmsoft.pentaxgallery.camera.model.StorageData;
 
 public final class UrlHelper {
 
-
     private UrlHelper() { }
-
 
     private final static String URL_BASE = "http://192.168.0.1/v1";
     protected final static String URL_LIVE_VIEW = URL_BASE + "/liveview";
+    public static final String URL_FOCUS = URL_BASE + "/lens/focus";
     protected final static String URL_CAMERA_PARAMS = URL_BASE + "/params/camera";
     final static String URL_WEBSOCKET = "ws://192.168.0.1/v1/changes";
     private final static String URL_PHOTOS = URL_BASE + "/photos";

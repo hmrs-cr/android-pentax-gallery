@@ -77,6 +77,7 @@ import com.hmsoft.pentaxgallery.camera.model.StorageData;
 import com.hmsoft.pentaxgallery.service.DownloadService;
 import com.hmsoft.pentaxgallery.ui.camera.CameraActivity;
 import com.hmsoft.pentaxgallery.ui.preferences.PreferencesActivity;
+import com.hmsoft.pentaxgallery.ui.widgets.ImageThumbWidget;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 import com.hmsoft.pentaxgallery.util.Utils;
@@ -267,6 +268,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         mCameraActionButton.setVisibility(mCamera.isConnected() ? View.VISIBLE : View.GONE);
 
         updateEmptyViewText("");
+
         return v;
     }
 
@@ -302,6 +304,10 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         updateActionBarTitle();
 
         DownloadService.setDisplayNotification(false);
+
+        if(mCamera.isConnected()) {
+            mCamera.getController().addCameraChangeListener(ImageGridFragment.this);
+        }
     }
 
     @Override
@@ -328,7 +334,10 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     @Override
     public void onDestroy() {
-        mCamera.getController().setCameraChangeListener(null);
+        mCamera.getController().removeCameraChangeListener(this);
+        if(getActivity() == null || !getActivity().isChangingConfigurations()) {
+            mCamera.getController().addCameraChangeListener(null);
+        }
         super.onDestroy();
         mImageFetcher.closeCache();
         //CacheUtils.close();
@@ -1510,7 +1519,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             }
 
             if(mCamera.isConnected()) {
-                mCamera.getController().setCameraChangeListener(ImageGridFragment.this);
+                mCamera.getController().addCameraChangeListener(ImageGridFragment.this);
             }
 
             mSwipeRefreshLayout.setRefreshing(false);
@@ -1539,7 +1548,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             updateActionBarTitle();
             updateMenuItems();
 
-            mCameraActionButton.setVisibility(mCamera.isConnected() ? View.VISIBLE : View.GONE);
+            mCameraActionButton.setVisibility(mCamera.isConnected() ||  BuildConfig.DEBUG ? View.VISIBLE : View.GONE);
 
             updateProgressText(null);
             mImageListTask = null;

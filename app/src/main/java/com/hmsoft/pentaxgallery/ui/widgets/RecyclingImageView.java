@@ -17,7 +17,7 @@
  *
  */
 
-package com.hmsoft.pentaxgallery.ui;
+package com.hmsoft.pentaxgallery.ui.widgets;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;

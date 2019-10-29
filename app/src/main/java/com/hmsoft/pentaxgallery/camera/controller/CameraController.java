@@ -20,6 +20,7 @@ import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
 import com.hmsoft.pentaxgallery.camera.model.CameraChange;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
 import com.hmsoft.pentaxgallery.camera.model.CameraPreferences;
+import com.hmsoft.pentaxgallery.camera.model.CameraParams;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageListData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
@@ -77,12 +78,20 @@ public interface CameraController {
     ImageMetaData getImageInfo(ImageData imageData);
     void getImageInfo(final ImageData imageData, final CameraController.OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
 
-    void setCameraChangeListener(OnCameraChangeListener onCameraChangeListener);
+    void addCameraChangeListener(OnCameraChangeListener onCameraChangeListener);
+    void removeCameraChangeListener(OnCameraChangeListener onCameraChangeListener);
 
     void startLiveView(OnLiveViewFrameReceivedListener onLiveViewFrameReceivedListener);
+    void pauseLiveView();
     void stopLiveView();
 
     BaseResponse shoot();
     void shootAsync(OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
+
+    BaseResponse focus();
+    void focusAsync(OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
+
+    CameraParams getCameraParams();
+    void getCameraParamsAsync(OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
 
 }

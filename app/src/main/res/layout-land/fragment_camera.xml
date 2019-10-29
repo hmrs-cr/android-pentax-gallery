@@ -11,8 +11,31 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="left"
-        android:scaleType="fitStart"
-        tools:srcCompat="@drawable/liveview" />
+        android:scaleType="fitStart" />
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="right"
+        android:background="@color/translucent"
+        android:minHeight="?attr/actionBarSize"
+        android:orientation="vertical"
+        android:theme="?attr/actionBarTheme">
+
+
+
+            <SeekBar
+                android:id="@+id/xvSeekBar"
+                style="@style/Widget.AppCompat.SeekBar.Discrete"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="left"
+                android:max="10"
+                android:progress="5"
+                android:progressDrawable="@android:color/transparent"
+                android:rotation="270"
+                android:splitTrack="false"/>
+
 
     <FrameLayout
         android:layout_width="wrap_content"
@@ -33,5 +56,24 @@
             android:layout_gravity="center"
             android:clickable="true"
             android:src="@mipmap/ic_launcher_circle" />
+
+        <TextView
+            android:id="@+id/exposureModeBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginBottom="@dimen/margin_large"
+            android:backgroundTint="@color/translucent"
+            android:text="--" />
+
+        <TextView
+            android:id="@+id/exposureCompensationBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="fill|top"
+            android:layout_marginTop="@dimen/margin_large"
+            android:backgroundTint="@color/translucent"
+            android:text="--" />
+    </FrameLayout>
     </FrameLayout>
 </FrameLayout>

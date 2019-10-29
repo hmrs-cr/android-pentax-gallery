@@ -1,15 +1,16 @@
 package com.hmsoft.pentaxgallery.camera.model;
 
-import androidx.annotation.NonNull;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
+
+import androidx.annotation.NonNull;
 
 public class CameraChange extends BaseResponse {
 
     public static final String ACTION_ADD = "add";
     public static final String CHANGED_STORAGE = "storage";
+    public static final String CHANGED_CAMERA = "camera";
 
     public final String changed;
     public final String action;

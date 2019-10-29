@@ -215,6 +215,20 @@ public class CameraData extends BaseResponse {
         return result;
     }
 
+    public String[] getParamList(String paramName) {
+        JSONArray jsonArray = getJSONObject().optJSONArray(paramName + "List");
+
+        String[] result = null;
+        if(jsonArray != null) {
+            result = new String[jsonArray.length()];
+            for(int c = 0; c < result.length; c++) {
+                result[c] = jsonArray.optString(c);
+            }
+        }
+
+        return result;
+    }
+
     @Override
     public int hashCode() {
         return hashCode;
