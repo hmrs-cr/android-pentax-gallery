@@ -51,6 +51,7 @@ import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.ViewTreeObserver;
 import android.view.Window;
+import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
@@ -110,7 +111,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         ActionBar.OnNavigationListener,
         SwipeRefreshLayout.OnRefreshListener,
         CameraController.OnCameraChangeListener,
-        SearchView.OnCloseListener {
+        SearchView.OnCloseListener, View.OnApplyWindowInsetsListener {
     private static final String TAG = "ImageGridFragment";
     private static final String IMAGE_CACHE_DIR = "thumbs";
 
@@ -177,6 +178,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             }
         });
 
+        v.setOnApplyWindowInsetsListener(this);
+
 
         mGridView.setOnTouchListener(new View.OnTouchListener(){
 
@@ -239,25 +242,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                     }
                 });
 
-
-        Display display = ((WindowManager)getContext().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-
-        Point realSize = new Point();
-        display.getRealSize(realSize);
-
-        Point size = new Point();
-        display.getSize(size);
-
-        int barSize = 0;
-        if (size.y < realSize.y) {
-            barSize = realSize.y - size.y;
-        }
-
         mCameraActionButton = v.findViewById(R.id.cameraActionButton);
-        FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams)mCameraActionButton.getLayoutParams();
-        layoutParams.setMargins(layoutParams.leftMargin, layoutParams.topMargin,layoutParams.rightMargin,
-                layoutParams.bottomMargin + barSize);
-        mCameraActionButton.setLayoutParams(layoutParams);
         mCameraActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -1042,6 +1027,15 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         if (mMenu != null) {
             mMenu.removeGroup(R.id.camera_menu_list);
         }
+    }
+
+    @Override
+    public WindowInsets onApplyWindowInsets(View v, WindowInsets insets) {
+        FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams)mCameraActionButton.getLayoutParams();
+        layoutParams.setMargins(layoutParams.leftMargin, layoutParams.topMargin,layoutParams.rightMargin,
+                layoutParams.bottomMargin + insets.getSystemWindowInsetBottom());
+        mCameraActionButton.setLayoutParams(layoutParams);
+        return insets.consumeSystemWindowInsets();
     }
 
     private volatile static Thread cacheThread = null;
