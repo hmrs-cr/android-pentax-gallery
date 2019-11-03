@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -21,8 +22,10 @@ import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
 import com.hmsoft.pentaxgallery.camera.model.CameraChange;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
 import com.hmsoft.pentaxgallery.camera.model.CameraParams;
+import com.hmsoft.pentaxgallery.camera.model.PowerOffResponse;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 
@@ -51,20 +54,11 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_camera, container, false);
 
-        final CameraController.OnAsyncCommandExecutedListener cameraNotConnectedResponseListener = new CameraController.OnAsyncCommandExecutedListener() {
-            @Override
-            public void onAsyncCommandExecuted(BaseResponse response) {
-                if (response == null) {
-                    cameraNotConnected();
-                }
-            }
-        };
-
         shutterActionButton = v.findViewById(R.id.shutterActionButton);
         shutterActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                cameraController.shootAsync(cameraNotConnectedResponseListener);
+                shoot();
             }
         });
 
@@ -72,7 +66,7 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
         mImageLiveView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                cameraController.focusAsync(cameraNotConnectedResponseListener);
+                cameraController.focus(CameraFragment.this);
             }
         });
 
@@ -111,6 +105,20 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
         cameraController.addCameraChangeListener(this);
 
         return v;
+    }
+
+    /*private*/ void shoot() {
+        cameraController.shoot(this);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.powerOff:
+                cameraController.powerOff(this);
+                return true;
+        }
+        return false;
     }
 
     @Override
@@ -214,13 +222,19 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
     }
 
     private void updateCameraParams() {
-        cameraController.getCameraParamsAsync(this);
+        cameraController.getCameraParams(this);
     }
 
     @Override
     public void onAsyncCommandExecuted(BaseResponse response) {
-        if(response instanceof CameraParams) {
+        if (response instanceof CameraParams) {
             updateCameraParams((CameraParams)response);
+        } if (response instanceof PowerOffResponse) {
+            if(response.success && getActivity() != null) {
+                getActivity().finish();
+            }
+        } else if (response == null) {
+            cameraNotConnected();
         }
     }
 }

@@ -3,9 +3,13 @@ package com.hmsoft.pentaxgallery.ui.camera;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Display;
+import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.Surface;
 import android.view.WindowManager;
 
+import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.Camera;
 
 import androidx.appcompat.app.ActionBar;
@@ -46,5 +50,33 @@ public class CameraActivity extends AppCompatActivity {
                 actionBar.hide();
             }
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.camera_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(super.onOptionsItemSelected(item)) {
+            return true;
+        }
+        return fragment.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (super.onKeyDown(keyCode, event)) {
+            return true;
+        }
+
+        if ((keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_UP)){
+            fragment.shoot();
+            return true;
+        }
+
+        return false;
     }
 }

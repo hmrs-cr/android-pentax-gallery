@@ -86,12 +86,12 @@ public interface CameraController {
     void stopLiveView();
 
     BaseResponse shoot();
-    void shootAsync(OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
+    void shoot(OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
 
     BaseResponse focus();
-    void focusAsync(OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
+    void focus(OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
 
     CameraParams getCameraParams();
-    void getCameraParamsAsync(OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
+    void getCameraParams(OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
 
 }

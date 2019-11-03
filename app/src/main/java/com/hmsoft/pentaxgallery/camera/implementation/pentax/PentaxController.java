@@ -22,11 +22,12 @@ import com.hmsoft.pentaxgallery.camera.implementation.pentax.model.PentaxImageLi
 import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
 import com.hmsoft.pentaxgallery.camera.model.CameraChange;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
-import com.hmsoft.pentaxgallery.camera.model.CameraPreferences;
 import com.hmsoft.pentaxgallery.camera.model.CameraParams;
+import com.hmsoft.pentaxgallery.camera.model.CameraPreferences;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageListData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
+import com.hmsoft.pentaxgallery.camera.model.PowerOffResponse;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
 import com.hmsoft.pentaxgallery.camera.util.HttpHelper;
 import com.hmsoft.pentaxgallery.util.Logger;
@@ -243,7 +244,7 @@ public class PentaxController implements CameraController {
     public BaseResponse powerOff() {
         String response = powerOffJson();
         try {
-            return  response != null ? new BaseResponse(response) : null;
+            return  response != null ? new PowerOffResponse(response) : null;
         } catch (JSONException e) {
             e.printStackTrace();
             return null;
@@ -429,7 +430,7 @@ public class PentaxController implements CameraController {
         }
     }
 
-    public void shootAsync(final OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {
+    public void shoot(final OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {
         TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
             @Override
             public void run() {
@@ -454,7 +455,7 @@ public class PentaxController implements CameraController {
     }
 
     @Override
-    public void focusAsync(final OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {
+    public void focus(final OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {
         TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
             @Override
             public void run() {
@@ -482,7 +483,7 @@ public class PentaxController implements CameraController {
     }
 
     @Override
-    public void getCameraParamsAsync(final OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {
+    public void getCameraParams(final OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {
         TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
             @Override
             public void run() {

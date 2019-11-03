@@ -90,4 +90,5 @@
     <string name="loading_camera_list">Loading camera list…</string>
     <string name="about_label">About…</string>
     <string name="remove_old_images_label">Remove old image data</string>
+    <string name="power_off">Power Off</string>
 </resources>
