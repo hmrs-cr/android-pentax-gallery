@@ -32,7 +32,8 @@ public class CameraActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (getSupportFragmentManager().findFragmentByTag(TAG) == null) {
+        fragment = (CameraFragment) getSupportFragmentManager().findFragmentByTag(TAG);
+        if (fragment == null) {
             final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
             fragment = new CameraFragment();
             ft.add(android.R.id.content, fragment, TAG);
@@ -63,7 +64,7 @@ public class CameraActivity extends AppCompatActivity {
         if(super.onOptionsItemSelected(item)) {
             return true;
         }
-        return fragment.onOptionsItemSelected(item);
+        return fragment != null && fragment.onOptionsItemSelected(item);
     }
 
     @Override
@@ -72,7 +73,7 @@ public class CameraActivity extends AppCompatActivity {
             return true;
         }
 
-        if ((keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_UP)){
+        if (fragment != null && (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_UP)){
             fragment.shoot();
             return true;
         }
