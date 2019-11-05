@@ -66,7 +66,7 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
         mImageLiveView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                cameraController.focus(CameraFragment.this);
+                focus();
             }
         });
 
@@ -109,6 +109,10 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
 
     /*private*/ void shoot() {
         cameraController.shoot(this);
+    }
+
+    /*private*/ void focus() {
+        cameraController.focus(this);
     }
 
     @Override

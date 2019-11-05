@@ -73,9 +73,17 @@ public class CameraActivity extends AppCompatActivity {
             return true;
         }
 
-        if (fragment != null && (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_UP)){
-            fragment.shoot();
-            return true;
+        if(fragment == null) {
+            return false;
+        }
+
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+                fragment.shoot();
+                return true;
+            case KeyEvent.KEYCODE_VOLUME_UP:
+                fragment.focus();
+                return true;
         }
 
         return false;

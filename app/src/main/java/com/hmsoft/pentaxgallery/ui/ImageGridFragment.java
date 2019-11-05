@@ -758,7 +758,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         if(imageList != null) {
             for (int c = imageList.length() - 1; c >= 0; c--) {
                 ImageData imageData = imageList.getImage(c);
-                if ((includeRaw || !imageData.isRaw) && !imageData.existsOnLocalStorage()) {
+                if ((includeRaw || !imageData.isRaw) && imageData.getGalleryId() == 0) {
                     DownloadService.DownloadEntry downloadEntry = DownloadService.findDownloadEntry(imageData);
                     if (downloadEntry == null) {
                         enqueue.add(imageData);

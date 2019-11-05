@@ -29,6 +29,7 @@ import com.hmsoft.pentaxgallery.camera.model.ImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.ui.ImageGridActivity;
 import com.hmsoft.pentaxgallery.util.Logger;
+import com.hmsoft.pentaxgallery.util.TaskExecutor;
 import com.hmsoft.pentaxgallery.util.Utils;
 
 import org.json.JSONArray;
@@ -448,7 +449,7 @@ public class DownloadService extends IntentService {
                 }
 
                 Context context = MyApplication.ApplicationContext;
-                ImageData imageData = downloadEntry.getImageData();
+                final ImageData imageData = downloadEntry.getImageData();
               
                 if (resultCode == UPDATE_PROGRESS) {
                     int progress = resultData.getInt(EXTRA_PROGRESS);                    
@@ -471,7 +472,15 @@ public class DownloadService extends IntentService {
                         Queue.downloadCount++;
                         String localUri = resultData.getString(EXTRA_LOCAL_URI);
                         if(localUri != null && localUri.length() > 0) {
-                            imageData.setLocalStorageUri(Uri.parse(localUri));
+                            Uri uri = Uri.parse(localUri);
+                            imageData.setGalleryId(Integer.parseInt(uri.getLastPathSegment()));
+                            imageData.setLocalStorageUri(uri);
+                            TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
+                                @Override
+                                public void run() {
+                                    imageData.saveData();
+                                }
+                            });
                         }
                     } else if(status == DOWNLOAD_STATUS_ERROR) {
                         Queue.errorCount++;

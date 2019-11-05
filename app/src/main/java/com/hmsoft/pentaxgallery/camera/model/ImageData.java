@@ -53,6 +53,7 @@ public abstract class ImageData {
 
     private boolean mIsDownloadQueue;
     private boolean mIsFlagged;
+    private int mGalleryId;
     private Bitmap mThumbBitmap;
   
     private JSONObject mJSONObject;
@@ -180,6 +181,7 @@ public abstract class ImageData {
                 String json = Utils.readTextFile(dataFile);
                 mJSONObject = new JSONObject(json);
 
+                mGalleryId = mJSONObject.optInt("galleryId", 0);
                 mIsFlagged = mJSONObject.optBoolean("isFlagged", false);
                 mIsDownloadQueue = mJSONObject.optBoolean("inDownloadQueue", false);
                 JSONObject metadata = mJSONObject.optJSONObject("metadata");
@@ -200,6 +202,7 @@ public abstract class ImageData {
         try {
             mJSONObject.put("isFlagged", Boolean.toString(mIsFlagged));
             mJSONObject.put("inDownloadQueue", Boolean.toString(mIsDownloadQueue));
+            mJSONObject.put("galleryId", Integer.toString(mGalleryId));
             if (mMetaData != null) {
                 mJSONObject.put("metadata", mMetaData.getJSONObject());
             }
@@ -208,5 +211,13 @@ public abstract class ImageData {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public int getGalleryId() {
+        return mGalleryId;
+    }
+
+    public void setGalleryId(int mGalleryId) {
+        this.mGalleryId = mGalleryId;
     }
 }
