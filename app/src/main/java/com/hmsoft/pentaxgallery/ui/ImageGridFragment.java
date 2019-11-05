@@ -630,9 +630,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             switch (itemId) {
                 case R.id.view_downloads_only:
                     mCamera.setImageFilter(DownloadService.DownloadQueueFilter);
-                    if(mCamera.imageCount() > 0) {
-                        addScreenOnFlag();
-                    }
+                    addScreenOnFlag();
                     emptyViewText = R.string.all_pictures_transferred;
                     break;
                 case R.id.view_downloaded_only:
