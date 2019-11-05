@@ -22,18 +22,25 @@ import com.hmsoft.pentaxgallery.camera.implementation.pentax.model.PentaxImageLi
 import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
 import com.hmsoft.pentaxgallery.camera.model.CameraChange;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
+import com.hmsoft.pentaxgallery.camera.model.CameraParams;
+import com.hmsoft.pentaxgallery.camera.model.CameraPreferences;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageListData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
+import com.hmsoft.pentaxgallery.camera.model.PowerOffResponse;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
 import com.hmsoft.pentaxgallery.camera.util.HttpHelper;
-import com.hmsoft.pentaxgallery.util.DefaultSettings;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 
 import org.json.JSONException;
 
 import java.io.EOFException;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -45,13 +52,18 @@ public class PentaxController implements CameraController {
     
     private static final int NORMAL_CLOSURE_STATUS = 1000;
 
-    private final int connectTimeOut;
-    private final int readTimeOut;
+    private int connectTimeOut;
+    private int readTimeOut;
 
-    public PentaxController() {
-        DefaultSettings settings = DefaultSettings.getsInstance();
-        connectTimeOut = settings.getIntValue(DefaultSettings.DEFAULT_CONNECT_TIME_OUT);
-        readTimeOut = settings.getIntValue(DefaultSettings.DEFAULT_READ_TIME_OUT);
+    private OkHttpClient httpClient = new OkHttpClient();
+
+    public PentaxController(CameraPreferences preferences) {
+        setPreferences(preferences);
+    }
+
+    public void setPreferences(CameraPreferences preferences) {
+        connectTimeOut = preferences.getConnectTimeout();
+        readTimeOut = preferences.getReadTimeout();
     }
 
     protected String getDeviceInfoJson() {
@@ -67,15 +79,27 @@ public class PentaxController implements CameraController {
     }
 
     protected String powerOffJson() {
-        return HttpHelper.getStringResponse(UrlHelper.URL_POWEROFF, HttpHelper.RequestMethod.POST);
+        return HttpHelper.getStringResponse(UrlHelper.URL_POWEROFF, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.POST);
+    }
+
+    protected String shootJson() {
+        return HttpHelper.getStringResponse(UrlHelper.URL_SHOOT, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.POST);
     }
 
     protected String pingJson() {
-        return HttpHelper.getStringResponse(UrlHelper.URL_PING, HttpHelper.RequestMethod.GET);
+        return HttpHelper.getStringResponse(UrlHelper.URL_PING, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.GET);
+    }
+
+    protected String focusJson() {
+        return HttpHelper.getStringResponse(UrlHelper.URL_FOCUS, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.POST);
+    }
+
+    private String getCameraParamsJson() {
+        return HttpHelper.getStringResponse(UrlHelper.URL_CAMERA_PARAMS, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.GET);
     }
 
     private WebSocket cameraWebSocket;
-    private OnCameraChangeListener cameraChangeListener;
+    private List<OnCameraChangeListener> cameraChangeListeners = new LinkedList<>();
     private WebSocketListener webSocketListener =  new WebSocketListener() {
         private static final String TAG = "CameraWebSocketClient";
 
@@ -87,7 +111,8 @@ public class PentaxController implements CameraController {
         @Override
         public void onMessage(WebSocket webSocket, final String response) {
             if(Logger.DEBUG) Logger.debug(TAG, "onMessage: " + response);
-            if(cameraChangeListener != null) {
+            for (OnCameraChangeListener listener : cameraChangeListeners) {
+                final OnCameraChangeListener cameraChangeListener = listener;
                 TaskExecutor.executeOnUIThread(new Runnable() {
                     @Override
                     public void run() {
@@ -219,7 +244,7 @@ public class PentaxController implements CameraController {
     public BaseResponse powerOff() {
         String response = powerOffJson();
         try {
-            return  response != null ? new BaseResponse(response) : null;
+            return  response != null ? new PowerOffResponse(response) : null;
         } catch (JSONException e) {
             e.printStackTrace();
             return null;
@@ -239,20 +264,236 @@ public class PentaxController implements CameraController {
         });
     }
 
-    public void setCameraChangeListener(OnCameraChangeListener onCameraChangeListener) {
-        if (this.cameraWebSocket != null) {
+    public void addCameraChangeListener(OnCameraChangeListener onCameraChangeListener) {
+        if (onCameraChangeListener == null) {
+            stopWebSocket();
+            return;
+        }
+
+        if(!this.cameraChangeListeners.contains(onCameraChangeListener)) {
+            this.cameraChangeListeners.add(onCameraChangeListener);
+        }
+
+        startWebSocket();
+    }
+
+    @Override
+    public void removeCameraChangeListener(OnCameraChangeListener onCameraChangeListener) {
+        this.cameraChangeListeners.remove(onCameraChangeListener);
+    }
+
+    private void startWebSocket() {
+        if (this.cameraWebSocket == null) {
+            Request request = new Request.Builder().url(UrlHelper.URL_WEBSOCKET).build();
+            this.cameraWebSocket = httpClient.newWebSocket(request, this.webSocketListener);
+        }
+    }
+
+    private void stopWebSocket() {
+        if(this.cameraWebSocket != null) {
             this.cameraWebSocket.close(NORMAL_CLOSURE_STATUS, null);
             this.cameraWebSocket = null;
         }
+        this.cameraChangeListeners.clear();
+    }
 
-        this.cameraChangeListener = onCameraChangeListener;
-        if (onCameraChangeListener != null) {
-            Request request = new Request.Builder().url(UrlHelper.URL_WEBSOCKET).build();
 
-            OkHttpClient client = new OkHttpClient();
-            this.cameraWebSocket = client.newWebSocket(request, this.webSocketListener);
-            client.dispatcher().executorService().shutdown();
+    private static class LiveViewThread extends Thread {
+
+        private static final String TAG = "LiveViewThread";
+
+        private volatile static LiveViewThread instance;
+
+        static synchronized void start(OkHttpClient httpClient,
+                                               OnLiveViewFrameReceivedListener listener) {
+
+            if(instance == null) {
+                instance = new LiveViewThread();
+                instance.httpClient = httpClient;
+                instance.start();
+            }
+            instance.listener = listener;
+            instance.isPaused = false;
+            if(Logger.DEBUG) Logger.debug(TAG, "start");
         }
+
+        static synchronized void pause() {
+            if(instance != null) {
+                instance.isPaused = true;
+                if(Logger.DEBUG) Logger.debug(TAG, "pause");
+            }
+        }
+
+        static synchronized void finish() {
+            if(instance != null) {
+                instance.isRunning = false;
+                instance.listener = null;
+                instance = null;
+                if(Logger.DEBUG) Logger.debug(TAG, "finish");
+            }
+        }
+
+        private LiveViewThread() {
+            if(Logger.DEBUG) Logger.debug(TAG, "created");
+        }
+
+        private volatile boolean isRunning;
+        private volatile boolean isPaused;
+
+        private final byte[] buffer = new byte[LiveViewInputStream.MAX_FRAME_LENGTH];
+        private OkHttpClient httpClient;
+        private OnLiveViewFrameReceivedListener listener;
+
+        @Override
+        public synchronized void start() {
+            isRunning = true;
+            super.start();
+        }
+
+        private LiveViewInputStream getLiveViewInputStream() {
+            Request request = new Request.Builder().get().url(UrlHelper.URL_LIVE_VIEW).build();
+
+            OkHttpClient client = httpClient.newBuilder().readTimeout(0, TimeUnit.MILLISECONDS).build();
+            try {
+                Response response = client.newCall(request).execute();
+                if(response.code() == 200) {
+                    return new LiveViewInputStream(response.body().byteStream());
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        public void run() {
+            LiveViewInputStream inputStream = null;
+            try {
+                inputStream = getLiveViewInputStream();
+                if (inputStream != null) {
+                    while ((isRunning) && (!isInterrupted())) {
+                        int buffSize = inputStream.getFrame(buffer);
+                        if (buffSize > 0 && !isPaused) {
+                            byte[] frame = Arrays.copyOf(buffer, buffSize);
+                            if(listener != null) {
+                                listener.onLiveViewFrameReceived(frame);
+                            }
+                        } else {
+                            if(Logger.DEBUG) Logger.debug(TAG, "Paused:" + isPaused +
+                                    ", isRunning:" + isRunning + ", buffSize:" + buffSize);
+                        }
+                    }
+                } else {
+                    if(Logger.DEBUG) Logger.debug(TAG, "error");
+                    if(listener != null) {
+                        listener.onLiveViewFrameReceived(null);
+                    }
+                }
+            } catch (Exception e) {
+                if(Logger.DEBUG) Logger.warning(TAG, "Thread error", e);
+            } finally {
+                if(inputStream != null) {
+                    try {
+                        inputStream.close();
+                    } catch (IOException ignored) {
+
+                    }
+                }
+                if(Logger.DEBUG) Logger.debug(TAG, "Thread finished");
+                isRunning = false;
+                instance = null;
+            }
+        }
+
+    }
+
+    public void startLiveView(OnLiveViewFrameReceivedListener onLiveViewFrameReceivedListener) {
+        LiveViewThread.start(httpClient, onLiveViewFrameReceivedListener);
+    }
+
+    @Override
+    public void pauseLiveView() {
+        LiveViewThread.pause();
+    }
+
+    public void stopLiveView() {
+        LiveViewThread.finish();
+    }
+
+    public BaseResponse shoot() {
+        String response = shootJson();
+        try {
+            return  response != null ? new BaseResponse(response) : null;
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public void shoot(final OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {
+        TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
+            @Override
+            public void run() {
+                BaseResponse response = shoot();
+                if(onAsyncCommandExecutedListener != null) {
+                    TaskExecutor.executeOnUIThread(new CameraController.AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, response));
+                }
+
+            }
+        });
+    }
+
+    @Override
+    public BaseResponse focus() {
+        String response = focusJson();
+        try {
+            return  response != null ? new BaseResponse(response) : null;
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public void focus(final OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {
+        TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
+            @Override
+            public void run() {
+                BaseResponse response = focus();
+                if(onAsyncCommandExecutedListener != null) {
+                    TaskExecutor.executeOnUIThread(new CameraController.AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, response));
+                }
+
+            }
+        });
+    }
+
+    @Override
+    public CameraParams getCameraParams() {
+        String response = getCameraParamsJson();
+        if(response == null) {
+            response = getDeviceInfoJson();
+        }
+        try {
+            return  response != null ? new CameraParams(response) : null;
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public void getCameraParams(final OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {
+        TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
+            @Override
+            public void run() {
+                BaseResponse response = getCameraParams();
+                if(onAsyncCommandExecutedListener != null) {
+                    TaskExecutor.executeOnUIThread(new CameraController.AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, response));
+                }
+
+            }
+        });
     }
 
 }

@@ -3,23 +3,48 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.hmsoft.pentaxgallery">
 
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
     <application
         android:name=".MyApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_circle"
         android:supportsRtl="true"
         android:theme="@style/AppThemeDark"
-        tools:ignore="GoogleAppIndexingWarning"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="true"
+        tools:ignore="GoogleAppIndexingWarning">
+        <activity android:name=".ui.camera.CameraActivity"
+            android:keepScreenOn="true"
+            android:parentActivityName=".ui.ImageGridActivity"
+            android:theme="@style/AppThemeDark.CameraScreen">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ui.ImageGridActivity" />
+        </activity>
+
+        <activity
+            android:name=".ui.preferences.PreferencesActivity"
+            android:parentActivityName=".ui.ImageGridActivity"
+            android:theme="@style/AppThemeDark.PreferenceScreen" />
         <activity
             android:name=".ui.ImageGridActivity"
             android:label="@string/app_name"
             android:launchMode="singleTop"
-            android:screenOrientation="fullSensor">
+            android:screenOrientation="fullSensor"
+            android:theme="@style/AppThemeDark.GalleryScreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             <intent-filter>
@@ -30,13 +55,12 @@
                 android:name="android.app.searchable"
                 android:resource="@xml/searchable" />
         </activity>
-
         <activity
             android:name=".ui.ImageDetailActivity"
+            android:keepScreenOn="true"
             android:label="@string/app_name"
             android:parentActivityName=".ui.ImageGridActivity"
-            android:theme="@style/AppThemeDark.FullScreen"
-            android:keepScreenOn="true">
+            android:theme="@style/AppThemeDark.FullScreen">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ui.ImageGridActivity" />
@@ -46,14 +70,5 @@
             android:name=".service.DownloadService"
             android:exported="false" />
     </application>
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
 </manifest>

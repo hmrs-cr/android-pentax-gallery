@@ -1,0 +1,81 @@
+<PreferenceScreen
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        app:key="@string/key_basic_category"
+        app:title="@string/basic"
+        app:summary="@string/basic_camera_settings">
+
+        <EditTextPreference
+            app:key="@string/key_album_name"
+            app:title="@string/album_name_label"
+            app:defaultValue="@string/default_album_name"
+            app:useSimpleSummaryProvider="true"/>
+
+        <EditTextPreference
+            app:key="@string/key_raw_album_name"
+            app:title="@string/raw_album_name_label"
+            app:defaultValue="@string/default_raw_album_name"
+            app:useSimpleSummaryProvider="true"/>
+
+        <SwitchPreferenceCompat
+            app:key="@string/key_auto_download_jpg"
+            app:title="@string/auto_download_jpgs_label"
+            app:defaultValue="@string/default_auto_download_jpg"
+            app:summary="@string/auto_download_jpgs_summary"/>
+
+        <SwitchPreferenceCompat
+            app:key="@string/key_auto_download_raw"
+            app:title="@string/auto_download_raw_label"
+            app:defaultValue="@string/default_auto_download_raw"
+            app:summary="@string/auto_download_raw_summary"/>
+
+        <SwitchPreferenceCompat
+            app:key="@string/key_shutdown_camera_after_transfer"
+            app:title="@string/shutdown_camera_after_transfer_label"
+            app:defaultValue="@string/default_shutdown_camera_after_transfer"
+            app:summary="@string/shutdown_camera_after_transfer_summary"/>
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:key="@string/key_advanced_category"
+        app:title="@string/advanced"
+        app:summary="@string/advanced_camera_settings">
+
+        <SwitchPreferenceCompat
+            app:key="@string/key_load_local_image_data"
+            app:title="Load local image data"
+            app:defaultValue="@string/default_load_local_image_data"/>
+
+        <EditTextPreference
+            app:key="@string/key_camera_thread_number"
+            app:title="@string/thread_number"
+            app:defaultValue="@string/default_camera_thread_number"
+            app:useSimpleSummaryProvider="true"/>
+
+        <EditTextPreference
+            app:key="@string/key_connect_timeout"
+            app:title="@string/connect_timeout"
+            app:defaultValue="@string/default_connect_timeout"
+            app:useSimpleSummaryProvider="true"/>
+
+        <EditTextPreference
+            app:key="@string/key_read_timeout"
+            app:title="@string/read_timeout"
+            app:defaultValue="@string/default_read_timeout"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory>
+        <Preference
+            app:key="@string/key_remove_old_images"
+            app:title="@string/remove_old_images_label"/>
+
+        <Preference
+            app:key="@string/key_remove_camera"
+            app:title="@string/remove_camera_label"/>
+    </PreferenceCategory>
+
+</PreferenceScreen>

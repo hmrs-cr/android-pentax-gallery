@@ -28,18 +28,20 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
 import android.os.AsyncTask;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
 import android.widget.ImageView;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.R;
-import com.hmsoft.pentaxgallery.util.DefaultSettings;
+import com.hmsoft.pentaxgallery.camera.Camera;
+import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.util.Logger;
 
 import java.lang.ref.WeakReference;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+
+import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
 
 
 /**
@@ -95,7 +97,7 @@ public abstract class UrlImageWorker {
      * Load an image specified by the url parameter into an ImageView (override
      * { UrlImageWorker#processBitmap(Object)} to define the processing logic). A memory and
      * disk cache will be used if an {@link ImageCache} has been added using
-     * {@link UrlImageWorker#addImageCache(android.support.v4.app.FragmentManager, ImageCache.ImageCacheParams)}. If the
+     * {@link UrlImageWorker#addImageCache(androidx.core.app.FragmentManager, ImageCache.ImageCacheParams)}. If the
      * image is found in the memory cache, it is set immediately, otherwise an {@link AsyncTask}
      * will be created to asynchronously load the bitmap.
      *
@@ -103,7 +105,7 @@ public abstract class UrlImageWorker {
      * @param imageView The ImageView to bind the downloaded image to.
      * @param listener A listener that will be called back once the image has been loaded.
      */
-    public void loadImage(String url, Object param, ImageView imageView, OnImageLoadedListener listener) {
+    public void loadImage(String url, ImageData imageData, ImageView imageView, OnImageLoadedListener listener) {
         if (url == null) {
             return;
         }
@@ -117,13 +119,13 @@ public abstract class UrlImageWorker {
             }
         } else if (cancelPotentialWork(url, imageView)) {
             //BEGIN_INCLUDE(execute_background_task)
-            final BitmapWorkerTask task = new BitmapWorkerTask(url, param, imageView, listener);
+            final BitmapWorkerTask task = new BitmapWorkerTask(url, imageData, imageView, listener);
             final AsyncDrawable asyncDrawable =
                     new AsyncDrawable(mResources, mLoadingBitmap, task);
             imageView.setImageDrawable(asyncDrawable);
 
             if(mExecutor == null) {
-                int numThreads = DefaultSettings.getsInstance().getIntValue(DefaultSettings.THUMB_THREAD_NUMBER);
+                int numThreads = Camera.instance.getPreferences().getThreadNumber();
                 mExecutor = Executors.newFixedThreadPool(numThreads);
             }
 
@@ -137,14 +139,14 @@ public abstract class UrlImageWorker {
      * Load an image specified by the data parameter into an ImageView (override
      * {  UrlImageWorker#processBitmap(Object)} to define the processing logic). A memory and
      * disk cache will be used if an {@link ImageCache} has been added using
-     * {@link UrlImageWorker#addImageCache(android.support.v4.app.FragmentManager, ImageCache.ImageCacheParams)}. If the
+     * {@link UrlImageWorker#addImageCache(androidx.core.app.FragmentManager, ImageCache.ImageCacheParams)}. If the
      * image is found in the memory cache, it is set immediately, otherwise an {@link AsyncTask}
      * will be created to asynchronously load the bitmap.
      *
      * @param url The URL of the image to downloadDown.
      * @param imageView The ImageView to bind the downloaded image to.
      */
-    public void loadImage(String url, Object param, ImageView imageView) {
+    public void loadImage(String url, ImageData param, ImageView imageView) {
         loadImage(url, param, imageView, null);
     }
 
@@ -174,7 +176,7 @@ public abstract class UrlImageWorker {
      * @param cacheParams The cache parameters to use for the image cache.
      */
     public void addImageCache(FragmentManager fragmentManager,
-            ImageCache.ImageCacheParams cacheParams) {
+                              ImageCache.ImageCacheParams cacheParams) {
         mImageCacheParams = cacheParams;
         mImageCache = ImageCache.getInstance(fragmentManager, mImageCacheParams);
         new CacheAsyncTask().execute(MESSAGE_INIT_DISK_CACHE);
@@ -214,7 +216,7 @@ public abstract class UrlImageWorker {
      *            { UrlImageWorker#loadImage(Object, ImageView)}
      * @return The processed bitmap
      */
-    protected abstract Bitmap processBitmap(String url, Object param);
+    protected abstract Bitmap processBitmap(String url, ImageData imageData);
 
     /**
      * @return The {@link ImageCache} object currently being used by this UrlImageWorker.
@@ -294,13 +296,13 @@ public abstract class UrlImageWorker {
      */
     private class BitmapWorkerTask extends AsyncTask<Void, Void, BitmapDrawable> {
         private final String mUrl;
-        private final Object mParam;
+        private final ImageData mImageData;
         private final WeakReference<ImageView> imageViewReference;
         private final OnImageLoadedListener mOnImageLoadedListener;
 
-        public BitmapWorkerTask(String url, Object param, ImageView imageView, OnImageLoadedListener listener) {
+        public BitmapWorkerTask(String url, ImageData imageData, ImageView imageView, OnImageLoadedListener listener) {
             mUrl = url;
-            mParam = param;
+            this.mImageData = imageData;
             imageViewReference = new WeakReference<ImageView>(imageView);
             mOnImageLoadedListener = listener;
         }
@@ -312,7 +314,7 @@ public abstract class UrlImageWorker {
         protected BitmapDrawable doInBackground(Void... params) {
             //BEGIN_INCLUDE(load_bitmap_in_background)
             if (BuildConfig.DEBUG) {
-                Logger.debug(TAG, "doInBackground - start work " + mParam);
+                Logger.debug(TAG, "doInBackground - start work " + mImageData);
             }
 
             Bitmap bitmap = null;
@@ -342,7 +344,7 @@ public abstract class UrlImageWorker {
             // process method (as implemented by a subclass)
             if (bitmap == null && !isCancelled() && getAttachedImageView() != null
                     && !mExitTasksEarly) {
-                bitmap = processBitmap(mUrl, mParam);
+                bitmap = processBitmap(mUrl, mImageData);
             }
 
             // If the bitmap was processed and the image cache is available, then add the processed
@@ -358,7 +360,7 @@ public abstract class UrlImageWorker {
             }
 
             if (BuildConfig.DEBUG) {
-                Logger.debug(TAG, "doInBackground - finished work " + mParam);
+                Logger.debug(TAG, "doInBackground - finished work " + mImageData);
             }
 
             return drawable;

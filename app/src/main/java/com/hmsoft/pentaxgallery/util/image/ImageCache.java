@@ -28,14 +28,11 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.util.LruCache;
-import android.util.Log;
+import android.util.LruCache;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.util.Logger;
-import com.hmsoft.pentaxgallery.util.cache.CacheUtils;
+import com.hmsoft.pentaxgallery.util.Utils;
 import com.hmsoft.pentaxgallery.util.cache.DiskLruCache;
 
 import java.io.File;
@@ -52,13 +49,16 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+
 
 /**
  * This class handles disk and memory caching of bitmaps in conjunction with the
  * {@link UrlImageWorker} class and its subclasses. Use
- * {@link ImageCache#getInstance(android.support.v4.app.FragmentManager, ImageCacheParams)} to get an instance of this
+ * {@link ImageCache#getInstance(androidx.core.app.FragmentManager, ImageCacheParams)} to get an instance of this
  * class, although usually a cache should be added directly to an {@link UrlImageWorker} by calling
- * {@link UrlImageWorker#addImageCache(android.support.v4.app.FragmentManager, ImageCacheParams)}.
+ * {@link UrlImageWorker#addImageCache(androidx.core.app.FragmentManager, ImageCacheParams)}.
  */
 public class ImageCache {
     private static final String TAG = "ImageCache";
@@ -90,7 +90,7 @@ public class ImageCache {
     /**
      * Create a new ImageCache object using the specified parameters. This should not be
      * called directly by other classes, instead use
-     * {@link ImageCache#getInstance(android.support.v4.app.FragmentManager, ImageCacheParams)} to fetch an ImageCache
+     * {@link ImageCache#getInstance(androidx.core.app.FragmentManager, ImageCacheParams)} to fetch an ImageCache
      * instance.
      *
      * @param cacheParams The cache parameters to use to initialize the cache
@@ -199,7 +199,7 @@ public class ImageCache {
                     if (!diskCacheDir.exists()) {
                         diskCacheDir.mkdirs();
                     }
-                    if (CacheUtils.getUsableSpace(diskCacheDir) > mCacheParams.diskCacheSize) {
+                    if (Utils.getUsableSpace(diskCacheDir) > mCacheParams.diskCacheSize) {
                         try {
                             mDiskLruCache = DiskLruCache.open(
                                     diskCacheDir, 1, 1, mCacheParams.diskCacheSize);
@@ -468,15 +468,15 @@ public class ImageCache {
 
         /**
          * Create a set of image cache parameters that can be provided to
-         * {@link ImageCache#getInstance(android.support.v4.app.FragmentManager, ImageCacheParams)} or
-         * {@link UrlImageWorker#addImageCache(android.support.v4.app.FragmentManager, ImageCacheParams)}.
+         * {@link ImageCache#getInstance(androidx.core.app.FragmentManager, ImageCacheParams)} or
+         * {@link UrlImageWorker#addImageCache(androidx.core.app.FragmentManager, ImageCacheParams)}.
          * @param context A context to use.
          * @param diskCacheDirectoryName A unique subdirectory name that will be appended to the
          *                               application cache directory. Usually "cache" or "images"
          *                               is sufficient.
          */
         public ImageCacheParams(Context context, String diskCacheDirectoryName) {
-            diskCacheDir = CacheUtils.getDiskCacheDir(context, diskCacheDirectoryName);
+            diskCacheDir = Utils.getDiskCacheDir(context, diskCacheDirectoryName);
         }
 
         /**

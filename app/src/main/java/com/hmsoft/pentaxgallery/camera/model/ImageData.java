@@ -33,7 +33,6 @@ import java.io.IOException;
 public abstract class ImageData {
 
     private static final String TAG = "ImageData";
-    /*private*/ static final String FOLDER_IMAGES = "images";
 
     public final String directory;
     public final String fileName;
@@ -54,6 +53,7 @@ public abstract class ImageData {
 
     private boolean mIsDownloadQueue;
     private boolean mIsFlagged;
+    private int mGalleryId;
     private Bitmap mThumbBitmap;
   
     private JSONObject mJSONObject;
@@ -93,8 +93,6 @@ public abstract class ImageData {
     public abstract String getThumbUrl();
 
     public abstract String getDownloadUrl();
-
-    public abstract File getLocalPath();
   
     public abstract ImageMetaData readMetadata();
 
@@ -153,9 +151,7 @@ public abstract class ImageData {
 
     private File getDataFile() {
         if(dataFile == null) {
-            CameraData cameraData = mStorageData.getCameraData();
-            File parentDir = new File(cameraData.getStorageDirectory(), FOLDER_IMAGES + File.separator +
-                    mStorageData.name);
+            File parentDir = mStorageData.getImageDataDirectory();
             parentDir.mkdirs();
             dataFile = new File(parentDir, this.dataKey);
         }
@@ -185,6 +181,7 @@ public abstract class ImageData {
                 String json = Utils.readTextFile(dataFile);
                 mJSONObject = new JSONObject(json);
 
+                mGalleryId = mJSONObject.optInt("galleryId", 0);
                 mIsFlagged = mJSONObject.optBoolean("isFlagged", false);
                 mIsDownloadQueue = mJSONObject.optBoolean("inDownloadQueue", false);
                 JSONObject metadata = mJSONObject.optJSONObject("metadata");
@@ -205,6 +202,7 @@ public abstract class ImageData {
         try {
             mJSONObject.put("isFlagged", Boolean.toString(mIsFlagged));
             mJSONObject.put("inDownloadQueue", Boolean.toString(mIsDownloadQueue));
+            mJSONObject.put("galleryId", Integer.toString(mGalleryId));
             if (mMetaData != null) {
                 mJSONObject.put("metadata", mMetaData.getJSONObject());
             }
@@ -213,5 +211,13 @@ public abstract class ImageData {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public int getGalleryId() {
+        return mGalleryId;
+    }
+
+    public void setGalleryId(int mGalleryId) {
+        this.mGalleryId = mGalleryId;
     }
 }

@@ -11,26 +11,25 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.os.ResultReceiver;
 import android.provider.MediaStore;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
 import android.widget.Toast;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.R;
-import com.hmsoft.pentaxgallery.camera.CameraFactory;
+import com.hmsoft.pentaxgallery.camera.Camera;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
 import com.hmsoft.pentaxgallery.camera.model.FilteredImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.ui.ImageGridActivity;
-import com.hmsoft.pentaxgallery.util.DefaultSettings;
 import com.hmsoft.pentaxgallery.util.Logger;
+import com.hmsoft.pentaxgallery.util.TaskExecutor;
 import com.hmsoft.pentaxgallery.util.Utils;
 
 import org.json.JSONArray;
@@ -52,14 +51,9 @@ import java.util.Hashtable;
 import java.util.List;
 
 import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
-/**
- * An {@link IntentService} subclass for handling asynchronous task requests in
- * a service on a separate handler thread.
- * <p>
- * TODO: Customize class - update intent actions, extra parameters and static
- * helper methods.
- */
 public class DownloadService extends IntentService {
 
     private static final String TAG = "DownloadService";
@@ -89,10 +83,20 @@ public class DownloadService extends IntentService {
     private static int downloadErrorCount = 0;
     private static boolean sShutCameraDownWhenDone;
 
+    private static boolean displayNotification;
+
+    public static boolean isDisplayingNotification() {
+        return displayNotification;
+    }
+
+    public static void setDisplayNotification(boolean displayNotification) {
+        DownloadService.displayNotification = displayNotification;
+    }
+
     public interface OnDownloadFinishedListener {
         void onDownloadProgress(ImageData imageData, long donloadId, int progress);
-        void onDownloadFinished(ImageData imageData, long donloadId, int remainingDownloads, 
-                                boolean wasCanceled);        
+        void onDownloadFinished(ImageData imageData, long donloadId, int remainingDownloads,
+                                int downloadCount, int errorCount, boolean wasCanceled);
     }
   
     public static final FilteredImageList.ImageFilter DownloadQueueFilter = new FilteredImageList.ImageFilter() {
@@ -165,9 +169,9 @@ public class DownloadService extends IntentService {
         DownloadEntry downloadEntry = Queue.findDownloadEntry(downloadId);
         if (downloadEntry == null) {
             if (BuildConfig.DEBUG) {
-                Logger.debug(TAG, "No downloadDown with id " + downloadId + " found");
-                return;
+                Logger.debug(TAG, "No download with id " + downloadId + " found");
             }
+            return;
         }
 
         boolean canceled = false;
@@ -191,16 +195,15 @@ public class DownloadService extends IntentService {
             URL url = new URL(imageData.getDownloadUrl());
             URLConnection connection = url.openConnection();
 
-            DefaultSettings settings = DefaultSettings.getsInstance();
-            int connectTimeOut = settings.getIntValue(DefaultSettings.DEFAULT_CONNECT_TIME_OUT);
-            connection.setConnectTimeout(connectTimeOut * 500);
+            Camera camera = Camera.instance;
 
+            connection.setConnectTimeout(camera.getPreferences().getConnectTimeout() / 2);
             connection.connect();
 
             // this will be useful so that you can show a typical 0-100% progress bar
             fileLength = connection.getContentLength();
 
-            ImageMetaData imageMetaData = CameraFactory.DefaultCamera.getImageInfo(imageData);
+            ImageMetaData imageMetaData = camera.getImageInfo(imageData);
             uri = imageData.getLocalStorageUri();
 
             if (uri == null) {
@@ -221,14 +224,15 @@ public class DownloadService extends IntentService {
                     }
                 }
 
-                if (Build.VERSION.SDK_INT < /*Build.VERSION_CODES.Q*/ 29) {
-                    File localPath = imageData.getLocalPath();
+                //if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                    File localPath = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+                            camera.getImageLocalPath(imageData).getPath());
                     values.put(MediaStore.MediaColumns.DATA, localPath.getAbsolutePath());
                     localPath.getParentFile().mkdirs();
-                } else {
+                //} else {
                     //MediaStore.MediaColumns.RELATIVE_PATH
                     //values.put(MediaStore.Images.Media.IS_PENDING, 1);
-                }
+                //}
 
                 uri = cr.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
                 if (uri == null) {
@@ -445,7 +449,7 @@ public class DownloadService extends IntentService {
                 }
 
                 Context context = MyApplication.ApplicationContext;
-                ImageData imageData = downloadEntry.getImageData();
+                final ImageData imageData = downloadEntry.getImageData();
               
                 if (resultCode == UPDATE_PROGRESS) {
                     int progress = resultData.getInt(EXTRA_PROGRESS);                    
@@ -468,7 +472,15 @@ public class DownloadService extends IntentService {
                         Queue.downloadCount++;
                         String localUri = resultData.getString(EXTRA_LOCAL_URI);
                         if(localUri != null && localUri.length() > 0) {
-                            imageData.setLocalStorageUri(Uri.parse(localUri));
+                            Uri uri = Uri.parse(localUri);
+                            imageData.setGalleryId(Integer.parseInt(uri.getLastPathSegment()));
+                            imageData.setLocalStorageUri(uri);
+                            TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
+                                @Override
+                                public void run() {
+                                    imageData.saveData();
+                                }
+                            });
                         }
                     } else if(status == DOWNLOAD_STATUS_ERROR) {
                         Queue.errorCount++;
@@ -533,7 +545,8 @@ public class DownloadService extends IntentService {
         private static void doDownloadFinished(ImageData imageData, long donloadId, boolean wasCanceled) {
 
             if(onDownloadFinishedListener != null) {
-                onDownloadFinishedListener.onDownloadFinished(imageData, donloadId, sDownloadQueue.size(), wasCanceled);
+                onDownloadFinishedListener.onDownloadFinished(imageData, donloadId, sDownloadQueue.size(),
+                        Queue.downloadCount, Queue.errorCount, wasCanceled);
             }
 
             if(sDownloadQueue.size() == 0) {
@@ -543,8 +556,8 @@ public class DownloadService extends IntentService {
                     sWackeLock = null;
                     if(BuildConfig.DEBUG) Logger.debug(TAG, "WakeLock released");
                 }
-                if(sShutCameraDownWhenDone) {
-                    CameraFactory.DefaultCamera.powerOff();
+                if(sShutCameraDownWhenDone && !wasCanceled) {
+                    Camera.instance.powerOff();
                 }
                 downloadNotification(null, donloadId > 0 ? 0 : -1);
             }
@@ -571,18 +584,28 @@ public class DownloadService extends IntentService {
             doDownloadFinished(downloadEntry.mImageData, downloadEntry.getDownloadId(), canceled);
         }
               
-        /*public*/ static boolean inBatchDownload;        
+        /*public*/ static boolean inBatchDownload;
+
+        private static NotificationManagerCompat notificationManager;
         
         public static ResultReceiver DownloadResultReceiver = new DownloadReceiver(new Handler());
 
         public static void downloadNotification(ImageData imageData, int progress) {
+
             Context context = MyApplication.ApplicationContext;
+            if(notificationManager == null) {
+                notificationManager = NotificationManagerCompat.from(context);
+            }
+
+            if(!displayNotification) {
+                notificationManager.cancel(PROGRESS_NOTIFICATION_ID);
+                return;
+            }
+
             NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID);
-            NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
 
             PendingIntent pi = ImageGridActivity.getPendingIntent();
             builder.setSmallIcon(R.drawable.ic_cloud_download_white_24dp)
-                       .setLocalOnly(true)
                        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                        .setContentIntent(pi);
 
@@ -612,6 +635,7 @@ public class DownloadService extends IntentService {
 
                 if(contentText != null) {
                     builder.setContentText(contentText)
+                            .setAutoCancel(true)
                             .setContentTitle(context.getString(R.string.download_done_notification_title));
                     notificationManager.notify(DONE_NOTIFICATION_ID, builder.build());
                 }

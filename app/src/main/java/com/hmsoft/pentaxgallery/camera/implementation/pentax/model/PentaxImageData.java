@@ -24,7 +24,6 @@ import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.camera.implementation.pentax.UrlHelper;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
-import com.hmsoft.pentaxgallery.util.DefaultSettings;
 import com.hmsoft.pentaxgallery.util.Logger;
 
 import java.io.File;
@@ -34,7 +33,6 @@ import androidx.exifinterface.media.ExifInterface;
 
 public class PentaxImageData extends ImageData {
 
-    private File mLocalPath;
     private Uri mLocalUri = null;
 
     PentaxImageData(String directory, String fileName) {
@@ -48,7 +46,7 @@ public class PentaxImageData extends ImageData {
             try {
                 ParcelFileDescriptor fd = MyApplication.ApplicationContext.getContentResolver().openFileDescriptor(getLocalStorageUri(), "r");
                 exifInterface = new ExifInterface(fd.getFileDescriptor());
-                setMetaData(new PentaxImageMetaData(getLocalPath(), exifInterface));
+                setMetaData(new PentaxImageMetaData(exifInterface));
                 fd.close();
                 if(BuildConfig.DEBUG) Logger.debug(fileName, "Image metadata loaded from downloaded picture");
             } catch (IOException e) {
@@ -85,19 +83,5 @@ public class PentaxImageData extends ImageData {
     public String getDownloadUrl() {
         String downloadUrl = UrlHelper.getDownloadUrl(this);
         return downloadUrl;
-    }
-
-    @Override
-    public File getLocalPath() {
-        if(mLocalPath == null) {
-            String location = DefaultSettings.getsInstance().getStringValue(DefaultSettings.DOWNLOAD_LOCATION);
-
-            if (isRaw) {
-                location += " (RAW)";
-            }
-
-            mLocalPath = new File(location, uniqueFileName);
-        }
-        return mLocalPath;
     }
 }

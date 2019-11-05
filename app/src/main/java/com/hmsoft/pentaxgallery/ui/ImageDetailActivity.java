@@ -19,17 +19,9 @@
 
 package com.hmsoft.pentaxgallery.ui;
 
-import android.app.ActionBar;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.app.NavUtils;
-import android.support.v4.view.ViewPager;
 import android.util.DisplayMetrics;
 import android.view.GestureDetector;
 import android.view.Menu;
@@ -42,7 +34,6 @@ import android.widget.Toast;
 
 import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.Camera;
-import com.hmsoft.pentaxgallery.camera.CameraFactory;
 import com.hmsoft.pentaxgallery.camera.controller.CameraController;
 import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
@@ -52,8 +43,18 @@ import com.hmsoft.pentaxgallery.util.TaskExecutor;
 import com.hmsoft.pentaxgallery.util.image.ImageCache;
 import com.hmsoft.pentaxgallery.util.image.ImageFetcher;
 import com.hmsoft.pentaxgallery.util.image.ImageLocalFetcher;
+import com.hmsoft.pentaxgallery.util.image.ImageRotatorFetcher;
 
-public class ImageDetailActivity extends FragmentActivity implements OnClickListener,
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NavUtils;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentStatePagerAdapter;
+import androidx.viewpager.widget.ViewPager;
+
+public class ImageDetailActivity extends AppCompatActivity implements OnClickListener,
         GestureDetector.OnGestureListener,
         GestureDetector.OnDoubleTapListener, ViewPager.OnPageChangeListener,
         DownloadService.OnDownloadFinishedListener,
@@ -62,11 +63,11 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
     private static final String IMAGE_CACHE_DIR = "images";
     public static final String EXTRA_IMAGE = "extra_image";
 
+    private Camera mCamera = Camera.instance;
     private ImagePagerAdapter mAdapter;
     private ImageFetcher mImageFetcher;
     private ViewPager mPager;
     private Menu mMenu;
-    private Camera mCamera = CameraFactory.DefaultCamera;
     private ImageData imageData;
     private DownloadService.DownloadEntry downloadEntry;
 
@@ -91,7 +92,9 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
         cacheParams.setMemCacheSizePercent(0.40f); // Set memory cache to 35% of app memory
 
         // The ImageFetcher takes care of loading images into our ImageView children asynchronously
-        mImageFetcher = new ImageLocalFetcher(this, longest);
+        boolean loadLocalImageData = Camera.instance.getPreferences().loadLocalImageData();
+
+        mImageFetcher = loadLocalImageData ? new ImageLocalFetcher(this, longest) : new ImageRotatorFetcher(this, longest);
         mImageFetcher.addImageCache(getSupportFragmentManager(), cacheParams);
         mImageFetcher.setImageFadeIn(false);
 
@@ -110,7 +113,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
         // Enable some additional newer visibility and ActionBar features to create a more
         // immersive photo viewing experience
 
-        final ActionBar actionBar = getActionBar();
+        final ActionBar actionBar = getSupportActionBar();
         if(actionBar != null) {
             // Hide title text and set home as up
             actionBar.setDisplayHomeAsUpEnabled(true);
@@ -404,7 +407,7 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
 
     private void updateActionBarTitle() {        
         if(imageData != null) {
-            ActionBar actionBar = getActionBar();
+            ActionBar actionBar = getSupportActionBar();
             if (actionBar != null) {
                 actionBar.setTitle(imageData.fileName);                
                 String subtitle = null;
@@ -433,7 +436,8 @@ public class ImageDetailActivity extends FragmentActivity implements OnClickList
     }
 
     @Override
-    public void onDownloadFinished(ImageData imageData, long donloadId, int remainingDownloads, boolean wasCanceled) {
+    public void onDownloadFinished(ImageData imageData, long donloadId, int remainingDownloads,
+                                   int downloadCount, int errorCount, boolean wasCanceled) {
         updateCurrentImageData();
         if(mCamera.isFiltered()) {
             mAdapter.notifyDataSetChanged();

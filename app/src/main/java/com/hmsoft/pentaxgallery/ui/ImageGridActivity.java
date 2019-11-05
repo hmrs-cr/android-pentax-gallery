@@ -23,17 +23,24 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentTransaction;
+import android.view.Display;
+import android.view.Surface;
+import android.view.WindowManager;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
+import com.hmsoft.pentaxgallery.ui.preferences.PreferencesActivity;
 import com.hmsoft.pentaxgallery.util.Logger;
+
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentTransaction;
 
 /**
  * Simple FragmentActivity to hold the main {@link ImageGridFragment} and not much else.
  */
-public class ImageGridActivity extends FragmentActivity {
+public class ImageGridActivity extends AppCompatActivity {
     private static final String TAG = "ImageGridActivity";
 
     public static final String EXTRA_START_DOWNLOADS = "EXTRA_START_DOWNLOADS";
@@ -92,6 +99,27 @@ public class ImageGridActivity extends FragmentActivity {
             ft.commit();
         }
 
+        final ActionBar actionBar = getSupportActionBar();
+        if(actionBar != null) {
+            actionBar.setDisplayShowTitleEnabled(true);
+        }
 
+        Display display = ((WindowManager)getSystemService(WINDOW_SERVICE)).getDefaultDisplay();
+        int rotation = display.getRotation();
+        if(rotation == Surface.ROTATION_0 || rotation == Surface.ROTATION_180) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (resultCode) {
+            case PreferencesActivity.RESULT_UPDATE_CAMERA_LIST:
+                fragment.rebuildCameraListMenu();
+                break;
+            case PreferencesActivity.RESULT_OK:
+                break;
+        }
     }
 }

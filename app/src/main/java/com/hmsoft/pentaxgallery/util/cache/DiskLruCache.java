@@ -464,6 +464,11 @@ public final class DiskLruCache implements Closeable {
             throw new IOException();
         }
     }
+  
+    public boolean hasKey(String key) {
+        Entry entry = lruEntries.get(key);
+        return entry != null && entry.readable;
+    }
 
     /**
      * Returns a snapshot of the entry named {@code key}, or null if it doesn't

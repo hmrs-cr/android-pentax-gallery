@@ -24,10 +24,11 @@ import android.content.Context;
 import android.graphics.Bitmap;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
+import com.hmsoft.pentaxgallery.camera.Camera;
+import com.hmsoft.pentaxgallery.camera.model.CameraPreferences;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
-import com.hmsoft.pentaxgallery.util.DefaultSettings;
 import com.hmsoft.pentaxgallery.util.Logger;
-import com.hmsoft.pentaxgallery.util.cache.CacheUtils;
+import com.hmsoft.pentaxgallery.util.Utils;
 import com.hmsoft.pentaxgallery.util.cache.DiskLruCache;
 
 import java.io.BufferedInputStream;
@@ -45,7 +46,7 @@ import java.net.URL;
  */
 public class ImageFetcher extends ImageResizer {
     private static final String TAG = "ImageFetcher";
-    private static final int HTTP_CACHE_SIZE = 20 * 1024 * 1024; // 20MB
+    private static final int HTTP_CACHE_SIZE = 512 * 1024 * 1024; // 512MB
     private static final String HTTP_CACHE_DIR = "http";
     private static final int IO_BUFFER_SIZE = 8 * 1024;
 
@@ -81,7 +82,7 @@ public class ImageFetcher extends ImageResizer {
     }
 
     private void init(Context context) {
-        mHttpCacheDir = CacheUtils.getDiskCacheDir(context, HTTP_CACHE_DIR);
+        mHttpCacheDir = Utils.getDiskCacheDir(context, HTTP_CACHE_DIR);
         mContentResolver = context.getContentResolver();
     }
 
@@ -96,7 +97,7 @@ public class ImageFetcher extends ImageResizer {
             mHttpCacheDir.mkdirs();
         }
         synchronized (mHttpDiskCacheLock) {
-            if (CacheUtils.getUsableSpace(mHttpCacheDir) > HTTP_CACHE_SIZE) {
+            if (Utils.getUsableSpace(mHttpCacheDir) > HTTP_CACHE_SIZE) {
                 try {
                     mHttpDiskCache = DiskLruCache.open(mHttpCacheDir, 1, 1, HTTP_CACHE_SIZE);
                     //CacheUtils.setDiskCache(mHttpDiskCache);
@@ -170,6 +171,48 @@ public class ImageFetcher extends ImageResizer {
         }
     }
 
+    public boolean downloadUrlToCacheIfNeeded(String url) throws IOException {
+        DiskLruCache.Editor editor = null;
+        synchronized (mHttpDiskCacheLock) { 
+           while (mHttpDiskCacheStarting) {
+                try {
+                    mHttpDiskCacheLock.wait();
+                } catch (InterruptedException e) {
+                }
+            }
+            final String key = ImageCache.hashKeyForDisk(url);
+            if (!mHttpDiskCache.hasKey(key)) {
+                if(BuildConfig.DEBUG) Logger.debug(TAG, "Cache Key not found for " + url);
+                editor = mHttpDiskCache.edit(key);
+            } else if(BuildConfig.DEBUG) Logger.debug(TAG, "Cache Key found for " + url);
+        }
+      
+        boolean downloaded = false;
+        if(editor != null) {
+            downloaded = downloadUrlToCache(editor, url);
+        }
+      
+        return downloaded;
+    }
+  
+    private boolean downloadUrlToCache(DiskLruCache.Editor editor, String url) throws IOException {
+        boolean success = false;
+        if (editor != null && !isCancel()) {
+            success = (downloadUrlToStream(url,
+                    editor.newOutputStream(DISK_CACHE_INDEX)));
+
+            synchronized (mHttpDiskCacheLock) {
+                if (success) {
+                    editor.commit();
+                    if(BuildConfig.DEBUG) Logger.debug(TAG, "Downloaded to cache " + url);
+                } else {
+                    editor.abort();
+                }
+            }
+        }
+        return success;
+    }
+  
     /**
      * The main process method, which will be called by the UrlImageWorker in the AsyncTask background
      * thread.
@@ -198,37 +241,27 @@ public class ImageFetcher extends ImageResizer {
 
         if (mHttpDiskCache != null) {
             try {
+                DiskLruCache.Editor editor = null;
                 synchronized (mHttpDiskCacheLock) {
                     snapshot = mHttpDiskCache.get(key);
+                    if (snapshot == null) {
+                        editor = mHttpDiskCache.edit(key);                      
+                    }
                 }
 
                 if (snapshot == null) {
                     if (BuildConfig.DEBUG) {
                         Logger.debug(TAG, "processBitmap, not found in http cache, downloading... " + imageData);
                     }
-                    DiskLruCache.Editor editor;
-                    synchronized (mHttpDiskCacheLock) {
-                        editor = mHttpDiskCache.edit(key);
-                    }
-
-                    if (editor != null && !isCancel()) {
-                        boolean success = (downloadUrlToStream(url,
-                                editor.newOutputStream(DISK_CACHE_INDEX)));
-
-                        synchronized (mHttpDiskCacheLock) {
-                            if (success) {
-                                editor.commit();
-                            } else {
-                                editor.abort();
-                            }
-                        }
-                    }
+                    downloadUrlToCache(editor, url);
                     synchronized (mHttpDiskCacheLock) {
                         snapshot = mHttpDiskCache.get(key);
                     }
                 } else if (BuildConfig.DEBUG) {
                     Logger.debug(TAG, "processBitmap, found in http cache " + imageData);
                 }
+              
+              
                 if (snapshot != null) {
                     fileInputStream =
                             (FileInputStream) snapshot.getInputStream(DISK_CACHE_INDEX);
@@ -247,7 +280,8 @@ public class ImageFetcher extends ImageResizer {
             }
         }
 
-        if (fileInputStream == null && fileDescriptor == null && imageData.existsOnLocalStorage()) {
+        boolean loadLocalImageData = Camera.instance.getPreferences().loadLocalImageData();
+        if (loadLocalImageData && fileInputStream == null && imageData.existsOnLocalStorage()) {
             try {
                 if(BuildConfig.DEBUG) Logger.debug(TAG, "Loading picture from " + imageData.getLocalStorageUri());
                 fileDescriptor = mContentResolver.openFileDescriptor(imageData.getLocalStorageUri(), "r").getFileDescriptor();
@@ -270,11 +304,6 @@ public class ImageFetcher extends ImageResizer {
         return bitmap;
     }
 
-    @Override
-    protected Bitmap processBitmap(String url, Object param) {
-        return processBitmap(url, (ImageData)param);
-    }
-
     /**
      * Download a bitmap from a URL and write the content to an output stream.
      *
@@ -289,12 +318,12 @@ public class ImageFetcher extends ImageResizer {
 
         try {
 
-            DefaultSettings settings = DefaultSettings.getsInstance();
+            CameraPreferences preferences = Camera.instance.getPreferences();
 
             final URL url = new URL(urlString);
             urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setConnectTimeout(settings.getIntValue(DefaultSettings.DEFAULT_CONNECT_TIME_OUT) * 1000);
-            urlConnection.setReadTimeout(settings.getIntValue(DefaultSettings.DEFAULT_READ_TIME_OUT) * 1000);
+            urlConnection.setConnectTimeout(preferences.getConnectTimeout());
+            urlConnection.setReadTimeout(preferences.getReadTimeout());
             in = new BufferedInputStream(urlConnection.getInputStream(), IO_BUFFER_SIZE);
             out = new BufferedOutputStream(outputStream, IO_BUFFER_SIZE);
 
@@ -304,7 +333,7 @@ public class ImageFetcher extends ImageResizer {
             }
             return true;
         } catch (final IOException e) {
-            Logger.error(TAG, "Error in downloadBitmap - " + e);
+            if(BuildConfig.DEBUG) Logger.error(TAG, "Error in downloadBitmap - " + e);
         } finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();

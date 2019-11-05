@@ -17,16 +17,17 @@
  *
  */
 
-package com.hmsoft.pentaxgallery.ui;
+package com.hmsoft.pentaxgallery.ui.widgets;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
-import android.support.v7.widget.AppCompatImageView;
 import android.util.AttributeSet;
 import android.widget.ImageView;
 
 import com.hmsoft.pentaxgallery.util.image.RecyclingBitmapDrawable;
+
+import androidx.appcompat.widget.AppCompatImageView;
 
 
 /**

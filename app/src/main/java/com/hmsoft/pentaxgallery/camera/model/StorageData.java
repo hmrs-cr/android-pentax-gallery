@@ -18,7 +18,11 @@ package com.hmsoft.pentaxgallery.camera.model;
 
 import org.json.JSONObject;
 
+import java.io.File;
+
 public class StorageData {
+    /*private*/ static final String FOLDER_IMAGES = "images";
+
     public final boolean active;
     public final boolean available;
     public final boolean equipped;
@@ -80,5 +84,10 @@ public class StorageData {
             count = String.valueOf(mImageList.length());
         }
         return String.format("%s (%s/%s)", name, count, format).toUpperCase();
+    }
+
+    public File getImageDataDirectory() {
+        CameraData cameraData = getCameraData();
+        return new File(cameraData.getStorageDirectory(), FOLDER_IMAGES + File.separator + name);
     }
 }

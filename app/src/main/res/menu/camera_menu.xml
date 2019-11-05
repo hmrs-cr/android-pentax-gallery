@@ -14,10 +14,15 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android" >
 
-<androidx.viewpager.widget.ViewPager xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/pager"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent" >
 
-</androidx.viewpager.widget.ViewPager>
+
+    <item
+        android:id="@+id/powerOff"
+        android:title="@string/power_off"
+        android:icon="@android:drawable/ic_lock_power_off"
+        app:showAsAction="always"/>
+
+</menu>

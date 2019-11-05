@@ -1,12 +1,12 @@
 package com.hmsoft.pentaxgallery.camera;
 
-import android.support.annotation.WorkerThread;
-
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.camera.controller.CameraController;
+import com.hmsoft.pentaxgallery.camera.implementation.pentax.PentaxController;
 import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
+import com.hmsoft.pentaxgallery.camera.model.CameraPreferences;
 import com.hmsoft.pentaxgallery.camera.model.FilteredImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageList;
@@ -14,6 +14,7 @@ import com.hmsoft.pentaxgallery.camera.model.ImageListData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
 import com.hmsoft.pentaxgallery.util.Logger;
+import com.hmsoft.pentaxgallery.util.TaskExecutor;
 import com.hmsoft.pentaxgallery.util.Utils;
 import com.hmsoft.pentaxgallery.util.WifiHelper;
 
@@ -23,23 +24,42 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import androidx.annotation.WorkerThread;
+
 public class Camera {
-    
+
+    public static final Camera instance = new Camera(new PentaxController(CameraPreferences.Default));
+
     private static final String TAG = "Camera";
   
     private final CameraController mController;
 
+    private CameraData mLatestConnectedCamera;
     private boolean mCameraConnected;
     private CameraData mCameraData;
     private int mCurrentStorageIndex;
     private FilteredImageList mFilteredImageList = null;
-    private List<CameraData> mCameras;
+    private volatile List<CameraData> mCameras;
+
+    public File getImageLocalPath(ImageData imageData) {
+
+        CameraData cameraData = getCameraData();
+        String base = null;
+        if (cameraData != null) {
+            if(imageData.isRaw) {
+                base = cameraData.preferences.getRawAlbumName();
+            } else {
+                base = cameraData.preferences.getAlbumName();
+            }
+        }
+        return new File(base, imageData.uniqueFileName);
+    }
 
     public interface OnWifiConnectionAttemptListener {
         void onWifiConnectionAttempt(String ssid);
     }
 
-    public Camera(CameraController controller) {
+    /*package*/ Camera(CameraController controller) {
         this.mController = controller;
     }
 
@@ -67,6 +87,7 @@ public class Camera {
           for(CameraData camera : getRegisteredCameras()) {
               if(camera.cameraId.equals(cameraId)) {
                   latestConnectedCamera = camera;
+                  mController.setPreferences(camera.preferences);
                   break;
               }
           }
@@ -74,6 +95,7 @@ public class Camera {
           int retryes = 3;
           int ci = 0;
 
+          latestConnectedCamera = mLatestConnectedCamera;
           while (!mCameraConnected) {
 
               if (mController.connectToCamera()) {
@@ -85,7 +107,9 @@ public class Camera {
                   Logger.warning(TAG, "Could not bind to WiFi");
               }
 
-              if (cameraData == null) {
+              if (cameraData != null) {
+                  mController.setPreferences(cameraData.preferences);
+              } else {
 
                   if (retryes-- == 0) {
                       Logger.warning(TAG, "Too many failed attempts to connect");
@@ -102,11 +126,12 @@ public class Camera {
                       WifiHelper.turnWifiOn(MyApplication.ApplicationContext, 1000);
 
                       if (ci == cameras.size()) {
-                          Logger.warning(TAG, "All registered mCameras failed to connect");
+                          if(BuildConfig.DEBUG) Logger.debug(TAG, "All registered mCameras failed to connect");
                           break;
                       }
 
                       cameraData = cameras.get(ci++);
+                      mController.setPreferences(cameraData.preferences);
 
                       if (listener != null) {
                           listener.onWifiConnectionAttempt(cameraData.ssid);
@@ -150,6 +175,7 @@ public class Camera {
           if(BuildConfig.DEBUG) Logger.debug(TAG, "Camera data from cache: " + cameraData);
       }
 
+      mLatestConnectedCamera = cameraData;
       setCameraData(cameraData);
       
        int activeStorageIndex = -1;
@@ -173,10 +199,15 @@ public class Camera {
     }
 
     public List<CameraData> getRegisteredCameras() {
-        if (mCameras == null) {
-            mCameras = CameraData.getRegisteredCameras();
+        if (mCameras == null && !TaskExecutor.isMainUIThread()) {
+            loadCameraList();
         }
         return mCameras;
+    }
+
+    @WorkerThread
+    public synchronized void loadCameraList() {
+        mCameras = CameraData.getRegisteredCameras();
     }
 
     @WorkerThread
@@ -221,6 +252,10 @@ public class Camera {
         return mCameraData;
     }
 
+    public CameraPreferences getPreferences() {
+        return mCameraData != null ? mCameraData.preferences : CameraPreferences.Default;
+    }
+
     public void setCameraData(CameraData cameraData) {
         mCameraData = cameraData;
     }
@@ -255,6 +290,12 @@ public class Camera {
 
         StorageData storageData = getCurrentStorage();
         return storageData != null ? storageData.getImageList() : null;
+    }
+
+    public boolean imageListHasMixedFormats() {
+        StorageData storageData = getCurrentStorage();
+        return storageData != null && storageData.getImageList() != null &&
+                storageData.getImageList().hasMixedFormats;
     }
   
     public void setImageFilter(FilteredImageList.ImageFilter filter) {
@@ -302,17 +343,33 @@ public class Camera {
     }
 
     public ImageData addImageToStorage(String storage, String filepath) {
+        ImageData imageData = null;
         if(mCameraData != null) {
             for (StorageData storageData : mCameraData.storages) {
                 if(storageData.name.equals(storage)) {
                     File file = new File(filepath);
                     String dirName = file.getParent();
                     String fileName = file.getName();
-                    return storageData.getImageList().insertImage(dirName, fileName);
+                    imageData = storageData.getImageList().insertImage(dirName, fileName);
+                    imageData.setStorageData(storageData);
+                    break;
+                }
+            }
+            if(imageData != null && imageData.getStorageData().equals(getCurrentStorage())) {
+                if((imageData.isRaw && hasFilter(FilteredImageList.RawFilter)) ||
+                        (!imageData.isRaw && hasFilter(FilteredImageList.JpgFilter))) {
+                    rebuildFilter();
                 }
             }
         }
-        return null;
+        return imageData;
+    }
+
+    public void rebuildFilter() {
+        ImageList imageList = getImageList();
+        if(imageList instanceof FilteredImageList) {
+            ((FilteredImageList)imageList).rebuildFilter();
+        }
     }
 
     public void powerOff() {

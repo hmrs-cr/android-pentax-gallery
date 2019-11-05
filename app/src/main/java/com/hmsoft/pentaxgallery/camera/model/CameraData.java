@@ -48,9 +48,12 @@ public class CameraData extends BaseResponse {
     public final String serialNo;
     public final String dateAdded;
     public final String cameraId;
+    public final int battery;
+    public final boolean hot;
 
     public final String key;
     public final String ssid;
+    public final CameraPreferences preferences;
 
     public final int hashCode;
 
@@ -77,8 +80,12 @@ public class CameraData extends BaseResponse {
         this.ssid = null;
 
         hashCode = 0;
+        battery = -1;
+        hot = false;
 
         storages.add(new StorageData(this));
+
+        preferences = CameraPreferences.Default;
     }
 
     public CameraData(JSONTokener jsonTokener) throws JSONException {
@@ -99,6 +106,12 @@ public class CameraData extends BaseResponse {
 
         key = jsonObject.optString("key");
         ssid = jsonObject.optString("ssid");
+
+        battery = jsonObject.optInt("battery", -1);
+        hot = jsonObject.optBoolean("hot");
+
+        preferences = new CameraPreferences(this);
+        preferences.load();
 
         JSONArray storajesArray = jsonObject.optJSONArray("storages");
         if (storajesArray != null) {
@@ -198,6 +211,20 @@ public class CameraData extends BaseResponse {
                 return o2.dateAdded.compareTo(o1.dateAdded);
             }
         });
+
+        return result;
+    }
+
+    public String[] getParamList(String paramName) {
+        JSONArray jsonArray = getJSONObject().optJSONArray(paramName + "List");
+
+        String[] result = null;
+        if(jsonArray != null) {
+            result = new String[jsonArray.length()];
+            for(int c = 0; c < result.length; c++) {
+                result[c] = jsonArray.optString(c);
+            }
+        }
 
         return result;
     }

@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Environment;
 import android.provider.Settings;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
@@ -126,4 +127,51 @@ public class Utils {
         return sb.toString();
     }
 
+    /**
+     * Check how much usable space is available at a given path.
+     *
+     * @param path The path to check
+     * @return The space available in bytes
+     */
+    public static long getUsableSpace(File path) {
+        return path.getUsableSpace();
+    }
+
+    /**
+     * Check if external storage is built-in or removable.
+     *
+     * @return True if external storage is removable (like an SD card), false
+     *         otherwise.
+     */
+    public static boolean isExternalStorageRemovable() {
+        return Environment.isExternalStorageRemovable();
+    }
+
+    /**
+     * Get the external app cache directory.
+     *
+     * @param context The context to use
+     * @return The external cache dir
+     */
+    public static File getExternalCacheDir(Context context) {
+        return context.getExternalCacheDir();
+    }
+
+    /**
+     * Get a usable cache directory (external if available, internal otherwise).
+     *
+     * @param context The context to use
+     * @param uniqueName A unique directory name to append to the cache dir
+     * @return The cache dir
+     */
+    public static File getDiskCacheDir(Context context, String uniqueName) {
+        // Check if media is mounted or storage is built-in, if so, try and use external cache dir
+        // otherwise use internal cache dir
+        final String cachePath =
+                Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()) ||
+                        !isExternalStorageRemovable() ? getExternalCacheDir(context).getPath() :
+                        context.getCacheDir().getPath();
+
+        return new File(cachePath + File.separator + uniqueName);
+    }
 }

@@ -16,17 +16,32 @@
 -->
 
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent">
+    android:layout_height="fill_parent"
+    android:background="@drawable/background">
 
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/cameraActionButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right|bottom"
+        android:layout_marginRight="@dimen/margin_medium"
+        android:layout_marginBottom="@dimen/margin_medium"
+        android:clickable="true"
+        android:fadingEdge="horizontal|vertical|none"
+        android:focusable="true"
+        android:focusableInTouchMode="false"
+        app:backgroundTint="?attr/colorBackgroundFloating"
+        app:srcCompat="@mipmap/ic_launcher_circle" />
 
-        <ProgressBar
-            android:id="@+id/progressbarGrid"
-            style="?android:attr/progressBarStyleLarge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center" />
+    <ProgressBar
+        android:id="@+id/progressbarGrid"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center" />
 
     <TextView
         android:id="@+id/progressLabel"
@@ -49,7 +64,8 @@
         android:textColor="@android:color/tertiary_text_light"
         android:textSize="18sp" />
 
-    <android.support.v4.widget.SwipeRefreshLayout
+
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swiperefresh"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -65,6 +81,8 @@
             android:numColumns="auto_fit"
             android:stretchMode="columnWidth"
             android:verticalSpacing="@dimen/image_thumbnail_spacing" >
+
         </GridView>
-    </android.support.v4.widget.SwipeRefreshLayout>
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 </FrameLayout>

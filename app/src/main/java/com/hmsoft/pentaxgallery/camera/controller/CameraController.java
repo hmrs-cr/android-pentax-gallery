@@ -19,6 +19,8 @@ package com.hmsoft.pentaxgallery.camera.controller;
 import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
 import com.hmsoft.pentaxgallery.camera.model.CameraChange;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
+import com.hmsoft.pentaxgallery.camera.model.CameraPreferences;
+import com.hmsoft.pentaxgallery.camera.model.CameraParams;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageListData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
@@ -34,6 +36,10 @@ public interface CameraController {
 
     interface OnCameraChangeListener {
         void onCameraChange(CameraChange change);
+    }
+
+    interface OnLiveViewFrameReceivedListener {
+        void onLiveViewFrameReceived(byte[] frameData);
     }
 
     class AsyncCommandExecutedListenerRunnable implements Runnable {
@@ -54,6 +60,8 @@ public interface CameraController {
         }
     }
 
+    void setPreferences(CameraPreferences preferences);
+
     BaseResponse ping();
     void ping(final CameraController.OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
   
@@ -70,5 +78,20 @@ public interface CameraController {
     ImageMetaData getImageInfo(ImageData imageData);
     void getImageInfo(final ImageData imageData, final CameraController.OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
 
-    void setCameraChangeListener(OnCameraChangeListener onCameraChangeListener);
+    void addCameraChangeListener(OnCameraChangeListener onCameraChangeListener);
+    void removeCameraChangeListener(OnCameraChangeListener onCameraChangeListener);
+
+    void startLiveView(OnLiveViewFrameReceivedListener onLiveViewFrameReceivedListener);
+    void pauseLiveView();
+    void stopLiveView();
+
+    BaseResponse shoot();
+    void shoot(OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
+
+    BaseResponse focus();
+    void focus(OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
+
+    CameraParams getCameraParams();
+    void getCameraParams(OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
+
 }

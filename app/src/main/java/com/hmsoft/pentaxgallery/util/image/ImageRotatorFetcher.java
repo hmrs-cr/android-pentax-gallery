@@ -4,7 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
 
-import com.hmsoft.pentaxgallery.camera.CameraFactory;
+import com.hmsoft.pentaxgallery.camera.Camera;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 
@@ -30,7 +30,7 @@ public class ImageRotatorFetcher extends ImageFetcher {
         Bitmap bitmap = super.processBitmap(url, imageData);
 
         if(bitmap != null && imageData != null) {
-            ImageMetaData metaData = CameraFactory.DefaultCamera.getImageInfo(imageData);
+            ImageMetaData metaData = Camera.instance.getImageInfo(imageData);
             if(metaData != null) {
                 bitmap = rotateBitmap(bitmap, metaData.orientationDegrees);
             }

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="key_album_name">album_name</string>
+    <string name="key_raw_album_name">raw_album_name</string>
+    <string name="key_auto_download_jpg">auto_download_jpg</string>
+    <string name="key_basic_category">basic_category</string>
+    <string name="key_advanced_category">advanced_category</string>
+    <string name="key_about">about</string>
+    <string name="key_auto_download_raw">auto_download_raw</string>
+    <string name="key_shutdown_camera_after_transfer">shutdown_camera_after_transfer</string>
+    <string name="key_camera_thread_number">camera_thread_number</string>
+    <string name="key_connect_timeout">connect_timeout</string>
+    <string name="key_read_timeout">read_timeout</string>
+    <string name="key_remove_camera">remove_camera</string>
+    <string name="key_load_local_image_data">load_local_image_data</string>
+    <string name="key_cameras_category">cameras_category</string>
+    <string name="key_help_category">help_category</string>
+    <string name="key_remove_old_images">remove_old_images</string>
+
+    <string name="default_album_name">Pentax Gallery</string>
+    <string name="default_raw_album_name">Pentax Gallery (RAW)</string>
+    <string name="default_auto_download_jpg">true</string>
+    <string name="default_auto_download_raw">false</string>
+    <string name="default_shutdown_camera_after_transfer">false</string>
+    <string name="default_camera_thread_number">3</string>
+    <string name="default_connect_timeout">1000</string>
+    <string name="default_read_timeout">35000</string>
+    <string name="default_load_local_image_data">false</string>
+
+</resources>
