@@ -34,7 +34,7 @@
         android:focusable="true"
         android:focusableInTouchMode="false"
         app:backgroundTint="?attr/colorBackgroundFloating"
-        app:srcCompat="@mipmap/ic_launcher_circle" />
+        app:srcCompat="@drawable/ic_cloud_download_white_24dp" />
 
     <ProgressBar
         android:id="@+id/progressbarGrid"

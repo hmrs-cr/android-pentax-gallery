@@ -91,4 +91,18 @@
     <string name="about_label">About…</string>
     <string name="remove_old_images_label">Remove old image data</string>
     <string name="power_off">Power Off</string>
+    <string name="main_action_label">Main button action</string>
+    <string name="default_main_action">CAMERA</string>
+
+    <string-array name="main_action_options">
+        <item>None</item>
+        <item>Download JPGs</item>
+        <item>Camera</item>
+    </string-array>
+
+    <string-array name="main_action_options_values">
+        <item>NONE</item>
+        <item>DOWNLOAD</item>
+        <item>CAMERA</item>
+    </string-array>
 </resources>

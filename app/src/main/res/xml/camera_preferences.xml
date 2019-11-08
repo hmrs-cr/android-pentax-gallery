@@ -36,6 +36,14 @@
             app:defaultValue="@string/default_shutdown_camera_after_transfer"
             app:summary="@string/shutdown_camera_after_transfer_summary"/>
 
+        <ListPreference
+            app:key="@string/key_main_action"
+            app:title="@string/main_action_label"
+            app:defaultValue="@string/default_main_action"
+            app:entryValues="@array/main_action_options_values"
+            app:entries="@array/main_action_options"
+            app:useSimpleSummaryProvider="true"/>
+
     </PreferenceCategory>
 
     <PreferenceCategory

@@ -16,6 +16,12 @@ import androidx.preference.PreferenceDataStore;
 
 public class CameraPreferences extends PreferenceDataStore {
 
+    public enum MainAction {
+        NONE,
+        CAMERA,
+        DOWNLOAD
+    }
+
     public static final CameraPreferences Default = new CameraPreferences(null);
 
     private final File settingsFile;
@@ -141,5 +147,9 @@ public class CameraPreferences extends PreferenceDataStore {
 
     public int getReadTimeout() {
         return getInt(R.string.key_read_timeout, R.string.default_read_timeout);
+    }
+
+    public MainAction getMainAction() {
+        return MainAction.valueOf(getString(R.string.key_main_action, R.string.default_main_action));
     }
 }

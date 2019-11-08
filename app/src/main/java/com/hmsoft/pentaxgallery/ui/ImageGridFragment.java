@@ -28,7 +28,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -40,7 +39,6 @@ import android.provider.Settings;
 import android.text.Html;
 import android.text.TextUtils;
 import android.util.TypedValue;
-import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -71,6 +69,7 @@ import com.hmsoft.pentaxgallery.camera.Camera;
 import com.hmsoft.pentaxgallery.camera.controller.CameraController;
 import com.hmsoft.pentaxgallery.camera.model.CameraChange;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
+import com.hmsoft.pentaxgallery.camera.model.CameraPreferences;
 import com.hmsoft.pentaxgallery.camera.model.FilteredImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageList;
@@ -126,7 +125,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     private TextView mEmptyViewLabel;
     private TextView mProgressLabel;
     private GridView mGridView;
-    private FloatingActionButton mCameraActionButton;
+    private FloatingActionButton mMainActionButton;
     private Menu mMenu;
     private SearchView mSearchView;
     private SwipeRefreshLayout mSwipeRefreshLayout;
@@ -242,19 +241,54 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                     }
                 });
 
-        mCameraActionButton = v.findViewById(R.id.cameraActionButton);
-        mCameraActionButton.setOnClickListener(new View.OnClickListener() {
+        mMainActionButton = v.findViewById(R.id.cameraActionButton);
+        mMainActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                CameraActivity.start(getActivity());
+                CameraPreferences.MainAction mainAction = mCamera.getPreferences().getMainAction();
+                switch (mainAction) {
+                    case CAMERA:
+                        CameraActivity.start(getActivity());
+                        break;
+                    case DOWNLOAD:
+                        downloadJpgs();
+                        break;
+                }
             }
         });
-
-        mCameraActionButton.setVisibility(mCamera.isConnected() ? View.VISIBLE : View.GONE);
 
         updateEmptyViewText("");
 
         return v;
+    }
+
+    @SuppressLint("RestrictedApi")
+    private void updateMainActionButton() {
+        if(mMainActionButton == null) {
+            return;
+        }
+
+        CameraPreferences.MainAction mainAction = mCamera.getPreferences().getMainAction();
+
+        mMainActionButton.setVisibility(
+                (mCamera.isConnected() || BuildConfig.DEBUG) && mainAction != CameraPreferences.MainAction.NONE
+                ? View.VISIBLE
+                : View.GONE
+        );
+
+        switch (mainAction) {
+            case CAMERA:
+                mMainActionButton.setImageResource(R.mipmap.ic_launcher_circle);
+                break;
+            case DOWNLOAD:
+                mMainActionButton.setImageResource(R.drawable.ic_cloud_download_white_24dp);
+                break;
+        }
+
+        if(mMenu != null) {
+            mMenu.findItem(R.id.download_jpgs).setIcon(mainAction == CameraPreferences.MainAction.DOWNLOAD ?
+                    R.mipmap.ic_launcher_circle : R.drawable.ic_cloud_download_white_24dp);
+        }
     }
 
     @Override
@@ -293,6 +327,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         if(mCamera.isConnected()) {
             mCamera.getController().addCameraChangeListener(ImageGridFragment.this);
         }
+        updateMainActionButton();
     }
 
     @Override
@@ -607,7 +642,11 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 shareFlaggedList();
                 return true;
             case R.id.download_jpgs:
-                downloadJpgs();
+                if(mCamera.getPreferences().getMainAction() == CameraPreferences.MainAction.DOWNLOAD) {
+                    CameraActivity.start(getActivity());
+                } else {
+                    downloadJpgs();
+                }
                 return true;
             case R.id.settings:
                 PreferencesActivity.start(getActivity());
@@ -1029,10 +1068,10 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     @Override
     public WindowInsets onApplyWindowInsets(View v, WindowInsets insets) {
-        FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams)mCameraActionButton.getLayoutParams();
+        FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) mMainActionButton.getLayoutParams();
         layoutParams.setMargins(layoutParams.leftMargin, layoutParams.topMargin,layoutParams.rightMargin,
                 layoutParams.bottomMargin + insets.getSystemWindowInsetBottom());
-        mCameraActionButton.setLayoutParams(layoutParams);
+        mMainActionButton.setLayoutParams(layoutParams);
         return insets.consumeSystemWindowInsets();
     }
 
@@ -1540,7 +1579,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             updateActionBarTitle();
             updateMenuItems();
 
-            mCameraActionButton.setVisibility(mCamera.isConnected() ||  BuildConfig.DEBUG ? View.VISIBLE : View.GONE);
+            updateMainActionButton();
 
             updateProgressText(null);
             mImageListTask = null;

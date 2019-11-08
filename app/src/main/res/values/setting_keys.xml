@@ -26,5 +26,6 @@
     <string name="default_connect_timeout">1000</string>
     <string name="default_read_timeout">35000</string>
     <string name="default_load_local_image_data">false</string>
+    <string name="key_main_action">main_action</string>
 
 </resources>
