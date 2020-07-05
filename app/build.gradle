@@ -18,11 +18,11 @@ def versionStringBase = "${versionMajor}.${versionMinor}.${verCode}-${buildTime(
 
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 30
     defaultConfig {
         applicationId "com.hmsoft." + APP_NAME.toLowerCase()
-        minSdkVersion 21
-        targetSdkVersion 28
+        minSdkVersion 24
+        targetSdkVersion 29
         versionName versionStringBase
         versionCode verCode
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
