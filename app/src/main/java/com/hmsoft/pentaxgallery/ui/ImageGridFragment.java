@@ -133,7 +133,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     private boolean mNeedUpdateImageList;
     private volatile boolean mDontShowProgressBar;
 
-    private final int DEFAULT_MULTIFORMAT_FILTER =  R.id.view_raw_only;
+    private final int DEFAULT_MULTIFORMAT_FILTER =  R.id.view_jpg_only;
 
     /**
      * Empty constructor as per the Fragment documentation
