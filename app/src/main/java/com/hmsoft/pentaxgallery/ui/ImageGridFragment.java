@@ -89,6 +89,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -322,7 +323,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         DownloadService.setOnDownloadFinishedListener(this);
         updateActionBarTitle();
 
-        DownloadService.setDisplayNotification(false);
+        DownloadService.setDisplayNotification(true);
 
         if(mCamera.isConnected()) {
             mCamera.getController().addCameraChangeListener(ImageGridFragment.this);

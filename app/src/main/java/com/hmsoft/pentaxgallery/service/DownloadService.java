@@ -4,6 +4,7 @@ import android.app.IntentService;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.Service;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -15,6 +16,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.os.ResultReceiver;
+import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.widget.Toast;
 
@@ -145,6 +147,9 @@ public class DownloadService extends IntentService {
     @Override
     public void onStart(@Nullable Intent intent, int startId) {
         super.onStart(intent, startId);
+        this.startForeground(Queue.PROGRESS_NOTIFICATION_ID,
+                Queue.createDownloadNotificationBuilder(MyApplication.ApplicationContext).build());
+
         if(BuildConfig.DEBUG) Logger.debug(TAG,  "onStart");
     }
 
@@ -329,7 +334,7 @@ public class DownloadService extends IntentService {
         intent.putExtra(EXTRA_RECEIVER, Queue.DownloadResultReceiver);
         intent.putExtra(EXTRA_DOWNLOAD_ID, ++downloadId);
         downloadEntry.setDownloadId(downloadId);
-        context.startService(intent);
+        context.startForegroundService(intent);
         if(BuildConfig.DEBUG) Logger.debug(TAG, "Download added to service: " + downloadId);
         return downloadId;
     }
@@ -411,6 +416,10 @@ public class DownloadService extends IntentService {
         Queue.loadFromFile(sourceImageList, cameraData);
     }
 
+    public static String getQueueFinishETA() {
+        return Queue.getETAString();
+    }
+
     private static class Queue {
 
         private static final String CACHE_KEY = "downloadQueue.cache";
@@ -427,6 +436,9 @@ public class DownloadService extends IntentService {
         private final static ImageList sIageList = new DownloadQueueImageList();
         private static int downloadCount = 0;
         private static int errorCount = 0;
+        private static long sStarDownloadTime = -1;
+        private static long sLastEtaUpdate = -1;
+        private static String sLastEtatext;
 
         private static class DownloadReceiver extends ResultReceiver {
 
@@ -550,6 +562,7 @@ public class DownloadService extends IntentService {
             }
 
             if(sDownloadQueue.size() == 0) {
+                sStarDownloadTime = -1;
                 inBatchDownload = false;
                 if(sWackeLock != null) {
                     sWackeLock.release();
@@ -591,6 +604,20 @@ public class DownloadService extends IntentService {
         public static ResultReceiver DownloadResultReceiver = new DownloadReceiver(new Handler());
 
         public static void downloadNotification(ImageData imageData, int progress) {
+            downloadNotification(imageData, progress, null);
+        }
+
+        public static NotificationCompat.Builder createDownloadNotificationBuilder(Context context) {
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID);
+
+            PendingIntent pi = ImageGridActivity.getPendingIntent();
+            builder.setSmallIcon(R.drawable.ic_cloud_download_white_24dp)
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                    .setContentIntent(pi);
+
+            return builder;
+        }
+        public static void downloadNotification(ImageData imageData, int progress, Service foregroundService) {
 
             Context context = MyApplication.ApplicationContext;
             if(notificationManager == null) {
@@ -602,26 +629,30 @@ public class DownloadService extends IntentService {
                 return;
             }
 
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID);
-
-            PendingIntent pi = ImageGridActivity.getPendingIntent();
-            builder.setSmallIcon(R.drawable.ic_cloud_download_white_24dp)
-                       .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                       .setContentIntent(pi);
-
+            NotificationCompat.Builder builder = createDownloadNotificationBuilder(context);
             if(imageData != null) {
                 //i.putExtra(ImageGridActivity.EXTRA_START_DOWNLOADS, true);
 
+                int remainingDownloads = sDownloadQueue.size();
+                String eta = getETAString((float) remainingDownloads);
                 builder.setContentTitle(context.getString(R.string.download_notification_title))
-                       .setContentText(String.format("%s (%d)", imageData.fileName, sDownloadQueue.size()))
+                       .setContentText(String.format("%s (%d)", imageData.fileName, remainingDownloads))
                        .setOngoing(true)
                        .setLargeIcon(imageData.getThumbBitmap())
+                       .setSubText(eta)
                        .setProgress(100, progress, progress == 0);
 
-                notificationManager.cancel(DONE_NOTIFICATION_ID);
-                notificationManager.notify(PROGRESS_NOTIFICATION_ID, builder.build());
+
+                if (foregroundService != null) {
+                    foregroundService.startForeground(PROGRESS_NOTIFICATION_ID, builder.build());
+                } else {
+                    notificationManager.notify(PROGRESS_NOTIFICATION_ID, builder.build());
+                }
+
             } else {
-                notificationManager.cancel(PROGRESS_NOTIFICATION_ID);
+                if (foregroundService != null) {
+                    foregroundService.stopForeground(true);
+                }
 
                 String contentText = null;
                 if(Queue.downloadCount > 0 && Queue.errorCount > 0) {
@@ -647,6 +678,40 @@ public class DownloadService extends IntentService {
                    Toast.makeText(context, R.string.donwload_done_notification_title, Toast.LENGTH_LONG).show();
                 }
             }
+        }
+
+        public static String getETAString() {
+            return  getETAString((float)sDownloadQueue.size());
+        }
+
+        private static String getETAString(float remainingDownloads) {
+            String etaText = null;
+            long elapsedRealTime = SystemClock.elapsedRealtime();
+            if (sStarDownloadTime > 0 && elapsedRealTime - sLastEtaUpdate > 45000) {
+                int downloaded = Queue.downloadCount;
+                long elapsedDownloadTime = (elapsedRealTime - sStarDownloadTime) / 1000;
+                float downloadsPerSecond = (float)downloaded / (float)elapsedDownloadTime;
+                if (downloadsPerSecond > 0) {
+                    sLastEtaUpdate = elapsedRealTime;
+                    int remainingMinutes = Math.round((remainingDownloads / (float)downloadsPerSecond) / 60);
+                    etaText =  "ETA: ";
+                    switch (remainingMinutes) {
+                        case 0:
+                            etaText += " less than a minute";
+                            break;
+                        case 1:
+                            etaText += " about 1 minute";
+                            break;
+                        default:
+                            etaText += remainingMinutes + " minutes";
+                    }
+
+                    sLastEtatext = etaText;
+                    Logger.debug("ETACALC", etaText);
+                }
+            }
+
+            return sLastEtatext;
         }
 
         /*public*/ static void loadFromFile(ImageList sourceImageList, CameraData cameraData) {
@@ -797,7 +862,10 @@ public class DownloadService extends IntentService {
             int count = 0;
             if (all || !isDownloading()) {
                 DownloadEntry downloadEntry = null;
-                 while((downloadEntry = getNextDownload()) != null) {
+                sStarDownloadTime = SystemClock.elapsedRealtime();
+                sLastEtatext = "";
+                sLastEtaUpdate = sStarDownloadTime;
+                while((downloadEntry = getNextDownload()) != null) {
                     download(downloadEntry);
                     count++;
                 }
