@@ -21,7 +21,7 @@
     <string name="default_raw_album_name">Pentax Gallery (RAW)</string>
     <string name="default_auto_download_jpg">true</string>
     <string name="default_auto_download_raw">false</string>
-    <string name="default_shutdown_camera_after_transfer">false</string>
+    <string name="default_shutdown_camera_after_transfer">true</string>
     <string name="default_camera_thread_number">3</string>
     <string name="default_connect_timeout">1000</string>
     <string name="default_read_timeout">35000</string>
