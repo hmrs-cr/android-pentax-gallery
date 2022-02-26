@@ -645,8 +645,7 @@ public class DownloadService extends IntentService {
                        .setContentText(String.format("%s (%d)", imageData.fileName, remainingDownloads))
                        .setOngoing(true)
                        .setLargeIcon(imageData.getThumbBitmap())
-                       .setNumber(66)
-                       .setWhen(System.currentTimeMillis() - (SystemClock.elapsedRealtime() - sStarDownloadTime))
+                       .setShowWhen(false)
                        .setProgress(100, progress, progress == 0);
 
                 String eta = getETAString((float) remainingDownloads);
@@ -683,12 +682,12 @@ public class DownloadService extends IntentService {
                     if (totalTime > 0) {
                         String ataText = "Total: ";
                         if (totalTime < 60) {
-                            ataText += totalTime + " s";
+                            ataText += totalTime + "s";
                         } else {
                             if (totalTime % 60 > 6) {
                                 ataText += "< ";
                             }
-                            ataText += Math.round(Math.ceil(totalTime / (float)60)) +  " m";
+                            ataText += Math.round(Math.ceil(totalTime / (float)60)) +  "m";
                         }
 
                         if (Logger.DEBUG) {
@@ -732,7 +731,7 @@ public class DownloadService extends IntentService {
                             etaText += " < 1m";
                             break;
                         default:
-                            etaText += remainingMinutes + " m";
+                            etaText += remainingMinutes + "m";
                     }
 
                     sLastEtatext = etaText;
