@@ -101,32 +101,18 @@ public final class HttpHelper {
 
     public static boolean bindToWifi() {
         ConnectivityManager connectivityManager = (ConnectivityManager) MyApplication.ApplicationContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            Network[] networks = connectivityManager.getAllNetworks();
+        Network[] networks = connectivityManager.getAllNetworks();
 
-            for (Network network : networks) {
-                NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
-                if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI && networkInfo.isConnected()) {
-                    if(BuildConfig.DEBUG) Logger.debug(TAG, "isConnectedOrConnecting:" + networkInfo.isConnectedOrConnecting());
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        connectivityManager.bindProcessToNetwork(network);
-                    } else {
-                        connectivityManager.setProcessDefaultNetwork(network);
-                    }
-                    return true;
-                }
-            }
-        } else {
-            NetworkInfo[] networksInfo = connectivityManager.getAllNetworkInfo();
-            for(NetworkInfo networkInfo : networksInfo) {
-                if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI && networkInfo.isConnected()) {
-                    return true;
-                }
+        for (Network network : networks) {
+            NetworkInfo networkInfo = connectivityManager.getNetworkInfo(network);
+            if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI && networkInfo.isConnected()) {
+                if (BuildConfig.DEBUG)
+                    Logger.debug(TAG, "isConnectedOrConnecting:" + networkInfo.isConnectedOrConnecting());
+                connectivityManager.bindProcessToNetwork(network);
+                return true;
             }
         }
 
         return false;
     }
-
-
 }

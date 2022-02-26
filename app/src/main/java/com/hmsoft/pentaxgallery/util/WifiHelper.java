@@ -61,14 +61,14 @@ public class WifiHelper {
   
     public static void waitForScanResultsAvailable(long timeOut) {
         int c = 0;
-        final int sleepms = 200;
+        final int sleepms = 500;
         
         while(!areScanResultsAvailable() && (c++ * sleepms) <  timeOut) {
             TaskExecutor.sleep(sleepms);
         }
       
-        if(BuildConfig.DEBUG) Logger.debug(TAG, "Scan results " + (areScanResultsAvailable() ? "" : "NOT ") +
-                                           "available after " + ((c-1)*sleepms) + "ms");
+        if(BuildConfig.DEBUG) Logger.debug(TAG, "Scan results " + (areScanResultsAvailable() ? "" : "NOT ") + "available" +
+                (c > 0 ? " after " + ((c-1)*sleepms) + "ms" : ""));
     }
   
     private static synchronized void updateScanResults(Context context) {

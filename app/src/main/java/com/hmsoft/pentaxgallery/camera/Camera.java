@@ -1,5 +1,7 @@
 package com.hmsoft.pentaxgallery.camera;
 
+import android.os.SystemClock;
+
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.camera.controller.CameraController;
@@ -137,9 +139,21 @@ public class Camera {
                           listener.onWifiConnectionAttempt(cameraData.ssid);
                       }
 
-                      if (ci == 0) {
-                          WifiHelper.startWifiScan(MyApplication.ApplicationContext);
-                          WifiHelper.waitForScanResultsAvailable(7500);
+
+                      if (ci == 1) {
+                          long wifiScanStartTime = SystemClock.elapsedRealtime();
+                          while (!WifiHelper.isWifiInRange(cameraData.ssid)) {
+                              WifiHelper.startWifiScan(MyApplication.ApplicationContext);
+                              WifiHelper.waitForScanResultsAvailable(20000);
+                              if (!WifiHelper.isWifiInRange(cameraData.ssid)) {
+                                  TaskExecutor.sleep(5000);
+                              }
+
+                              long scanTotalTime = SystemClock.elapsedRealtime() - wifiScanStartTime;
+                              if (scanTotalTime > 30000) {
+                                  break;
+                              }
+                          }
                       }
 
                       if (!WifiHelper.isWifiInRange(cameraData.ssid)) {
