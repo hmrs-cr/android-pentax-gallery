@@ -43,6 +43,8 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
 
     private CameraController cameraController = Camera.instance.getController();
 
+    private static boolean sInLiveView;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -132,6 +134,7 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
             mImageLiveView = getActivity().findViewById(R.id.liveImageView);
         }
         updateCameraParams();
+        sInLiveView = true;
     }
 
     @Override
@@ -145,6 +148,7 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
         super.onPause();
         cameraController.pauseLiveView();
         mImageLiveView = null;
+        sInLiveView = false;
     }
 
     @Override
@@ -240,5 +244,9 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
         } else if (response == null) {
             cameraNotConnected();
         }
+    }
+
+    public static boolean isInLiveView() {
+        return sInLiveView;
     }
 }

@@ -31,6 +31,7 @@ import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.ui.ImageGridActivity;
+import com.hmsoft.pentaxgallery.ui.camera.CameraFragment;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 import com.hmsoft.pentaxgallery.util.Utils;
@@ -571,7 +572,7 @@ public class DownloadService extends IntentService {
                     sWackeLock = null;
                     if(BuildConfig.DEBUG) Logger.debug(TAG, "WakeLock released");
                 }
-                if(sShutCameraDownWhenDone && !wasCanceled) {
+                if(sShutCameraDownWhenDone && !wasCanceled && !CameraFragment.isInLiveView()) {
                     Camera.instance.powerOff();
                 }
                 downloadNotification(null, donloadId > 0 ? 0 : -1);
