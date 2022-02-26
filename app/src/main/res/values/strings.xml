@@ -93,6 +93,8 @@
     <string name="power_off">Power Off</string>
     <string name="main_action_label">Main button action</string>
     <string name="default_main_action">CAMERA</string>
+    <string name="download_canceled">\"Download canceled: \"</string>
+    <string name="too_many_errors">Too many errors.</string>
 
     <string-array name="main_action_options">
         <item>None</item>

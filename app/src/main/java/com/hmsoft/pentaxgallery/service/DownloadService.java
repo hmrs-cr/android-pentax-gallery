@@ -18,6 +18,7 @@ import android.os.PowerManager;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
 import android.provider.MediaStore;
+import android.text.TextUtils;
 import android.widget.Toast;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
@@ -153,8 +154,10 @@ public class DownloadService extends IntentService {
         if(BuildConfig.DEBUG) Logger.debug(TAG,  "onStart");
     }
 
+
     @Override
     public void onDestroy() {
+        this.stopForeground(true);
         super.onDestroy();
         if(BuildConfig.DEBUG) Logger.debug(TAG,  "onDestroy");
     }
@@ -501,9 +504,9 @@ public class DownloadService extends IntentService {
                             Toast.makeText(context, message, Toast.LENGTH_LONG).show();
                         }                        
                     } else if(status == DOWNLOAD_STATUS_CANCELED) {
-                        Toast.makeText(context, "Download canceled: " + imageData.fileName, Toast.LENGTH_LONG).show();
+                        Toast.makeText(context, context.getString(R.string.download_canceled) + imageData.fileName, Toast.LENGTH_LONG).show();
                     } else if(status == DOWNLOAD_STATUS_TOO_MANY_ERRORS) {
-                        Toast.makeText(context, "Too many errors.", Toast.LENGTH_LONG).show();
+                        Toast.makeText(context, R.string.too_many_errors, Toast.LENGTH_LONG).show();
                         Queue.errorCount += sDownloadQueue.size();
                         cancelAll();
                         return;
@@ -562,7 +565,6 @@ public class DownloadService extends IntentService {
             }
 
             if(sDownloadQueue.size() == 0) {
-                sStarDownloadTime = -1;
                 inBatchDownload = false;
                 if(sWackeLock != null) {
                     sWackeLock.release();
@@ -573,6 +575,7 @@ public class DownloadService extends IntentService {
                     Camera.instance.powerOff();
                 }
                 downloadNotification(null, donloadId > 0 ? 0 : -1);
+                sStarDownloadTime = -1;
             }
         }
 
@@ -619,6 +622,10 @@ public class DownloadService extends IntentService {
         }
         public static void downloadNotification(ImageData imageData, int progress, Service foregroundService) {
 
+            if (progress % 5 != 0) {
+                return;
+            }
+
             Context context = MyApplication.ApplicationContext;
             if(notificationManager == null) {
                 notificationManager = NotificationManagerCompat.from(context);
@@ -634,13 +641,18 @@ public class DownloadService extends IntentService {
                 //i.putExtra(ImageGridActivity.EXTRA_START_DOWNLOADS, true);
 
                 int remainingDownloads = sDownloadQueue.size();
-                String eta = getETAString((float) remainingDownloads);
                 builder.setContentTitle(context.getString(R.string.download_notification_title))
                        .setContentText(String.format("%s (%d)", imageData.fileName, remainingDownloads))
                        .setOngoing(true)
                        .setLargeIcon(imageData.getThumbBitmap())
-                       .setSubText(eta)
+                       .setNumber(66)
+                       .setWhen(System.currentTimeMillis() - (SystemClock.elapsedRealtime() - sStarDownloadTime))
                        .setProgress(100, progress, progress == 0);
+
+                String eta = getETAString((float) remainingDownloads);
+                if (!TextUtils.isEmpty(eta)) {
+                    builder.setSubText(eta);
+                }
 
 
                 if (foregroundService != null) {
@@ -652,6 +664,8 @@ public class DownloadService extends IntentService {
             } else {
                 if (foregroundService != null) {
                     foregroundService.stopForeground(true);
+                } else {
+                    notificationManager.cancel(PROGRESS_NOTIFICATION_ID);
                 }
 
                 String contentText = null;
@@ -665,6 +679,24 @@ public class DownloadService extends IntentService {
                 }
 
                 if(contentText != null) {
+                    int totalTime = Math.round((SystemClock.elapsedRealtime() - sStarDownloadTime) / 1000);
+                    if (totalTime > 0) {
+                        String ataText = "Total: ";
+                        if (totalTime < 60) {
+                            ataText += totalTime + " s";
+                        } else {
+                            if (totalTime % 60 > 6) {
+                                ataText += "< ";
+                            }
+                            ataText += Math.round(Math.ceil(totalTime / (float)60)) +  " m";
+                        }
+
+                        if (Logger.DEBUG) {
+                            Logger.debug(TAG, "ATA: " + totalTime / (float)60);
+                        }
+                        builder.setSubText(ataText);
+                    }
+
                     builder.setContentText(contentText)
                             .setAutoCancel(true)
                             .setContentTitle(context.getString(R.string.download_done_notification_title));
@@ -687,7 +719,7 @@ public class DownloadService extends IntentService {
         private static String getETAString(float remainingDownloads) {
             String etaText = null;
             long elapsedRealTime = SystemClock.elapsedRealtime();
-            if (sStarDownloadTime > 0 && elapsedRealTime - sLastEtaUpdate > 45000) {
+            if (sStarDownloadTime > 0 && elapsedRealTime - sLastEtaUpdate > 40000) {
                 int downloaded = Queue.downloadCount;
                 long elapsedDownloadTime = (elapsedRealTime - sStarDownloadTime) / 1000;
                 float downloadsPerSecond = (float)downloaded / (float)elapsedDownloadTime;
@@ -697,17 +729,14 @@ public class DownloadService extends IntentService {
                     etaText =  "ETA: ";
                     switch (remainingMinutes) {
                         case 0:
-                            etaText += " less than a minute";
-                            break;
-                        case 1:
-                            etaText += " about 1 minute";
+                            etaText += " < 1m";
                             break;
                         default:
-                            etaText += remainingMinutes + " minutes";
+                            etaText += remainingMinutes + " m";
                     }
 
                     sLastEtatext = etaText;
-                    Logger.debug("ETACALC", etaText);
+                    if (Logger.DEBUG) Logger.debug(TAG, etaText);
                 }
             }
 
