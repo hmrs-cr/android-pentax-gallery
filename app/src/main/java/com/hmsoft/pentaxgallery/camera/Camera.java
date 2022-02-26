@@ -173,6 +173,7 @@ public class Camera {
                           cameraData = null;
                       } else {
                           Logger.warning(TAG, "Connected to " + cameraData.ssid);
+                          continue;
                       }
                   } else {
                       Logger.warning(TAG, "No previously connected mCameras found.");
