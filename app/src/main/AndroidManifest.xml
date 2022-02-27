@@ -12,7 +12,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
         android:name=".MyApplication"
@@ -24,7 +24,9 @@
         android:theme="@style/AppThemeDark"
         android:usesCleartextTraffic="true"
         tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name=".ui.camera.CameraActivity"
+
+        <activity
+            android:name=".ui.camera.CameraActivity"
             android:keepScreenOn="true"
             android:parentActivityName=".ui.ImageGridActivity"
             android:theme="@style/AppThemeDark.CameraScreen">
@@ -32,7 +34,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ui.ImageGridActivity" />
         </activity>
-
         <activity
             android:name=".ui.preferences.PreferencesActivity"
             android:parentActivityName=".ui.ImageGridActivity"
@@ -70,6 +71,12 @@
         <service
             android:name=".service.DownloadService"
             android:exported="false" />
+
+        <service
+            android:name=".service.LocationService"
+            android:enabled="true"
+            android:exported="false" />
+
     </application>
 
 </manifest>

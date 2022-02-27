@@ -36,8 +36,8 @@
     <string name="select_non_downloaded">Select non-downloaded</string>
     <string name="flag">Flag</string>
     <string name="flagged">Flagged</string>
-    <string name="download_notification_channel_name">Download Notification Channel</string>
-    <string name="download_notification_channel_desc">Download Notification Channel</string>
+    <string name="download_notification_channel_name">Notifications</string>
+    <string name="download_notification_channel_desc">Notifications</string>
     <string name="download_notification_title">Transferring pictures</string>
     <string name="donwload_done_notification_title">All pictures transferred</string>
     <string name="download_done_notification_title">Transfer done.</string>
@@ -95,6 +95,7 @@
     <string name="default_main_action">CAMERA</string>
     <string name="download_canceled">\"Download canceled: \"</string>
     <string name="too_many_errors">Too many errors.</string>
+    <string translatable="false" name="location_service_notification_content">(%1$d) ~ %2$dM(%3$s)</string>
 
     <string-array name="main_action_options">
         <item>None</item>

@@ -104,22 +104,17 @@ public class PentaxController implements CameraController {
         return HttpHelper.getStringResponse(UrlHelper.URL_FOCUS, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.POST);
     }
 
-    protected String updateCameraSettingJson(String key, String value) {
+    protected String updateCameraSettingJson(String key, String value) throws IOException {
         return HttpHelper.getStringResponse(
-                UrlHelper.URL_CAMERA_PARAMS,
+                UrlHelper.URL_DEVICE_PARAMS,
                 connectTimeOut,
                 readTimeOut,
-                HttpHelper.RequestMethod.POST,
+                HttpHelper.RequestMethod.PUT,
                 "text/plain",
-                key + "=" + value
-                );
+                key + "=" + value);
     }
 
     private String getCameraParamsJson() {
-        return HttpHelper.getStringResponse(UrlHelper.URL_CAMERA_PARAMS, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.GET);
-    }
-
-    private String updateCameraParamsJson() {
         return HttpHelper.getStringResponse(UrlHelper.URL_CAMERA_PARAMS, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.GET);
     }
 
@@ -522,7 +517,7 @@ public class PentaxController implements CameraController {
     public BaseResponse enableGeoTagging(boolean enabled) {
         try {
             return new BaseResponse(updateCameraSettingJson("geoTagging", enabled ? "on" : "off"));
-        } catch (JSONException e) {
+        } catch (JSONException | IOException e) {
             e.printStackTrace();
             return null;
         }
@@ -552,10 +547,10 @@ public class PentaxController implements CameraController {
             String gpsInfo = location.getLatitude() + "," +
                              location.getLongitude() + "," +
                              location.getAltitude() + "," +
-                             this.gpsDateTimeFormat.format(new Date(location.getTime())) + ",WGS8";
+                             this.gpsDateTimeFormat.format(new Date(location.getTime())) + ",WGS84";
 
             return new BaseResponse(updateCameraSettingJson("gpsInfo", gpsInfo));
-        } catch (JSONException e) {
+        } catch (JSONException | IOException e) {
             e.printStackTrace();
             return null;
         }
@@ -584,7 +579,7 @@ public class PentaxController implements CameraController {
 
             String dateTimeStr =  this.cameraDateTimeFormat.format(dateTime);
             return new BaseResponse(updateCameraSettingJson("datetime", dateTimeStr));
-        } catch (JSONException e) {
+        } catch (JSONException | IOException e) {
             e.printStackTrace();
             return null;
         }

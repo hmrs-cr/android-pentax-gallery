@@ -100,17 +100,15 @@ public final class HttpHelper {
                     }
 
                     if (!TextUtils.isEmpty(contentType)) {
-                        urlConnection.setRequestProperty("Content-Type", contentType);
+                        urlConnection.setRequestProperty("content-type", contentType);
                     }
 
                     if (!TextUtils.isEmpty(body)) {
                         urlConnection.setDoOutput(true);
-                        OutputStream os = urlConnection.getOutputStream();
-                        OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
-                        osw.write(body);
-                        osw.flush();
-                        osw.close();
-                        os.close();
+                        try (OutputStream os = urlConnection.getOutputStream()) {
+                            byte[] input = body.getBytes("utf-8");
+                            os.write(input, 0, input.length);
+                        }
                     }
 
                     InputStream in = new BufferedInputStream(urlConnection.getInputStream());

@@ -29,6 +29,7 @@ import android.view.WindowManager;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
+import com.hmsoft.pentaxgallery.service.LocationService;
 import com.hmsoft.pentaxgallery.ui.preferences.PreferencesActivity;
 import com.hmsoft.pentaxgallery.util.Logger;
 
@@ -85,6 +86,7 @@ public class ImageGridActivity extends AppCompatActivity {
         if(BuildConfig.DEBUG) Logger.debug(TAG, "onResume");
         super.onResume();
         handleStartDownloadIntent(getIntent());
+        LocationService.start(this);
     }
 
     @Override

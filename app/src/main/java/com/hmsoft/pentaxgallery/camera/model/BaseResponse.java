@@ -16,6 +16,8 @@
 
 package com.hmsoft.pentaxgallery.camera.model;
 
+import android.text.TextUtils;
+
 import com.hmsoft.pentaxgallery.BuildConfig;
 
 import org.json.JSONException;
@@ -35,7 +37,7 @@ public class BaseResponse {
     protected JSONObject mJSONObject;
 
     public BaseResponse(String response) throws JSONException {
-        this(new JSONTokener(response));
+        this(new JSONTokener(TextUtils.isEmpty(response) ? "{}" : response));
     }
 
     public BaseResponse(JSONTokener jsonTokener) throws JSONException {

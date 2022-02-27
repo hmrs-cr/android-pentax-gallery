@@ -354,27 +354,6 @@ public class DownloadService extends IntentService {
     public synchronized static void cancelDownload(int downloadId) {
         shouldCancelId = downloadId;
     }
-  
-    public static void createNotificationChannel() {
-        // Create the NotificationChannel, but only on API 26+ because
-        // the NotificationChannel class is new and not in the support library
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Context context = MyApplication.ApplicationContext;
-            String name = context.getString(R.string.download_notification_channel_name);
-            String description = context.getString(R.string.download_notification_channel_desc);
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
-            NotificationChannel channel = new NotificationChannel(Queue.CHANNEL_ID, name, importance);
-            channel.setDescription(description);
-            channel.setSound(null,null);
-            channel.enableLights(false);
-            channel.enableVibration(false);
-
-            // Register the channel with the system; you can't change the importance
-            // or other notification behaviors after this
-            NotificationManager notificationManager = MyApplication.ApplicationContext.getSystemService(NotificationManager.class);
-            notificationManager.createNotificationChannel(channel);
-        }
-    }
     
     public static void setOnDownloadFinishedListener(OnDownloadFinishedListener onDownloadFinishedListener) {
         Queue.onDownloadFinishedListener = onDownloadFinishedListener;
@@ -429,7 +408,6 @@ public class DownloadService extends IntentService {
         private static final String CACHE_KEY = "downloadQueue.cache";
 
         private static final String TAG = "Queue";
-        private static final String CHANNEL_ID = "DownloadChannel";
 
         private static final int PROGRESS_NOTIFICATION_ID = 5;
         private static final int DONE_NOTIFICATION_ID = 6;
@@ -612,7 +590,7 @@ public class DownloadService extends IntentService {
         }
 
         public static NotificationCompat.Builder createDownloadNotificationBuilder(Context context) {
-            NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID);
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(context, MyApplication.NOTIFICATION_CHANNEL_ID);
 
             PendingIntent pi = ImageGridActivity.getPendingIntent();
             builder.setSmallIcon(R.drawable.ic_cloud_download_white_24dp)

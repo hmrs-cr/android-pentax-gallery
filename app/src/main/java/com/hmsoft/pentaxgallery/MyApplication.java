@@ -17,6 +17,10 @@
 package com.hmsoft.pentaxgallery;
 
 import android.app.Application;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
+import android.os.Build;
 import android.os.PowerManager;
 
 import com.hmsoft.pentaxgallery.service.DownloadService;
@@ -26,6 +30,7 @@ import com.hmsoft.pentaxgallery.util.TaskExecutor;
 public class MyApplication extends Application {
 
     private static final String TAG = "MyApplication";
+    public static final String NOTIFICATION_CHANNEL_ID = "PentaxGalleryChannel";
 
     public static MyApplication ApplicationContext = null;
 
@@ -40,12 +45,29 @@ public class MyApplication extends Application {
         return wakeLock;
     }
 
+    private static void createNotificationChannel() {
+        Context context = MyApplication.ApplicationContext;
+        String name = context.getString(R.string.download_notification_channel_name);
+        String description = context.getString(R.string.download_notification_channel_desc);
+        int importance = NotificationManager.IMPORTANCE_DEFAULT;
+        NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, name, importance);
+        channel.setDescription(description);
+        channel.setSound(null,null);
+        channel.enableLights(false);
+        channel.enableVibration(false);
+
+        // Register the channel with the system; you can't change the importance
+        // or other notification behaviors after this
+        NotificationManager notificationManager = MyApplication.ApplicationContext.getSystemService(NotificationManager.class);
+        notificationManager.createNotificationChannel(channel);
+    }
+
     @Override
     public void onCreate() {
         ApplicationContext = this;
         CrashCatcher.init();
         TaskExecutor.init();
-        DownloadService.createNotificationChannel();
+        createNotificationChannel();
         super.onCreate();
     }   
 }

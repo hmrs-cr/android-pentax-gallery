@@ -50,6 +50,8 @@ public class CameraData extends BaseResponse {
     public final String cameraId;
     public final int battery;
     public final boolean hot;
+    public final boolean geoTagging;
+    public final String gpsInfo;
 
     public final String key;
     public final String ssid;
@@ -58,8 +60,6 @@ public class CameraData extends BaseResponse {
     public final int hashCode;
 
     public final List<StorageData> storages = new LinkedList<>();
-    private final boolean geoTagging;
-    private final String gpsInfo;
     private File storageDirectory;
 
     public CameraData(String response) throws JSONException {
