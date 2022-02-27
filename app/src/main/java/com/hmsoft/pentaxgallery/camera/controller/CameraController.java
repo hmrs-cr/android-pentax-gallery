@@ -16,6 +16,8 @@
 
 package com.hmsoft.pentaxgallery.camera.controller;
 
+import android.location.Location;
+
 import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
 import com.hmsoft.pentaxgallery.camera.model.CameraChange;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
@@ -27,6 +29,8 @@ import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
 
 import org.json.JSONException;
+
+import java.util.Date;
 
 public interface CameraController {
 
@@ -93,5 +97,14 @@ public interface CameraController {
 
     CameraParams getCameraParams();
     void getCameraParams(OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
+
+    BaseResponse enableGeoTagging(boolean enabled);
+    void enableGeoTagging(boolean enabled, OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
+
+    BaseResponse updateGpsLocation(Location location);
+    void updateGpsLocation(Location location, OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
+
+    BaseResponse updateDateTime(Date dateTime);
+    void updateDateTime(Date dateTime, OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
 
 }

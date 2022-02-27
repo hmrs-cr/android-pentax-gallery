@@ -16,6 +16,8 @@
 
 package com.hmsoft.pentaxgallery.camera.implementation.pentax;
 
+import android.location.Location;
+
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.camera.controller.CameraController;
 import com.hmsoft.pentaxgallery.camera.implementation.pentax.model.PentaxImageListData;
@@ -37,9 +39,14 @@ import org.json.JSONException;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
@@ -54,6 +61,9 @@ public class PentaxController implements CameraController {
 
     private int connectTimeOut;
     private int readTimeOut;
+
+    private SimpleDateFormat cameraDateTimeFormat = null;
+    private SimpleDateFormat gpsDateTimeFormat = null;
 
     private OkHttpClient httpClient = new OkHttpClient();
 
@@ -94,7 +104,22 @@ public class PentaxController implements CameraController {
         return HttpHelper.getStringResponse(UrlHelper.URL_FOCUS, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.POST);
     }
 
+    protected String updateCameraSettingJson(String key, String value) {
+        return HttpHelper.getStringResponse(
+                UrlHelper.URL_CAMERA_PARAMS,
+                connectTimeOut,
+                readTimeOut,
+                HttpHelper.RequestMethod.POST,
+                "text/plain",
+                key + "=" + value
+                );
+    }
+
     private String getCameraParamsJson() {
+        return HttpHelper.getStringResponse(UrlHelper.URL_CAMERA_PARAMS, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.GET);
+    }
+
+    private String updateCameraParamsJson() {
         return HttpHelper.getStringResponse(UrlHelper.URL_CAMERA_PARAMS, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.GET);
     }
 
@@ -470,10 +495,7 @@ public class PentaxController implements CameraController {
 
     @Override
     public CameraParams getCameraParams() {
-        String response = getCameraParamsJson();
-        if(response == null) {
-            response = getDeviceInfoJson();
-        }
+        String response = getDeviceInfoJson();
         try {
             return  response != null ? new CameraParams(response) : null;
         } catch (JSONException e) {
@@ -496,4 +518,88 @@ public class PentaxController implements CameraController {
         });
     }
 
+    @Override
+    public BaseResponse enableGeoTagging(boolean enabled) {
+        try {
+            return new BaseResponse(updateCameraSettingJson("geoTagging", enabled ? "on" : "off"));
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public void enableGeoTagging(final boolean enabled, OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {
+        TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
+            @Override
+            public void run() {
+                BaseResponse response = enableGeoTagging(enabled);
+                if (onAsyncCommandExecutedListener != null) {
+                    TaskExecutor.executeOnUIThread(new CameraController.AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, response));
+                }
+            }
+        });
+    }
+
+    @Override
+    public BaseResponse updateGpsLocation(Location location) {
+        try {
+            if (this.gpsDateTimeFormat == null) {
+                this.gpsDateTimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US);
+                this.gpsDateTimeFormat.setTimeZone(Calendar.getInstance(TimeZone.getTimeZone("UTC")).getTimeZone());
+            }
+
+            String gpsInfo = location.getLatitude() + "," +
+                             location.getLongitude() + "," +
+                             location.getAltitude() + "," +
+                             this.gpsDateTimeFormat.format(new Date(location.getTime())) + ",WGS8";
+
+            return new BaseResponse(updateCameraSettingJson("gpsInfo", gpsInfo));
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public void updateGpsLocation(final Location location, OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {
+        TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
+            @Override
+            public void run() {
+                BaseResponse response = updateGpsLocation(location);
+                if (onAsyncCommandExecutedListener != null) {
+                    TaskExecutor.executeOnUIThread(new CameraController.AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, response));
+                }
+            }
+        });
+    }
+
+    @Override
+    public BaseResponse updateDateTime(Date dateTime) {
+        try {
+            if (this.cameraDateTimeFormat == null) {
+                this.cameraDateTimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+                this.cameraDateTimeFormat.setTimeZone(Calendar.getInstance(TimeZone.getTimeZone("UTC")).getTimeZone());
+            }
+
+            String dateTimeStr =  this.cameraDateTimeFormat.format(dateTime);
+            return new BaseResponse(updateCameraSettingJson("datetime", dateTimeStr));
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public void updateDateTime(final Date dateTime, OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {
+        TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
+            @Override
+            public void run() {
+                BaseResponse response = updateDateTime(dateTime);
+                if (onAsyncCommandExecutedListener != null) {
+                    TaskExecutor.executeOnUIThread(new CameraController.AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, response));
+                }
+            }
+        });
+    }
 }

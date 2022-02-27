@@ -58,6 +58,8 @@ public class CameraData extends BaseResponse {
     public final int hashCode;
 
     public final List<StorageData> storages = new LinkedList<>();
+    private final boolean geoTagging;
+    private final String gpsInfo;
     private File storageDirectory;
 
     public CameraData(String response) throws JSONException {
@@ -75,6 +77,9 @@ public class CameraData extends BaseResponse {
         dateAdded = null;
 
         cameraId = "default.camera";
+
+        geoTagging = false;
+        gpsInfo = "";
 
         this.key = null;
         this.ssid = null;
@@ -109,6 +114,8 @@ public class CameraData extends BaseResponse {
 
         battery = jsonObject.optInt("battery", -1);
         hot = jsonObject.optBoolean("hot");
+        geoTagging = "on".equals(jsonObject.optString("geoTagging"));
+        gpsInfo = jsonObject.optString("gpsInfo");
 
         preferences = new CameraPreferences(this);
         preferences.load();

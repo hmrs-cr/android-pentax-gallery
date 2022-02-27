@@ -21,16 +21,21 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
 import android.os.Build;
+import android.text.TextUtils;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.util.Logger;
+
+import org.w3c.dom.Text;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -42,7 +47,8 @@ public final class HttpHelper {
     public enum RequestMethod {
         DEFAULT(null),
         GET("GET"),
-        POST("POST");
+        POST("POST"),
+        PUT("PUT");
 
         private final String mText;
         RequestMethod(final  String text) {
@@ -69,7 +75,21 @@ public final class HttpHelper {
         return getStringResponse(url, connectTimeout, readTimeout, RequestMethod.DEFAULT);
     }
 
-    public static String getStringResponse(String url, int connectTimeout, int readTimeout, RequestMethod method) {
+    public static String getStringResponse(
+            String url,
+            int connectTimeout,
+            int readTimeout,
+            RequestMethod method) {
+        return getStringResponse(url, connectTimeout, readTimeout, method, null, null);
+    }
+
+    public static String getStringResponse(
+            String url,
+            int connectTimeout,
+            int readTimeout,
+            RequestMethod method,
+            String contentType,
+            String body) {
         try {
                 HttpURLConnection urlConnection = (HttpURLConnection) new URL(url).openConnection();
                 try {
@@ -78,6 +98,21 @@ public final class HttpHelper {
                     if(method != RequestMethod.DEFAULT) {
                         urlConnection.setRequestMethod(method.toString());
                     }
+
+                    if (!TextUtils.isEmpty(contentType)) {
+                        urlConnection.setRequestProperty("Content-Type", contentType);
+                    }
+
+                    if (!TextUtils.isEmpty(body)) {
+                        urlConnection.setDoOutput(true);
+                        OutputStream os = urlConnection.getOutputStream();
+                        OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
+                        osw.write(body);
+                        osw.flush();
+                        osw.close();
+                        os.close();
+                    }
+
                     InputStream in = new BufferedInputStream(urlConnection.getInputStream());
                     BufferedReader reader = new BufferedReader(new InputStreamReader(in));
                     StringBuilder builder = new StringBuilder();
