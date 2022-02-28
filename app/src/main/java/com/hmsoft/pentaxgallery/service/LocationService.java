@@ -1,5 +1,6 @@
 package com.hmsoft.pentaxgallery.service;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.Notification;
@@ -13,6 +14,7 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.os.SystemClock;
 import android.widget.Toast;
 
@@ -27,6 +29,7 @@ import com.hmsoft.pentaxgallery.camera.controller.CameraController;
 import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
+import com.hmsoft.pentaxgallery.util.Utils;
 
 import java.util.Locale;
 
@@ -65,6 +68,8 @@ public class LocationService extends Service {
     private Intent mMapIntent;
     private ComponentName mMapIntentComponent;
     private int mLocationCount;
+    private PowerManager mPowerManager;
+    private PowerManager.WakeLock mWakeLock;
 
     public static void start(Context context) {
         start(context, ACTION_UPDATE_LOCATION);
@@ -86,8 +91,10 @@ public class LocationService extends Service {
 
     public static void start(Context context, Intent intent) {
         context = context.getApplicationContext();
-        intent.setClass(context, LocationService.class);
-        context.startForegroundService(intent);
+        if (checkLocationPermission(context)) {
+            intent.setClass(context, LocationService.class);
+            context.startForegroundService(intent);
+        }
     }
 
     void updateConfig() {
@@ -99,9 +106,15 @@ public class LocationService extends Service {
         mMinimumAccuracy = 150;
         mMinTimeDelta = 60;
         mBestAccuracy = 25;
+
+        if (Logger.DEBUG) {
+            mGpsTimeout = 10;
+            mLocationUpdateInterval = 15;
+        }
     }
 
     void startLocationListener() {
+        acquireWakeLock();
         if (mLocationManager == null) {
 
             mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -153,6 +166,10 @@ public class LocationService extends Service {
     }
 
     private void stopLocationListener() {
+        stopLocationListener(true);
+    }
+
+    private void stopLocationListener(boolean triggerNextAlarm) {
         if (mNetLocationListener != null) {
             mLocationManager.removeUpdates(mNetLocationListener);
             if (Logger.DEBUG) Logger.debug(TAG, "LocationListener stopped: %s", mNetLocationListener.mProvider);
@@ -166,6 +183,11 @@ public class LocationService extends Service {
             mGpsLocationListener = null;
         }
 
+        if (triggerNextAlarm) {
+            setLocationAlarm();
+        }
+
+        releaseWakeLock();
         mLocationManager = null;
     }
 
@@ -285,6 +307,8 @@ public class LocationService extends Service {
 
         Context context = getApplicationContext();
         mAlarm = (AlarmManager) getSystemService(ALARM_SERVICE);
+        mPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        
         Intent i = new Intent(context, LocationService.class);
         i.setAction(ACTION_UPDATE_LOCATION);
         mAlarmLocationCallback = PendingIntent.getService(context, 0, i, 0);
@@ -294,6 +318,12 @@ public class LocationService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+
+        if (!checkLocationPermission(getApplicationContext())) {
+            stopSelf();
+            return  START_NOT_STICKY;
+        }
+
         updateNotification();
 
         String action = intent.getAction();
@@ -301,11 +331,10 @@ public class LocationService extends Service {
 
         switch (action) {
             case ACTION_UPDATE_LOCATION:
-                setLocationAlarm();
                 startLocationListener();
                 break;
             case ACTION_STOP_LOCATION_UPDATES:
-                stopLocationListener();
+                stopLocationListener(false);
                 mAlarm.cancel(mAlarmLocationCallback);
                 mNotificationManager.cancel(NOTIFICATION_ID);
                 stopForeground(true);
@@ -337,7 +366,7 @@ public class LocationService extends Service {
             mPassiveLocationListener = null;
         }
 
-        stopLocationListener();
+        stopLocationListener(false);
         mAlarm.cancel(mAlarmLocationCallback);
 
         super.onDestroy();
@@ -346,6 +375,35 @@ public class LocationService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    private static boolean checkLocationPermission(Context context) {
+        if (!Utils.hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
+            if (Logger.DEBUG) Logger.debug(TAG, "Missing location permission.");
+            Toast.makeText(context.getApplicationContext(), "Please grant location permission to Pentax Gallery", Toast.LENGTH_LONG).show();
+            return  false;
+        }
+
+        return  true;
+    }
+
+    private void acquireWakeLock() {
+            if (mWakeLock == null) {
+                mWakeLock = mPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, BuildConfig.APPLICATION_ID + ":location");
+                mWakeLock.setReferenceCounted(false);
+            }
+            if(!mWakeLock.isHeld()) {
+                mWakeLock.acquire(Math.round(mGpsTimeout * 1.5) * 1000);
+                if (Logger.DEBUG) Logger.debug(TAG, "Wakelock acquired");
+            }
+    }
+
+    private void releaseWakeLock() {
+        if (mWakeLock != null && mWakeLock.isHeld()) {
+            mWakeLock.release();
+            mWakeLock = null;
+            if (Logger.DEBUG) Logger.debug(TAG, "Wakelock released.");
+        }
     }
 
     private void logLocation(Location location, String message) {

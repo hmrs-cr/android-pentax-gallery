@@ -119,7 +119,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     private static ImageListTask mImageListTask = null;
 
-    private int mRequestCount = 5;
     private int mImageThumbSize;
     private int mImageThumbSpacing;
     private ImageAdapter mAdapter;
@@ -299,11 +298,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         super.onResume();
 
         if(!Utils.hasAllPermissions()) {
-            if(mRequestCount-- < 0) {
-                Utils.showSettingActivity(getActivity());
-            } else {
-                Utils.requestAllPermissions(getActivity());
-            }
+            Utils.requestAllPermissions(getActivity());
         }
 
         mImageFetcher.setCancel(false);

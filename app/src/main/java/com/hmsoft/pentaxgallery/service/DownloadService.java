@@ -1,8 +1,6 @@
 package com.hmsoft.pentaxgallery.service;
 
 import android.app.IntentService;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ContentResolver;
@@ -20,6 +18,10 @@ import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.widget.Toast;
+
+import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
@@ -53,10 +55,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
-
-import androidx.annotation.Nullable;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 
 public class DownloadService extends IntentService {
 
@@ -771,7 +769,6 @@ public class DownloadService extends IntentService {
         }
 
         /*private*/ static void download(DownloadEntry downloadEntry) {
-
             if(sWackeLock == null) {
                 sWackeLock = MyApplication.acquireWakeLock();
             }            

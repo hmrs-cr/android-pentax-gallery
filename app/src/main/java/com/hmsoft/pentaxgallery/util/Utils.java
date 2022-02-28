@@ -50,30 +50,21 @@ public class Utils {
     public static final String VERSION_STRING = "v" + BuildConfig.VERSION_NAME + " (" + BuildConfig.BUILD_TYPE + ")";
 
     public static boolean hasPermission(String permission) {
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            return MyApplication.ApplicationContext.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED;
-        }
-        return true;
+        return MyApplication.ApplicationContext.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED;
     }
 
     public static String[] getAllNeededPermissions() {
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            return new String[]{
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                    Manifest.permission.READ_EXTERNAL_STORAGE,
-                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.CHANGE_WIFI_STATE,
-                    Manifest.permission.WAKE_LOCK
-            };
-        }
-        return new String[0];
+        return new String[]{
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.CHANGE_WIFI_STATE,
+                Manifest.permission.WAKE_LOCK
+        };
     }
 
     public static boolean hasAllPermissions() {
-        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            return true;
-        }
 
         String[] permissions = getAllNeededPermissions();
 
@@ -101,10 +92,8 @@ public class Utils {
     }
 
     public static void requestAllPermissions(Activity activity) {
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            String[] permissions = getAllNeededPermissions();
-            activity.requestPermissions(permissions,0);
-        }
+        String[] permissions = getAllNeededPermissions();
+        activity.requestPermissions(permissions,0);
     }
 
     public static void saveTextFile(File file, String text) throws IOException {
