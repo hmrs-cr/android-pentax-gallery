@@ -885,6 +885,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                             } else {
                                 syncPictureList(true);
                             }
+                            mNoConnectionDialog = null;
                         }
                     });
                 }
