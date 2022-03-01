@@ -38,6 +38,10 @@ public interface CameraController {
         void onAsyncCommandExecuted(BaseResponse response);
     }
 
+    interface OnCameraDisconnectedListener {
+        void onCameraDisconnected();
+    }
+
     interface OnCameraChangeListener {
         void onCameraChange(CameraChange change);
     }
@@ -82,6 +86,7 @@ public interface CameraController {
     ImageMetaData getImageInfo(ImageData imageData);
     void getImageInfo(final ImageData imageData, final CameraController.OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
 
+    void setOnCameraDisconnectedListener(OnCameraDisconnectedListener onCameraDisconnectedListener);
     void addCameraChangeListener(OnCameraChangeListener onCameraChangeListener);
     void removeCameraChangeListener(OnCameraChangeListener onCameraChangeListener);
 

@@ -31,6 +31,7 @@ import com.hmsoft.pentaxgallery.camera.model.ImageListData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.camera.model.PowerOffResponse;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
+import com.hmsoft.pentaxgallery.camera.model.UpdateGpsLocationResponse;
 import com.hmsoft.pentaxgallery.camera.util.HttpHelper;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
@@ -66,6 +67,7 @@ public class PentaxController implements CameraController {
     private SimpleDateFormat gpsDateTimeFormat = null;
 
     private OkHttpClient httpClient = new OkHttpClient();
+    private OnCameraDisconnectedListener onCameraDisconnectedListener;
 
     public PentaxController(CameraPreferences preferences) {
         setPreferences(preferences);
@@ -77,23 +79,25 @@ public class PentaxController implements CameraController {
     }
 
     protected String getDeviceInfoJson() {
-        return HttpHelper.getStringResponse(UrlHelper.URL_DEVICE_INFO, connectTimeOut, readTimeOut);
+        return checkIfDisconnected(HttpHelper.getStringResponse(UrlHelper.URL_DEVICE_INFO, connectTimeOut, readTimeOut));
     }
 
     protected String getImageListJson(StorageData storage) {
-        return HttpHelper.getStringResponse(UrlHelper.getImageListUrl(storage), connectTimeOut, readTimeOut);
+        return checkIfDisconnected(HttpHelper.getStringResponse(UrlHelper.getImageListUrl(storage), connectTimeOut, readTimeOut));
     }
 
     protected String getImageInfoJson(ImageData imageData) {
-        return HttpHelper.getStringResponse(UrlHelper.getInfoUrl(imageData), connectTimeOut,  readTimeOut);
+        return checkIfDisconnected(HttpHelper.getStringResponse(UrlHelper.getInfoUrl(imageData), connectTimeOut,  readTimeOut));
     }
 
     protected String powerOffJson() {
-        return HttpHelper.getStringResponse(UrlHelper.URL_POWEROFF, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.POST);
+        String response = checkIfDisconnected(HttpHelper.getStringResponse(UrlHelper.URL_POWEROFF, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.POST));
+        triggerCameraDisconnectedListener();
+        return response;
     }
 
     protected String shootJson() {
-        return HttpHelper.getStringResponse(UrlHelper.URL_SHOOT, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.POST);
+        return checkIfDisconnected(HttpHelper.getStringResponse(UrlHelper.URL_SHOOT, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.POST));
     }
 
     protected String pingJson() {
@@ -101,21 +105,33 @@ public class PentaxController implements CameraController {
     }
 
     protected String focusJson() {
-        return HttpHelper.getStringResponse(UrlHelper.URL_FOCUS, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.POST);
+        return checkIfDisconnected(HttpHelper.getStringResponse(UrlHelper.URL_FOCUS, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.POST));
     }
 
     protected String updateCameraSettingJson(String key, String value) throws IOException {
-        return HttpHelper.getStringResponse(
+        return checkIfDisconnected(HttpHelper.getStringResponse(
                 UrlHelper.URL_DEVICE_PARAMS,
                 connectTimeOut,
                 readTimeOut,
                 HttpHelper.RequestMethod.PUT,
                 "text/plain",
-                key + "=" + value);
+                key + "=" + value));
     }
 
     private String getCameraParamsJson() {
-        return HttpHelper.getStringResponse(UrlHelper.URL_CAMERA_PARAMS, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.GET);
+        return checkIfDisconnected(HttpHelper.getStringResponse(UrlHelper.URL_CAMERA_PARAMS, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.GET));
+    }
+
+    private String checkIfDisconnected(String response) {
+        if (response == null) {
+            BaseResponse pingResponse = ping();
+            if (pingResponse == null || !pingResponse.success) {
+                triggerCameraDisconnectedListener();
+                if (Logger.DEBUG) Logger.debug("PTXCTRL", "Camera disconnected");
+            }
+        }
+
+        return response;
     }
 
     private WebSocket cameraWebSocket;
@@ -284,6 +300,10 @@ public class PentaxController implements CameraController {
         });
     }
 
+    public void setOnCameraDisconnectedListener(OnCameraDisconnectedListener onCameraDisconnectedListener) {
+        this.onCameraDisconnectedListener = onCameraDisconnectedListener;
+    }
+
     public void addCameraChangeListener(OnCameraChangeListener onCameraChangeListener) {
         if (onCameraChangeListener == null) {
             stopWebSocket();
@@ -315,6 +335,12 @@ public class PentaxController implements CameraController {
             this.cameraWebSocket = null;
         }
         this.cameraChangeListeners.clear();
+    }
+
+    private void triggerCameraDisconnectedListener() {
+        if (onCameraDisconnectedListener != null) {
+            onCameraDisconnectedListener.onCameraDisconnected();
+        }
     }
 
 
@@ -549,7 +575,7 @@ public class PentaxController implements CameraController {
                              location.getAltitude() + "," +
                              this.gpsDateTimeFormat.format(new Date(location.getTime())) + ",WGS84";
 
-            return new BaseResponse(updateCameraSettingJson("gpsInfo", gpsInfo));
+            return new UpdateGpsLocationResponse(updateCameraSettingJson("gpsInfo", gpsInfo), gpsInfo);
         } catch (JSONException | IOException e) {
             e.printStackTrace();
             return null;

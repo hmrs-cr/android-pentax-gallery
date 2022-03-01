@@ -27,6 +27,7 @@ import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.Camera;
 import com.hmsoft.pentaxgallery.camera.controller.CameraController;
 import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
+import com.hmsoft.pentaxgallery.camera.model.UpdateGpsLocationResponse;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 import com.hmsoft.pentaxgallery.util.Utils;
@@ -284,9 +285,10 @@ public class LocationService extends Service {
                     @Override
                     public void onAsyncCommandExecuted(BaseResponse response) {
                         if (response.success) {
-                            Logger.debug(TAG, "Camera location updated!");
+                            UpdateGpsLocationResponse r = (UpdateGpsLocationResponse)response;
+                            if (Logger.DEBUG) Logger.debug(TAG, "Camera location updated: " + r.gpsInfo);
                         } else {
-                            Logger.debug(TAG, "Failed to update camera location: " + response.errMsg);
+                            if (Logger.DEBUG) Logger.debug(TAG, "Failed to update camera location: " + response.errMsg);
                         }
                     }
                 };

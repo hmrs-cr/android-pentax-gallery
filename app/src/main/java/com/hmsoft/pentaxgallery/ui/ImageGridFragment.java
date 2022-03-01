@@ -136,6 +136,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     private volatile boolean mDontShowProgressBar;
 
     private final int DEFAULT_MULTIFORMAT_FILTER =  R.id.view_jpg_only;
+    private AlertDialog mNoConnectionDialog;
 
     /**
      * Empty constructor as per the Fragment documentation
@@ -839,6 +840,12 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     }
 
     private void showNoConnectedDialog(final String cameraID) {
+
+        if (mNoConnectionDialog != null) {
+            if (Logger.DEBUG) Logger.debug(TAG, "No Connection dialog already displayed.");
+            return;
+        }
+
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), android.R.style.Theme_Material_Dialog_Alert);
 
         builder.setTitle(getString(R.string.connection_error))
@@ -846,12 +853,15 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 .setPositiveButton(getString(R.string.wifi_settings), new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        mNoConnectionDialog = null;
                         startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
                     }
                 })
                 .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                        mNoConnectionDialog = null;
                         getActivity().finish();
                     }
                 })
@@ -859,6 +869,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 .setOnCancelListener(new DialogInterface.OnCancelListener() {
                     @Override
                     public void onCancel(DialogInterface dialog) {
+                        dialog.dismiss();
+                        mNoConnectionDialog = null;
                         getActivity().finish();
                     }
                 })
@@ -877,7 +889,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                     });
                 }
 
-                builder.show();
+        mNoConnectionDialog = builder.create();
+        mNoConnectionDialog.show();
     }
 
     private void syncPictureList(boolean loadImageListOnly) {

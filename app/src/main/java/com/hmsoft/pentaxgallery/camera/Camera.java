@@ -28,7 +28,7 @@ import java.util.List;
 
 import androidx.annotation.WorkerThread;
 
-public class Camera {
+public class Camera implements CameraController.OnCameraDisconnectedListener {
 
     public static final Camera instance = new Camera(new PentaxController(CameraPreferences.Default));
 
@@ -57,12 +57,18 @@ public class Camera {
         return new File(base, imageData.uniqueFileName);
     }
 
+    @Override
+    public void onCameraDisconnected() {
+        mCameraConnected = false;
+    }
+
     public interface OnWifiConnectionAttemptListener {
         void onWifiConnectionAttempt(String ssid);
     }
 
     /*package*/ Camera(CameraController controller) {
         this.mController = controller;
+        this.mController.setOnCameraDisconnectedListener(this);
     }
 
     @WorkerThread
