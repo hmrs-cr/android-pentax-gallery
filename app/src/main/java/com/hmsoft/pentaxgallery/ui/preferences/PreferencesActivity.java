@@ -8,6 +8,7 @@ import android.view.MenuItem;
 import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.Camera;
 import com.hmsoft.pentaxgallery.service.DownloadService;
+import com.hmsoft.pentaxgallery.service.LocationService;
 
 import java.util.List;
 
@@ -89,6 +90,7 @@ public class PreferencesActivity extends AppCompatActivity implements
     protected void onPause() {
         super.onPause();
         DownloadService.setShutCameraDownWhenDone(Camera.instance.getPreferences().shutdownAfterTransfer());
+        LocationService.updateConfig(this);
     }
 
     @Override

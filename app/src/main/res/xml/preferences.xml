@@ -12,6 +12,39 @@
     </PreferenceCategory>
 
     <PreferenceCategory
+        app:key="@string/key_location_service_category"
+        app:title="@string/location_service_label">
+
+        <SwitchPreferenceCompat
+            app:key="@string/key_enable_location_service"
+            app:title="@string/enable_location_service_label"
+            app:defaultValue="@string/default_enable_location_service"
+            app:summary="@string/enable_location_service_summary"/>
+
+        <SwitchPreferenceCompat
+            app:key="@string/key_store_location_in_camera"
+            app:title="@string/store_location_in_camera_label"
+            app:defaultValue="@string/default_store_location_in_camera"
+            app:summary="@string/store_location_in_camera_summary"/>
+
+        <SwitchPreferenceCompat
+            app:key="@string/key_update_picture_location_information"
+            app:title="@string/update_picture_location_information_label"
+            app:defaultValue="@string/default_update_picture_location_information"
+            app:summary="@string/update_picture_location_information_summary"/>
+
+
+        <ListPreference
+            app:key="@string/key_location_update_interval"
+            app:title="@string/location_update_interval_label"
+            app:defaultValue="@string/default_location_update_interval"
+            app:entryValues="@array/update_location_interval_options_values"
+            app:entries="@array/update_location_interval_options"
+            app:useSimpleSummaryProvider="true"/>
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
         app:key="@string/key_help_category"
         app:title="Help">
 

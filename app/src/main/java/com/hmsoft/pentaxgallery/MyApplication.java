@@ -23,6 +23,8 @@ import android.content.Context;
 import android.os.Build;
 import android.os.PowerManager;
 
+import androidx.preference.PreferenceManager;
+
 import com.hmsoft.pentaxgallery.service.DownloadService;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
@@ -60,6 +62,18 @@ public class MyApplication extends Application {
         // or other notification behaviors after this
         NotificationManager notificationManager = MyApplication.ApplicationContext.getSystemService(NotificationManager.class);
         notificationManager.createNotificationChannel(channel);
+    }
+
+    public static boolean getBooleanPref(int key, int defValueKey) {
+        return PreferenceManager.getDefaultSharedPreferences(ApplicationContext).getBoolean(ApplicationContext.getString(key), Boolean.toString(true).equals(ApplicationContext.getString(defValueKey)));
+    }
+
+    public static int getIntPref(int key, int defValueKey) {
+        return Integer.parseInt(getStringPref(key, defValueKey));
+    }
+
+    public static String getStringPref(int key, int defValueKey) {
+        return PreferenceManager.getDefaultSharedPreferences(ApplicationContext).getString(ApplicationContext.getString(key), ApplicationContext.getString(defValueKey));
     }
 
     @Override

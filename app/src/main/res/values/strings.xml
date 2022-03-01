@@ -96,6 +96,15 @@
     <string name="download_canceled">\"Download canceled: \"</string>
     <string name="too_many_errors">Too many errors.</string>
     <string translatable="false" name="location_service_notification_content">(%1$d) ~ %2$dM(%3$s)</string>
+    <string name="enable_location_service_label">Enable Location Service</string>
+    <string name="enable_location_service_summary">Enable location service to store the location where the pictures were taken.</string>
+    <string name="location_service_label">Location Service</string>
+    <string name="store_location_in_camera_label">Store Location in Camera</string>
+    <string name="store_location_in_camera_summary">If the camera supports it and it is connected store the obtained location in the camera itself.</string>
+    <string name="location_update_interval_label">Location Update Interval</string>
+    <string name="default_location_update_interval">180</string>
+    <string name="update_picture_location_information_label">Update Picture Location Information</string>
+    <string name="update_picture_location_information_summary">When downloading pictures from the camera, update the location information if available.</string>
 
     <string-array name="main_action_options">
         <item>None</item>
@@ -107,5 +116,44 @@
         <item>NONE</item>
         <item>DOWNLOAD</item>
         <item>CAMERA</item>
+    </string-array>
+
+
+    <string-array name="update_location_interval_options">
+        <item>30 seconds</item>
+        <item>1 minute</item>
+        <item>2 minutes</item>
+        <item>3 minutes</item>
+        <item>4 minutes</item>
+        <item>5 minutes</item>
+        <item>10 minutes</item>
+        <item>15 minutes</item>
+        <item>20 minutes</item>
+        <item>25 minutes</item>
+        <item>30 minutes</item>
+        <item>45 minutes</item>
+        <item>1 hour</item>
+        <item>4 hours</item>
+        <item>8 hours</item>
+        <item>12 hours</item>
+    </string-array>
+
+    <string-array name="update_location_interval_options_values">
+        <item>30</item>
+        <item>60</item>
+        <item>120</item>
+        <item>180</item>
+        <item>240</item>
+        <item>300</item>
+        <item>600</item>
+        <item>900</item>
+        <item>1200</item>
+        <item>1500</item>
+        <item>1800</item>
+        <item>2700</item>
+        <item>3600</item>
+        <item>14400</item>
+        <item>28800</item>
+        <item>43200</item>
     </string-array>
 </resources>

@@ -66,6 +66,8 @@ public class LocationService extends Service {
     private int mMinimumAccuracy = 150;
     private long mMinTimeDelta = 60;
     private float mBestAccuracy = 20;
+    private boolean mStoreLocationInCamera;
+
     private Intent mMapIntent;
     private ComponentName mMapIntentComponent;
     private int mLocationCount;
@@ -92,26 +94,48 @@ public class LocationService extends Service {
 
     public static void start(Context context, Intent intent) {
         context = context.getApplicationContext();
+        intent.setClass(context, LocationService.class);
+
+        if (!isServiceEnabled()) {
+            context.stopService(intent);
+            return;
+        }
+
         if (checkLocationPermission(context)) {
-            intent.setClass(context, LocationService.class);
             context.startForegroundService(intent);
         }
     }
 
     void updateConfig() {
+        if (!isServiceEnabled()) {
+            stopSelf();
+            return;
+        }
+
+
         // TODO: Read from settings.
-        mGpsTimeout = 45;
+        mGpsTimeout = 60;
         mMinimumDistance = 100;
-        mLocationUpdateInterval = 90;
-        mMaxReasonableSpeed = 55;
-        mMinimumAccuracy = 150;
-        mMinTimeDelta = 60;
-        mBestAccuracy = 25;
+        mMaxReasonableSpeed = 280;
+        mMinimumAccuracy = 200;
+        mMinTimeDelta = 30;
+        mBestAccuracy = 20;
+
+        mLocationUpdateInterval = MyApplication.getIntPref(R.string.key_location_update_interval, R.string.default_location_update_interval);
+        mStoreLocationInCamera = MyApplication.getBooleanPref(R.string.key_store_location_in_camera, R.string.default_store_location_in_camera);
 
         if (Logger.DEBUG) {
             mGpsTimeout = 10;
             mLocationUpdateInterval = 15;
         }
+    }
+
+    private static boolean isServiceEnabled() {
+        boolean enabled =  MyApplication.getBooleanPref(R.string.key_enable_location_service, R.string.default_enable_location_service);
+        if (Logger.DEBUG && !enabled) {
+            Logger.debug(TAG, "Service disabled.");
+        }
+        return enabled;
     }
 
     void startLocationListener() {
@@ -278,7 +302,7 @@ public class LocationService extends Service {
     private void saveLocation(Location bestLastLocation) {
         // TODO: save location to DB.
 
-        if (Camera.instance.isConnected() && Camera.instance.getCameraData().geoTagging) {
+        if (mStoreLocationInCamera && Camera.instance.isConnected() && Camera.instance.getCameraData().geoTagging) {
             CameraController.OnAsyncCommandExecutedListener listener = null;
             if (Logger.DEBUG) {
                 listener = new CameraController.OnAsyncCommandExecutedListener() {
@@ -328,7 +352,11 @@ public class LocationService extends Service {
 
         updateNotification();
 
-        String action = intent.getAction();
+        String action = intent != null ?  intent.getAction() : null;
+        if (action == null) {
+            return START_NOT_STICKY;
+        }
+
         if (Logger.DEBUG) Logger.debug(TAG, "onStartCommand:" + action);
 
         switch (action) {
@@ -343,7 +371,9 @@ public class LocationService extends Service {
                 stopSelf();
                 break;
             case ACTION_UPDATE_CONFIG:
+                stopLocationListener(false);
                 updateConfig();
+                startLocationListener();
                 break;
         }
 
