@@ -28,6 +28,7 @@ import com.hmsoft.pentaxgallery.camera.Camera;
 import com.hmsoft.pentaxgallery.camera.controller.CameraController;
 import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
 import com.hmsoft.pentaxgallery.camera.model.UpdateGpsLocationResponse;
+import com.hmsoft.pentaxgallery.data.LocationTable;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 import com.hmsoft.pentaxgallery.util.Utils;
@@ -296,34 +297,38 @@ public class LocationService extends Service {
         }
     }
 
-    private void saveLocation(Location bestLastLocation) {
-        // TODO: save location to DB.
-
+    private void saveLocation(Location location) {
         Camera camera = Camera.instance;
-        if (camera.getPreferences().isStoreLocationInCameraEnabled()
-                && camera.isConnected() && camera.getCameraData().geoTagging) {
-            CameraController.OnAsyncCommandExecutedListener listener = null;
-            if (Logger.DEBUG) {
-                listener = new CameraController.OnAsyncCommandExecutedListener() {
-                    @Override
-                    public void onAsyncCommandExecuted(BaseResponse response) {
-                        if (response.success) {
-                            UpdateGpsLocationResponse r = (UpdateGpsLocationResponse)response;
-                            if (Logger.DEBUG) Logger.debug(TAG, "Camera location updated: " + r.gpsInfo);
-                        } else {
-                            if (Logger.DEBUG) Logger.debug(TAG, "Failed to update camera location: " + response.errMsg);
-                        }
-                    }
-                };
+
+        final boolean storeInCamera = camera.getPreferences().isStoreLocationInCameraEnabled()
+                && camera.isConnected() && camera.getCameraData().geoTagging;
+
+        TaskExecutor.executeOnSingleThreadExecutor(() -> {
+
+            long saved = LocationTable.saveToDatabase(location);
+            if (saved > 0) {
+                TaskExecutor.executeOnUIThread(() -> {
+                    mLastSavedLocation = location;
+                    if (Logger.DEBUG) logLocation(location, "Saved last best location.");
+                    mLocationCount++;
+                    updateNotification();
+                });
             }
 
-            Camera.instance.getController().updateGpsLocation(bestLastLocation, listener);
-        }
-
-        mLastSavedLocation = bestLastLocation;
-        if (Logger.DEBUG) logLocation(bestLastLocation, "Save last best location.");
-        mLocationCount++;
-        updateNotification();
+            if (storeInCamera) {
+                BaseResponse response = Camera.instance.getController().updateGpsLocation(location);
+                if (Logger.DEBUG) {
+                    if (response.success) {
+                        UpdateGpsLocationResponse r = (UpdateGpsLocationResponse) response;
+                        if (Logger.DEBUG)
+                            Logger.debug(TAG, "Camera location updated: " + r.gpsInfo);
+                    } else {
+                        if (Logger.DEBUG)
+                            Logger.debug(TAG, "Failed to update camera location: " + response.errMsg);
+                    }
+                }
+            }
+        });
     }
 
     @Override
