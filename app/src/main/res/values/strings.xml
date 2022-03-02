@@ -105,6 +105,7 @@
     <string name="default_location_update_interval">180</string>
     <string name="update_picture_location_information_label">Update Picture Location Information</string>
     <string name="update_picture_location_information_summary">When downloading pictures from the camera, update the location information if available.</string>
+    <string name="downloaded_images_location_label">Downloaded Images Location</string>
 
     <string-array name="main_action_options">
         <item>None</item>

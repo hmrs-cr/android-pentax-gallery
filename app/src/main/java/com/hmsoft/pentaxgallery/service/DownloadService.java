@@ -397,6 +397,10 @@ public class DownloadService extends IntentService {
         Queue.loadFromFile(sourceImageList, cameraData);
     }
 
+    public static boolean isDownloading() {
+        return Queue.isDownloading();
+    }
+
     public static String getQueueFinishETA() {
         return Queue.getETAString();
     }
@@ -819,7 +823,7 @@ public class DownloadService extends IntentService {
             return null;
         }
 
-        public static boolean isDownloading() {
+        public static synchronized boolean isDownloading() {
             if (sDownloadQueue == null) {
                 return false;
             }

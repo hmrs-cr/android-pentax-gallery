@@ -1,9 +1,18 @@
 package com.hmsoft.pentaxgallery.ui.preferences;
 
 
+import android.app.Activity;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.storage.StorageManager;
+import android.os.storage.StorageVolume;
+import android.provider.DocumentsContract;
+import android.provider.MediaStore;
 import android.text.InputType;
 import android.text.format.Formatter;
 import android.widget.EditText;
@@ -14,12 +23,14 @@ import com.hmsoft.pentaxgallery.camera.model.CameraData;
 import com.hmsoft.pentaxgallery.camera.model.CameraPreferences;
 import com.hmsoft.pentaxgallery.camera.model.ImageList;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
+import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 
 import java.io.File;
 import java.util.List;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.preference.EditTextPreference;
@@ -59,6 +70,9 @@ public class CameraPreferenceFragment extends PreferenceFragmentCompat implement
         ((EditTextPreference)findPreference(getString(R.string.key_read_timeout))).setOnBindEditTextListener(numberEditTextListener);
         ((EditTextPreference)findPreference(getString(R.string.key_camera_thread_number))).setOnBindEditTextListener(numberEditTextListener);
 
+        Preference outDirePreference = findPreference(getString(R.string.key_downloaded_images_location));
+        outDirePreference.setOnPreferenceClickListener(this);
+
         Preference removeOldImageDataPreference = findPreference(getString(R.string.key_remove_old_images));
         removeOldImageDataPreference.setOnPreferenceClickListener(this);
         new OldImageDataTask(OldImageDataTask.TASK_GET_SIZE).execute(cameraData);
@@ -84,6 +98,27 @@ public class CameraPreferenceFragment extends PreferenceFragmentCompat implement
         });
     }
 
+    public void openDirectory() {
+        // Choose a directory using the system's file picker.
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+
+        StorageManager storageManager = (StorageManager)this.getContext().getSystemService(Context.STORAGE_SERVICE);
+        List<StorageVolume> storageVolumeList = storageManager.getStorageVolumes();
+
+        startActivityForResult(intent, 1);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        if (requestCode == 1 && resultCode == Activity.RESULT_OK) {
+            Uri uri = null;
+            if (data != null) {
+                uri = data.getData();
+                Logger.debug("PREf", uri.toString());
+            }
+        }
+    }
+
     @Override
     public boolean onPreferenceClick(Preference preference) {
 
@@ -91,7 +126,9 @@ public class CameraPreferenceFragment extends PreferenceFragmentCompat implement
         String message = null;
         int title = 0;
 
-        if(preference.getKey().equals(getString(R.string.key_remove_camera))) {
+        if (preference.getKey().equals(getString(R.string.key_downloaded_images_location))) {
+            openDirectory();
+        } else if(preference.getKey().equals(getString(R.string.key_remove_camera))) {
             message = String.format(getString(R.string.remove_camera_confirmation), cameraData.getDisplayName());
             title = R.string.remove_camera_label;
             yesClickListener = new DialogInterface.OnClickListener() {

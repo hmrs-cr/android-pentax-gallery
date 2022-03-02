@@ -743,8 +743,21 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         downloadJpgs(false);
     }
 
-    /*package*/ void downloadJpgs(boolean forceRefresh) {
+    private static void powerOffCameraIfPowerOffTransferEnabled() {
+        Camera camera = Camera.instance;
+        if (camera.isConnected() && camera.getCameraData().powerOffTransfer) {
+            TaskExecutor.executeOnUIThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (DownloadService.isDownloading()) {
+                        camera.powerOff();
+                    }
+                }
+            }, 2500);
+        }
+    }
 
+    /*package*/ void downloadJpgs(boolean forceRefresh) {
 
         List<ImageData> enqueue = getDownloadList();
         if ((mNeedUpdateImageList && (enqueue == null || enqueue.size() == 0)) || forceRefresh) {
@@ -754,10 +767,12 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                         public void onRefreshDone() {
                             showView(true, -1);
                             addToDownloadQueue(getDownloadList());
+                            powerOffCameraIfPowerOffTransferEnabled();
                         }
                     });
         } else {
             addToDownloadQueue(enqueue);
+            powerOffCameraIfPowerOffTransferEnabled();
         }
     }
 

@@ -3,6 +3,7 @@ package com.hmsoft.pentaxgallery.ui.preferences;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Html;
@@ -10,17 +11,30 @@ import android.text.Html;
 import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.Camera;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
+import com.hmsoft.pentaxgallery.service.LocationService;
+import com.hmsoft.pentaxgallery.service.StartLocationServiceReceiver;
+import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.Utils;
 
 import java.util.List;
 
+import androidx.annotation.Nullable;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.SwitchPreferenceCompat;
 
-public class PreferencesFragment extends PreferenceFragmentCompat {
+public class PreferencesFragment extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     private Camera camera = Camera.instance;
+    private PreferenceCategory mPrefCategoryLocationService;
+
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        mPrefCategoryLocationService = (PreferenceCategory)findPreference(getString(R.string.key_location_service_category));
+    }
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
@@ -36,6 +50,22 @@ public class PreferencesFragment extends PreferenceFragmentCompat {
                 return true;
             }
         });
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+        SwitchPreferenceCompat p = mPrefCategoryLocationService.findPreference(getString(R.string.key_enable_location_service));
+        Preference intervalPref = mPrefCategoryLocationService.findPreference(getString(R.string.key_location_update_interval));
+        intervalPref.setEnabled(p.isChecked());
+    }
+
+    @Override
+    public void onPause() {
+        LocationService.updateConfig(getContext());
+        getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+        super.onPause();
     }
 
     /*private*/ void addCameraList() {
@@ -79,6 +109,21 @@ public class PreferencesFragment extends PreferenceFragmentCompat {
             preference.setSummary("Serial #" + camera.serialNo);
             preference.setFragment(CameraPreferenceFragment.class.getName());
             preferenceCategory.addPreference(preference);
+        }
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (Logger.DEBUG) Logger.debug("PREF", "Preference shanged:" + key);
+        if (getString(R.string.key_enable_location_service).equals(key)) {
+            SwitchPreferenceCompat p = mPrefCategoryLocationService.findPreference(key);
+            if (p.isChecked()) {
+                StartLocationServiceReceiver.enable(getContext());
+            } else {
+                StartLocationServiceReceiver.disable(getContext());
+            }
+            Preference intervalPref = mPrefCategoryLocationService.findPreference(getString(R.string.key_location_update_interval));
+            intervalPref.setEnabled(p.isChecked());
         }
     }
 

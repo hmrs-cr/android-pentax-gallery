@@ -18,6 +18,11 @@
             app:defaultValue="@string/default_raw_album_name"
             app:useSimpleSummaryProvider="true"/>
 
+        <Preference
+            app:key="@string/key_downloaded_images_location"
+            app:title="@string/downloaded_images_location_label"
+            app:summary="/mnet/sdcard/pictures"/>
+
         <SwitchPreferenceCompat
             app:key="@string/key_auto_download_jpg"
             app:title="@string/auto_download_jpgs_label"
@@ -44,6 +49,23 @@
             app:entries="@array/main_action_options"
             app:useSimpleSummaryProvider="true"/>
 
+    </PreferenceCategory>
+
+
+    <PreferenceCategory
+        app:key="@string/key_location_service_category"
+        app:title="@string/location_service_label">
+        <SwitchPreferenceCompat
+            app:key="@string/key_store_location_in_camera"
+            app:title="@string/store_location_in_camera_label"
+            app:defaultValue="@string/default_store_location_in_camera"
+            app:summary="@string/store_location_in_camera_summary"/>
+
+        <SwitchPreferenceCompat
+            app:key="@string/key_update_picture_location_information"
+            app:title="@string/update_picture_location_information_label"
+            app:defaultValue="@string/default_update_picture_location_information"
+            app:summary="@string/update_picture_location_information_summary"/>
     </PreferenceCategory>
 
     <PreferenceCategory

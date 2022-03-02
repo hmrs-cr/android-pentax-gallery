@@ -35,5 +35,6 @@
     <string name="key_location_update_interval">location_update_interval</string>
     <string name="key_update_picture_location_information">update_picture_location_information</string>
     <string name="default_update_picture_location_information">true</string>
+    <string name="key_downloaded_images_location">downloaded_images_location</string>
 
 </resources>

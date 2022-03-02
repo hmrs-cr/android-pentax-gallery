@@ -51,6 +51,7 @@ public class CameraData extends BaseResponse {
     public final int battery;
     public final boolean hot;
     public final boolean geoTagging;
+    public final boolean powerOffTransfer;
     public final String gpsInfo;
 
     public final String key;
@@ -78,6 +79,7 @@ public class CameraData extends BaseResponse {
 
         cameraId = "default.camera";
 
+        powerOffTransfer = false;
         geoTagging = false;
         gpsInfo = "";
 
@@ -115,6 +117,7 @@ public class CameraData extends BaseResponse {
         battery = jsonObject.optInt("battery", -1);
         hot = jsonObject.optBoolean("hot");
         geoTagging = "on".equals(jsonObject.optString("geoTagging"));
+        powerOffTransfer = "on".equals(jsonObject.optString("powerOffTransfer"));
         gpsInfo = jsonObject.optString("gpsInfo");
 
         preferences = new CameraPreferences(this);

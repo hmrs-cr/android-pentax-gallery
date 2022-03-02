@@ -66,7 +66,6 @@ public class LocationService extends Service {
     private int mMinimumAccuracy = 150;
     private long mMinTimeDelta = 60;
     private float mBestAccuracy = 20;
-    private boolean mStoreLocationInCamera;
 
     private Intent mMapIntent;
     private ComponentName mMapIntentComponent;
@@ -122,8 +121,6 @@ public class LocationService extends Service {
         mBestAccuracy = 20;
 
         mLocationUpdateInterval = MyApplication.getIntPref(R.string.key_location_update_interval, R.string.default_location_update_interval);
-        mStoreLocationInCamera = MyApplication.getBooleanPref(R.string.key_store_location_in_camera, R.string.default_store_location_in_camera);
-
         if (Logger.DEBUG) {
             mGpsTimeout = 10;
             mLocationUpdateInterval = 15;
@@ -302,7 +299,9 @@ public class LocationService extends Service {
     private void saveLocation(Location bestLastLocation) {
         // TODO: save location to DB.
 
-        if (mStoreLocationInCamera && Camera.instance.isConnected() && Camera.instance.getCameraData().geoTagging) {
+        Camera camera = Camera.instance;
+        if (camera.getPreferences().isStoreLocationInCameraEnabled()
+                && camera.isConnected() && camera.getCameraData().geoTagging) {
             CameraController.OnAsyncCommandExecutedListener listener = null;
             if (Logger.DEBUG) {
                 listener = new CameraController.OnAsyncCommandExecutedListener() {

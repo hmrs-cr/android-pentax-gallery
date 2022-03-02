@@ -92,7 +92,6 @@ public class PentaxController implements CameraController {
 
     protected String powerOffJson() {
         String response = checkIfDisconnected(HttpHelper.getStringResponse(UrlHelper.URL_POWEROFF, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.POST));
-        triggerCameraDisconnectedListener();
         return response;
     }
 

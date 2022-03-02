@@ -152,4 +152,12 @@ public class CameraPreferences extends PreferenceDataStore {
     public MainAction getMainAction() {
         return MainAction.valueOf(getString(R.string.key_main_action, R.string.default_main_action));
     }
+
+    public boolean isStoreLocationInCameraEnabled() {
+        return getBoolean(R.string.key_store_location_in_camera, R.string.default_store_location_in_camera);
+    }
+
+    public boolean isUpdatePictureLocationEnabled() {
+        return getBoolean(R.string.key_update_picture_location_information, R.string.default_update_picture_location_information);
+    }
 }

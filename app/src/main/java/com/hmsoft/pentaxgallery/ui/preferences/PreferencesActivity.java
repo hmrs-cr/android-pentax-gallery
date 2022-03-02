@@ -2,6 +2,7 @@ package com.hmsoft.pentaxgallery.ui.preferences;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.MenuItem;
 
@@ -90,7 +91,6 @@ public class PreferencesActivity extends AppCompatActivity implements
     protected void onPause() {
         super.onPause();
         DownloadService.setShutCameraDownWhenDone(Camera.instance.getPreferences().shutdownAfterTransfer());
-        LocationService.updateConfig(this);
     }
 
     @Override
