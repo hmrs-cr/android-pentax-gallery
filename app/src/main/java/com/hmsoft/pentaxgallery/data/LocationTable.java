@@ -22,7 +22,6 @@ public class LocationTable {
     public static final String COLUMN_NAME_LONGITUD = "longitude";
     public static final String COLUMN_NAME_ALTITUDE = "altitude";
     public static final String COLUMN_NAME_ACCURACY = "accuracy";
-    public static final String COLUMN_NAME_SPEED = "speed";
 
     public static final String SQL_DROP_TABLE = "DROP TABLE IF EXISTS " + TABLE_NAME;
 
@@ -33,24 +32,21 @@ public class LocationTable {
                     COLUMN_NAME_LATITUDE + DatabaseHelper.TYPE_REAL + DatabaseHelper.COMMA_SEP +
                     COLUMN_NAME_LONGITUD + DatabaseHelper.TYPE_REAL + DatabaseHelper.COMMA_SEP +
                     COLUMN_NAME_ALTITUDE + DatabaseHelper.TYPE_REAL + DatabaseHelper.COMMA_SEP +
-                    COLUMN_NAME_ACCURACY + DatabaseHelper.TYPE_REAL + DatabaseHelper.COMMA_SEP +
-                    COLUMN_NAME_SPEED + DatabaseHelper.TYPE_REAL + ")";
+                    COLUMN_NAME_ACCURACY + DatabaseHelper.TYPE_REAL + ")";
 
     public static final String INSERT_SQL = "INSERT OR IGNORE INTO " + TABLE_NAME + " (" +
             COLUMN_NAME_TIMESTAMP + DatabaseHelper.COMMA_SEP +
             COLUMN_NAME_LATITUDE + DatabaseHelper.COMMA_SEP +
             COLUMN_NAME_LONGITUD + DatabaseHelper.COMMA_SEP +
             COLUMN_NAME_ALTITUDE + DatabaseHelper.COMMA_SEP +
-            COLUMN_NAME_ACCURACY + DatabaseHelper.COMMA_SEP +
-            COLUMN_NAME_SPEED + ") VALUES (?,?,?,?,?,?)";
+            COLUMN_NAME_ACCURACY + ") VALUES (?,?,?,?,?)";
 
     public static final String UPDATE_SQL = "UPDATE " + TABLE_NAME + " SET " +
             COLUMN_NAME_TIMESTAMP + "=?" + DatabaseHelper.COMMA_SEP +
             COLUMN_NAME_LATITUDE  + "=?" + DatabaseHelper.COMMA_SEP +
             COLUMN_NAME_LONGITUD  + "=?" + DatabaseHelper.COMMA_SEP +
             COLUMN_NAME_ALTITUDE  + "=?" + DatabaseHelper.COMMA_SEP +
-            COLUMN_NAME_ACCURACY  + "=?" + DatabaseHelper.COMMA_SEP +
-            COLUMN_NAME_SPEED     + "=? WHERE " +
+            COLUMN_NAME_ACCURACY  + "=?" + "=? WHERE " +
             COLUMN_NAME_TIMESTAMP + "=?";
 
     private static final String TIMESTAMP_WHERE_CONDITION = COLUMN_NAME_TIMESTAMP + " = ?";
@@ -60,26 +56,33 @@ public class LocationTable {
     private static final ContentValues sInsertValues = new ContentValues(7);
     private static SQLiteStatement sInsertStatement = null;
 
-    public static Location loadFromCursor(Cursor cursor) {
-        Location location = new Location(CACHED_LOCATION_PROVIDER);
-        location.setTime(cursor.getLong(cursor.getColumnIndex(COLUMN_NAME_TIMESTAMP)));
-        location.setLatitude(cursor.getDouble(cursor.getColumnIndex(COLUMN_NAME_LATITUDE)));
-        location.setLongitude(cursor.getDouble(cursor.getColumnIndex(COLUMN_NAME_LONGITUD)));
-        location.setAltitude(cursor.getDouble(cursor.getColumnIndex(COLUMN_NAME_ALTITUDE)));
-        location.setAccuracy(cursor.getFloat(cursor.getColumnIndex(COLUMN_NAME_ACCURACY)));
-        location.setSpeed(cursor.getFloat(cursor.getColumnIndex(COLUMN_NAME_SPEED)));
+    private static final String[] sLastLongFields = new String[]{COLUMN_NAME_LATITUDE, COLUMN_NAME_LONGITUD};
 
-        return location;
-    }
+    public static LatLong getLocationAtTimestamp(long timestamp, long window) {
 
-    public static Location getLast() {
+        String selectionExpression = COLUMN_NAME_TIMESTAMP + " BETWEEN " +
+                                     COLUMN_NAME_TIMESTAMP + " - " + window + " AND " +
+                                     COLUMN_NAME_TIMESTAMP + " + " + window;
+
+        String orderByExpression = "ABS(" + COLUMN_NAME_TIMESTAMP + " - " + timestamp + ")/1000," + COLUMN_NAME_ACCURACY;
+
         DatabaseHelper helper = DatabaseHelper.getInstance();
-        Cursor cursor = helper.getReadableDatabase().query(TABLE_NAME, null, null, null, null,
-                null, COLUMN_NAME_TIMESTAMP + " DESC", "1");
+        Cursor cursor = helper.getReadableDatabase().query(
+                TABLE_NAME,
+                sLastLongFields,
+                selectionExpression,
+                null,
+                null,
+                null,
+                orderByExpression,
+                "1");
+
         if(cursor != null) {
             try	{
                 if(cursor.moveToFirst()) {
-                    return loadFromCursor(cursor);
+                    Double latitude = cursor.getDouble(cursor.getColumnIndex(COLUMN_NAME_LATITUDE));
+                    Double longitude = cursor.getDouble(cursor.getColumnIndex(COLUMN_NAME_LONGITUD));
+                    return new LatLong(latitude, longitude);
                 }
             }
             finally	{
@@ -98,7 +101,6 @@ public class LocationTable {
         sInsertStatement.bindDouble(3, location.getLongitude());
         sInsertStatement.bindDouble(4, location.getAltitude());
         sInsertStatement.bindDouble(5, location.getAccuracy());
-        sInsertStatement.bindDouble(6, location.getSpeed());
         sInsertStatement.execute();
 
         if (Logger.DEBUG) {
@@ -106,6 +108,16 @@ public class LocationTable {
         }
 
         return 1;
+    }
+
+    public static final class LatLong {
+        public final Double latitude;
+        public final Double longitude;
+
+        protected LatLong(Double latitude, Double longitude) {
+            this.latitude = latitude;
+            this.longitude = longitude;
+        }
     }
 
     private static synchronized void prepareDmlStatements() {
