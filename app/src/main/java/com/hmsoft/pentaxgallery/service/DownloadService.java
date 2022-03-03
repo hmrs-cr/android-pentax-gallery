@@ -17,6 +17,7 @@ import android.os.ResultReceiver;
 import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.text.TextUtils;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -32,6 +33,7 @@ import com.hmsoft.pentaxgallery.camera.model.FilteredImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
+import com.hmsoft.pentaxgallery.data.LocationTable;
 import com.hmsoft.pentaxgallery.ui.ImageGridActivity;
 import com.hmsoft.pentaxgallery.ui.camera.CameraFragment;
 import com.hmsoft.pentaxgallery.util.Logger;
@@ -221,11 +223,20 @@ public class DownloadService extends IntentService {
                 values.put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis());
                 values.put(MediaStore.Images.Media.MIME_TYPE, imageData.isRaw ? "image/x-adobe-dng" : "image/jpeg");
                 values.put(MediaStore.Images.Media.SIZE, fileLength);
+
                 if (imageMetaData != null) {
                     values.put(MediaStore.Images.Media.ORIENTATION, imageMetaData.orientationDegrees);
                     try {
                         Date date = dateFormat.parse(imageMetaData.dateTime);
                         values.put(MediaStore.Images.Media.DATE_TAKEN, date.getTime());
+
+                        LocationTable.LatLong latLong = LocationService.getLocationAtTime(date);
+                        if (latLong != null) {
+                            if (Logger.DEBUG) Logger.debug(TAG, "Found location info for image: " + latLong.latitude + "," + latLong.longitude);
+                            // TODO: Do no use Images.Media.LATITUDE/Images.Media.LONGITUDE fields, save location data in exif.
+                            values.put(MediaStore.Images.Media.LATITUDE, latLong.latitude);
+                            values.put(MediaStore.Images.Media.LONGITUDE, latLong.longitude);
+                        }
                     } catch (ParseException e) {
                         Logger.warning(TAG, "Error parsing date: " + imageMetaData.dateTime, e);
                     }
