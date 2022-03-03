@@ -49,6 +49,11 @@
             app:entries="@array/main_action_options"
             app:useSimpleSummaryProvider="true"/>
 
+        <Preference
+            app:key="@string/key_sync_camera_time"
+            app:title="@string/sync_camera_time_label"
+            app:summary="@string/sync_camera_time_summary"/>
+
     </PreferenceCategory>
 
 

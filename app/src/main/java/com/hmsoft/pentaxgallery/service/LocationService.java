@@ -25,7 +25,6 @@ import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.Camera;
-import com.hmsoft.pentaxgallery.camera.controller.CameraController;
 import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
 import com.hmsoft.pentaxgallery.camera.model.UpdateGpsLocationResponse;
 import com.hmsoft.pentaxgallery.data.LocationTable;
@@ -33,6 +32,7 @@ import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 import com.hmsoft.pentaxgallery.util.Utils;
 
+import java.util.Date;
 import java.util.Locale;
 
 @SuppressLint("MissingPermission")
@@ -59,9 +59,9 @@ public class LocationService extends Service {
     private Location mLastSavedLocation;
     private Location mCurrentBestLocation;
 
+    private static long sLocationUpdateInterval = 0;
     private int mGpsTimeout = 60;
     private float mMinimumDistance = 100;
-    private long mLocationUpdateInterval = 60;
     private boolean mTimeoutRoutinePending;
     private float mMaxReasonableSpeed = 55;
     private int mMinimumAccuracy = 150;
@@ -106,14 +106,20 @@ public class LocationService extends Service {
         }
     }
 
+    public static LocationTable.LatLong getLocationAtTime(Date dateTime) {
+        if (sLocationUpdateInterval == 0) {
+            sLocationUpdateInterval = MyApplication.getIntPref(R.string.key_location_update_interval, R.string.default_location_update_interval);
+        }
+
+        return LocationTable.getLocationAtTimestamp(dateTime.getTime(), sLocationUpdateInterval * 2);
+    }
+
     void updateConfig() {
         if (!isServiceEnabled()) {
             stopSelf();
             return;
         }
 
-
-        // TODO: Read from settings.
         mGpsTimeout = 60;
         mMinimumDistance = 100;
         mMaxReasonableSpeed = 280;
@@ -121,11 +127,7 @@ public class LocationService extends Service {
         mMinTimeDelta = 30;
         mBestAccuracy = 20;
 
-        mLocationUpdateInterval = MyApplication.getIntPref(R.string.key_location_update_interval, R.string.default_location_update_interval);
-        if (Logger.DEBUG) {
-            mGpsTimeout = 10;
-            mLocationUpdateInterval = 15;
-        }
+        sLocationUpdateInterval = MyApplication.getIntPref(R.string.key_location_update_interval, R.string.default_location_update_interval);
     }
 
     private static boolean isServiceEnabled() {
@@ -234,7 +236,7 @@ public class LocationService extends Service {
                     saveLastLocation();
                     stopLocationListener();
                 } else {
-                    if (Logger.DEBUG) Logger.debug(TAG, "No good GPS location. " + location.getAccuracy() + "<=" + mBestAccuracy);
+                    if (Logger.DEBUG) Logger.debug(TAG, "No good GPS location: " + location.getProvider() + ", " + location.getAccuracy() + ":" + mBestAccuracy);
                 }
             }
         }
@@ -242,13 +244,13 @@ public class LocationService extends Service {
 
     void setLocationAlarm() {
         if(Logger.DEBUG) {
-            Toast.makeText(this, "Location alarm set to " + mLocationUpdateInterval + "s", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Location alarm set to " + sLocationUpdateInterval + "s", Toast.LENGTH_LONG).show();
         }
 
         mAlarm.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() +
-                mLocationUpdateInterval * 1000L, mAlarmLocationCallback);
+                sLocationUpdateInterval * 1000L, mAlarmLocationCallback);
 
-        if(Logger.DEBUG) Logger.debug(TAG, "Set alarm to %d seconds", mLocationUpdateInterval);
+        if(Logger.DEBUG) Logger.debug(TAG, "Set alarm to %d seconds", sLocationUpdateInterval);
     }
 
     private void saveLastLocation() {

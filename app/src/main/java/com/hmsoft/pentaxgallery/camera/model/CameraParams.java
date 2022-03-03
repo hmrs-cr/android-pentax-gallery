@@ -13,6 +13,7 @@ public class CameraParams extends BaseResponse {
     public final String WBMode;
     public final String shootMode;
     public final String exposureMode;
+    public final String operationMode;
 
     public CameraParams(String response) throws JSONException {
         this(new JSONTokener(response));
@@ -32,6 +33,7 @@ public class CameraParams extends BaseResponse {
         this.WBMode = jsonObject.optString("WBMode"); // "auto",
         this.shootMode = jsonObject.optString("shootMode"); // "single",
         this.exposureMode = jsonObject.optString("exposureMode"); // "U1",
+        this.operationMode = jsonObject.optString("operationMode");
                 /*"stillSize": "S1",
                 "movieSize": "FHD24p",
                 "effect": "cim_auto",

@@ -8,26 +8,12 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
-import android.provider.DocumentsContract;
-import android.provider.MediaStore;
 import android.text.InputType;
 import android.text.format.Formatter;
 import android.widget.EditText;
-
-import com.hmsoft.pentaxgallery.R;
-import com.hmsoft.pentaxgallery.camera.Camera;
-import com.hmsoft.pentaxgallery.camera.model.CameraData;
-import com.hmsoft.pentaxgallery.camera.model.CameraPreferences;
-import com.hmsoft.pentaxgallery.camera.model.ImageList;
-import com.hmsoft.pentaxgallery.camera.model.StorageData;
-import com.hmsoft.pentaxgallery.util.Logger;
-import com.hmsoft.pentaxgallery.util.TaskExecutor;
-
-import java.io.File;
-import java.util.List;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -36,6 +22,21 @@ import androidx.fragment.app.Fragment;
 import androidx.preference.EditTextPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
+
+import com.hmsoft.pentaxgallery.R;
+import com.hmsoft.pentaxgallery.camera.Camera;
+import com.hmsoft.pentaxgallery.camera.controller.CameraController;
+import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
+import com.hmsoft.pentaxgallery.camera.model.CameraData;
+import com.hmsoft.pentaxgallery.camera.model.CameraPreferences;
+import com.hmsoft.pentaxgallery.camera.model.ImageList;
+import com.hmsoft.pentaxgallery.camera.model.StorageData;
+import com.hmsoft.pentaxgallery.util.Logger;
+import com.hmsoft.pentaxgallery.util.TaskExecutor;
+
+import java.io.File;
+import java.util.Date;
+import java.util.List;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -75,6 +76,10 @@ public class CameraPreferenceFragment extends PreferenceFragmentCompat implement
 
         Preference removeOldImageDataPreference = findPreference(getString(R.string.key_remove_old_images));
         removeOldImageDataPreference.setOnPreferenceClickListener(this);
+
+        Preference syncTimePreference = findPreference(getString(R.string.key_sync_camera_time));
+        syncTimePreference.setOnPreferenceClickListener(this);
+
         new OldImageDataTask(OldImageDataTask.TASK_GET_SIZE).execute(cameraData);
 
         Preference removeCameraPreference = findPreference(getString(R.string.key_remove_camera));
@@ -126,7 +131,21 @@ public class CameraPreferenceFragment extends PreferenceFragmentCompat implement
         String message = null;
         int title = 0;
 
-        if (preference.getKey().equals(getString(R.string.key_downloaded_images_location))) {
+        if (preference.getKey().equals(getString(R.string.key_sync_camera_time))) {
+            Camera camera = Camera.instance;
+            if (camera.isConnected()) {
+                camera.getController().updateDateTime(new Date(), response -> {
+                    if (response != null && response.success) {
+                        Toast.makeText(this.getContext(), "Camera time successfully updated.", Toast.LENGTH_LONG).show();
+                    } else {
+                        if (Logger.DEBUG) Logger.debug("SETTINGS", "Failed to set camera time: " + response.errMsg);
+                        Toast.makeText(this.getContext(), "Failed to set camera time", Toast.LENGTH_LONG).show();
+                    }
+                });
+            } else {
+                Toast.makeText(this.getContext(), "Camera not connected", Toast.LENGTH_LONG).show();
+            }
+        } else if (preference.getKey().equals(getString(R.string.key_downloaded_images_location))) {
             openDirectory();
         } else if(preference.getKey().equals(getString(R.string.key_remove_camera))) {
             message = String.format(getString(R.string.remove_camera_confirmation), cameraData.getDisplayName());
