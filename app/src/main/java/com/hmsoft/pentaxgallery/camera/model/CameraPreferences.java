@@ -1,6 +1,8 @@
 package com.hmsoft.pentaxgallery.camera.model;
 
 import android.content.Context;
+import android.os.Build;
+import android.provider.MediaStore;
 
 import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.R;
@@ -157,7 +159,21 @@ public class CameraPreferences extends PreferenceDataStore {
         return getBoolean(R.string.key_store_location_in_camera, R.string.default_store_location_in_camera);
     }
 
+    public boolean isAutoSyncTime() {
+        return getBoolean(R.string.key_auto_sync_camera_time, R.string.default_auto_sync_camera_time);
+    }
+
     public boolean isUpdatePictureLocationEnabled() {
         return getBoolean(R.string.key_update_picture_location_information, R.string.default_update_picture_location_information);
+    }
+
+    public String getDownloadVolume() {
+        String volume = getString(context.getString(R.string.key_downloaded_images_location), null);
+        if (volume == null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                volume = MediaStore.VOLUME_EXTERNAL_PRIMARY;
+            }
+        }
+        return volume;
     }
 }

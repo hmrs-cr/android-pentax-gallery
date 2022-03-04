@@ -22,7 +22,11 @@ package com.hmsoft.pentaxgallery.ui;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.storage.StorageManager;
+import android.os.storage.StorageVolume;
+import android.provider.MediaStore;
 import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
@@ -37,6 +41,9 @@ import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.service.LocationService;
 import com.hmsoft.pentaxgallery.ui.preferences.PreferencesActivity;
 import com.hmsoft.pentaxgallery.util.Logger;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * Simple FragmentActivity to hold the main {@link ImageGridFragment} and not much else.

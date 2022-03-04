@@ -809,7 +809,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         if(imageList != null) {
             for (int c = imageList.length() - 1; c >= 0; c--) {
                 ImageData imageData = imageList.getImage(c);
-                if ((includeRaw || !imageData.isRaw) && imageData.getGalleryId() == 0) {
+                if ((includeRaw || !imageData.isRaw) && !imageData.existsOnLocalStorage()) {
                     DownloadService.DownloadEntry downloadEntry = DownloadService.findDownloadEntry(imageData);
                     if (downloadEntry == null) {
                         enqueue.add(imageData);
@@ -1499,17 +1499,11 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             if (imageList != null && needToLoadLocalData) {
                 publishProgress(PROGRESS_LOADING_LOCAL_DATA);
 
-                Map<String, String> downloadedList = loadDownloadedList(imageList);
                 for (int c = 0; c < imageList.length(); c++) {
                     ImageData imageData = imageList.getImage(c);
                     imageData.readData();
-
-                    String id = downloadedList.get(imageData.uniqueFileName);
-                    if (id != null) {
-                        imageData.setLocalStorageUri(Uri.withAppendedPath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id));
-                    }
                 }
-                downloadedList.clear();
+
                 DownloadService.loadQueueFromFile(imageList, cameraData);
             }
 
@@ -1518,51 +1512,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             }
 
             return imageList;
-        }
-
-        private Map<String, String> loadDownloadedList(ImageList imageList) {
-            final String orderByMediaStoreCursor = MediaStore.Images.Media.DATE_TAKEN;
-            final String[] projectionMediaStoreCursor = new String[] {
-                    MediaStore.Images.Media._ID,
-                    MediaStore.Images.Media.DISPLAY_NAME
-            };
-
-            StringBuilder whereSb = new StringBuilder();
-            whereSb.append(MediaStore.Images.Media.DISPLAY_NAME);
-            whereSb.append(" IN (");
-            for(int c = 0; c < imageList.length(); c++) {
-                whereSb.append("'");
-                whereSb.append(imageList.getImage(c).uniqueFileName);
-                whereSb.append("'");
-                if(c < imageList.length() - 1) {
-                    whereSb.append(",");
-                }
-            }
-            whereSb.append(")");
-
-            Cursor cursor = MediaStore.Images.Media.query(
-                    getContext().getContentResolver(),
-                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                    projectionMediaStoreCursor,
-                    whereSb.toString(),
-                    orderByMediaStoreCursor);
-
-            whereSb.setLength(0);
-
-            HashMap<String, String> table = new HashMap<>();
-
-            while(cursor.moveToNext()) {
-                int idIndex = cursor.getColumnIndex(MediaStore.Images.Media._ID);
-                int displayNameIndex = cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME);
-
-                String id =  cursor.getString(idIndex);
-                String uniqueName =  cursor.getString(displayNameIndex);
-                table.put(uniqueName, id);
-            }
-
-            cursor.close();
-
-            return table;
         }
 
         @Override

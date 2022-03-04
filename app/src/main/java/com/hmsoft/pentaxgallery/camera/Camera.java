@@ -1,5 +1,6 @@
 package com.hmsoft.pentaxgallery.camera;
 
+import android.os.Environment;
 import android.os.SystemClock;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
@@ -55,6 +56,19 @@ public class Camera implements CameraController.OnCameraDisconnectedListener {
             }
         }
         return new File(base, imageData.uniqueFileName);
+    }
+
+    public String getImageRelativePath(ImageData imageData) {
+        CameraData cameraData = getCameraData();
+        String base = null;
+        if (cameraData != null) {
+            if(imageData.isRaw) {
+                base = cameraData.preferences.getRawAlbumName();
+            } else {
+                base = cameraData.preferences.getAlbumName();
+            }
+        }
+        return Environment.DIRECTORY_PICTURES + File.separator + base;
     }
 
     @Override

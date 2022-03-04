@@ -7,9 +7,13 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
+import android.provider.MediaStore;
+import android.provider.Settings;
+import android.text.Html;
 import android.text.InputType;
 import android.text.format.Formatter;
 import android.widget.EditText;
@@ -20,6 +24,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.preference.EditTextPreference;
+import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
@@ -37,6 +42,7 @@ import com.hmsoft.pentaxgallery.util.TaskExecutor;
 import java.io.File;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -57,11 +63,13 @@ public class CameraPreferenceFragment extends PreferenceFragmentCompat implement
         Bundle args = getArguments();
         String cameraKey = args.getString("key");
         List<CameraData> cameras =  Camera.instance.getRegisteredCameras();
+        CameraPreferences cameraPreferences = null;
 
         for (CameraData camera : cameras) {
             if(camera.key.equals(cameraKey)) {
                 cameraData = camera;
-                getPreferenceManager().setPreferenceDataStore(camera.preferences);
+                cameraPreferences = camera.preferences;
+                getPreferenceManager().setPreferenceDataStore(cameraPreferences);
                 break;
             }
         }
@@ -71,14 +79,41 @@ public class CameraPreferenceFragment extends PreferenceFragmentCompat implement
         ((EditTextPreference)findPreference(getString(R.string.key_read_timeout))).setOnBindEditTextListener(numberEditTextListener);
         ((EditTextPreference)findPreference(getString(R.string.key_camera_thread_number))).setOnBindEditTextListener(numberEditTextListener);
 
-        Preference outDirePreference = findPreference(getString(R.string.key_downloaded_images_location));
-        outDirePreference.setOnPreferenceClickListener(this);
-
         Preference removeOldImageDataPreference = findPreference(getString(R.string.key_remove_old_images));
         removeOldImageDataPreference.setOnPreferenceClickListener(this);
 
+        ListPreference downloadLocationPreference = findPreference(getString(R.string.key_downloaded_images_location));
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            downloadLocationPreference.setVisible(false);
+        } else {
+            Set<String> externalVolumes =  MediaStore.getExternalVolumeNames(getContext());
+            if (externalVolumes.size() > 1) {
+                StorageManager sm = (StorageManager)getContext().getSystemService(Context.STORAGE_SERVICE);
+                List<StorageVolume> sv = sm.getStorageVolumes();
+
+                int i = 0;
+                String[] volumesDesc = new String[externalVolumes.size()];
+                String[] volumes = new String[externalVolumes.size()];
+                for (String evn : externalVolumes) {
+                    volumesDesc[i] = getVolumeDescription(evn, sv);
+                    volumes[i++] = evn;
+                }
+
+                downloadLocationPreference.setValue(cameraPreferences.getDownloadVolume());
+                downloadLocationPreference.setEntries(volumesDesc);
+                downloadLocationPreference.setEntryValues(volumes);
+            } else {
+                downloadLocationPreference.setVisible(false);
+            }
+        }
+
         Preference syncTimePreference = findPreference(getString(R.string.key_sync_camera_time));
-        syncTimePreference.setOnPreferenceClickListener(this);
+        if (cameraData.key.equals(Camera.instance.getCameraData().key) && Camera.instance.isConnected()) {
+            syncTimePreference.setEnabled(true);
+            syncTimePreference.setOnPreferenceClickListener(this);
+        } else {
+            syncTimePreference.setEnabled(false);
+        }
 
         new OldImageDataTask(OldImageDataTask.TASK_GET_SIZE).execute(cameraData);
 
@@ -91,6 +126,17 @@ public class CameraPreferenceFragment extends PreferenceFragmentCompat implement
         }
     }
 
+    private String getVolumeDescription(String volumeName, List<StorageVolume> svs) {
+        for (StorageVolume sv : svs) {
+            String description = sv.getDescription(getContext());
+            if (volumeName.equals(sv.getUuid()) || sv.toString().contains(volumeName) || description.contains(volumeName) ||
+                    (volumeName.equals(MediaStore.VOLUME_EXTERNAL_PRIMARY) && sv.isPrimary())) {
+                return description;
+            }
+        }
+        return  volumeName;
+    }
+
     @Override
     public void onPause() {
         super.onPause();
@@ -101,16 +147,6 @@ public class CameraPreferenceFragment extends PreferenceFragmentCompat implement
                 preferenceDataStore.save();
             }
         });
-    }
-
-    public void openDirectory() {
-        // Choose a directory using the system's file picker.
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-
-        StorageManager storageManager = (StorageManager)this.getContext().getSystemService(Context.STORAGE_SERVICE);
-        List<StorageVolume> storageVolumeList = storageManager.getStorageVolumes();
-
-        startActivityForResult(intent, 1);
     }
 
     @Override
@@ -136,18 +172,29 @@ public class CameraPreferenceFragment extends PreferenceFragmentCompat implement
             if (camera.isConnected()) {
                 camera.getController().updateDateTime(new Date(), response -> {
                     if (response != null && response.success) {
-                        Toast.makeText(this.getContext(), "Camera time successfully updated.", Toast.LENGTH_LONG).show();
+                        new android.app.AlertDialog.Builder(getActivity(), android.R.style.Theme_Material_Dialog_Alert)
+                                .setMessage(R.string.sync_camera_time_success_message)
+                                .setNegativeButton(android.R.string.ok, null)
+                                .setCancelable(true)
+                                .show();
+                    } else if (response != null && response.errCode == 412) {
+                        new android.app.AlertDialog.Builder(getActivity(), android.R.style.Theme_Material_Dialog_Alert)
+                                .setTitle(R.string.camera_not_in_capture_dialog_title)
+                                .setMessage(R.string.camera_not_in_capture_dialog_message)
+                                .setPositiveButton(R.string.set_to_capture_mode, (dialog, which) -> {
+                                    camera.getController().updateCameraSetting("operationMode", "capture", null);
+                                })
+                                .setNegativeButton(android.R.string.cancel, null)
+                                .setCancelable(true)
+                                .show();
                     } else {
-                        if (Logger.DEBUG) Logger.debug("SETTINGS", "Failed to set camera time: " + response.errMsg);
-                        Toast.makeText(this.getContext(), "Failed to set camera time", Toast.LENGTH_LONG).show();
+                        Toast.makeText(this.getContext(), R.string.sync_camera_time_fail_message, Toast.LENGTH_LONG).show();
                     }
                 });
             } else {
                 Toast.makeText(this.getContext(), "Camera not connected", Toast.LENGTH_LONG).show();
             }
-        } else if (preference.getKey().equals(getString(R.string.key_downloaded_images_location))) {
-            openDirectory();
-        } else if(preference.getKey().equals(getString(R.string.key_remove_camera))) {
+        }  else if(preference.getKey().equals(getString(R.string.key_remove_camera))) {
             message = String.format(getString(R.string.remove_camera_confirmation), cameraData.getDisplayName());
             title = R.string.remove_camera_label;
             yesClickListener = new DialogInterface.OnClickListener() {

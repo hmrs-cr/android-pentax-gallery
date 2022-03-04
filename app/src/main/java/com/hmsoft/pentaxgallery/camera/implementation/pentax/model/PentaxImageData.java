@@ -33,8 +33,6 @@ import androidx.exifinterface.media.ExifInterface;
 
 public class PentaxImageData extends ImageData {
 
-    private Uri mLocalUri = null;
-
     PentaxImageData(String directory, String fileName) {
         super(directory, fileName);
     }
@@ -54,17 +52,6 @@ public class PentaxImageData extends ImageData {
             }
         }
         return getMetaData();
-    }
-
-    @Override
-    public Uri getLocalStorageUri() {
-        return mLocalUri;
-    }
-
-    @Override
-    public void setLocalStorageUri(Uri localUri) {
-        mLocalUri = localUri;
-        mExistsOnLocalStorage = mLocalUri != null;
     }
 
     @Override

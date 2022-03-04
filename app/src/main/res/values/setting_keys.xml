@@ -37,5 +37,8 @@
     <string name="default_update_picture_location_information">true</string>
     <string name="key_downloaded_images_location">downloaded_images_location</string>
     <string name="key_sync_camera_time">sync_camera_time</string>
+    <string name="key_camera_date">camera_date</string>
+    <string name="key_auto_sync_camera_time">auto_sync_camera_time</string>
+    <string name="default_auto_sync_camera_time">true</string>
 
 </resources>

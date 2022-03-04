@@ -19,6 +19,7 @@ package com.hmsoft.pentaxgallery.camera.model;
 
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.text.TextUtils;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.util.Logger;
@@ -53,10 +54,10 @@ public abstract class ImageData {
 
     private boolean mIsDownloadQueue;
     private boolean mIsFlagged;
-    private int mGalleryId;
     private Bitmap mThumbBitmap;
   
     private JSONObject mJSONObject;
+    private Uri mLocalUri;
 
     public ImageData(String directory, String fileName) {
         this.directory = directory;
@@ -96,9 +97,14 @@ public abstract class ImageData {
   
     public abstract ImageMetaData readMetadata();
 
-    public abstract Uri getLocalStorageUri();
+    public Uri getLocalStorageUri() {
+        return mLocalUri;
+    }
 
-    public abstract void setLocalStorageUri(Uri localUri);
+    public void setLocalStorageUri(Uri localUri) {
+        mLocalUri = localUri;
+        mExistsOnLocalStorage = mLocalUri != null;
+    }
         
     public boolean existsOnLocalStorage() {
         if(mExistsOnLocalStorage == null) {
@@ -181,7 +187,8 @@ public abstract class ImageData {
                 String json = Utils.readTextFile(dataFile);
                 mJSONObject = new JSONObject(json);
 
-                mGalleryId = mJSONObject.optInt("galleryId", 0);
+                String uri = mJSONObject.optString("mediaStoreUri", null);
+                if (!TextUtils.isEmpty(uri)) { mLocalUri = Uri.parse(uri); mExistsOnLocalStorage = true; }
                 mIsFlagged = mJSONObject.optBoolean("isFlagged", false);
                 mIsDownloadQueue = mJSONObject.optBoolean("inDownloadQueue", false);
                 JSONObject metadata = mJSONObject.optJSONObject("metadata");
@@ -202,7 +209,7 @@ public abstract class ImageData {
         try {
             mJSONObject.put("isFlagged", Boolean.toString(mIsFlagged));
             mJSONObject.put("inDownloadQueue", Boolean.toString(mIsDownloadQueue));
-            mJSONObject.put("galleryId", Integer.toString(mGalleryId));
+            mJSONObject.put("mediaStoreUri", mLocalUri != null ? mLocalUri.toString() : "");
             if (mMetaData != null) {
                 mJSONObject.put("metadata", mMetaData.getJSONObject());
             }
@@ -211,13 +218,5 @@ public abstract class ImageData {
             e.printStackTrace();
         }
         return null;
-    }
-
-    public int getGalleryId() {
-        return mGalleryId;
-    }
-
-    public void setGalleryId(int mGalleryId) {
-        this.mGalleryId = mGalleryId;
     }
 }

@@ -18,10 +18,11 @@
             app:defaultValue="@string/default_raw_album_name"
             app:useSimpleSummaryProvider="true"/>
 
-        <Preference
+
+        <ListPreference
             app:key="@string/key_downloaded_images_location"
             app:title="@string/downloaded_images_location_label"
-            app:summary="/mnet/sdcard/pictures"/>
+            app:useSimpleSummaryProvider="true"/>
 
         <SwitchPreferenceCompat
             app:key="@string/key_auto_download_jpg"
@@ -49,13 +50,24 @@
             app:entries="@array/main_action_options"
             app:useSimpleSummaryProvider="true"/>
 
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:key="@string/key_camera_date"
+        app:title="@string/camera_date_label">
+
         <Preference
             app:key="@string/key_sync_camera_time"
             app:title="@string/sync_camera_time_label"
             app:summary="@string/sync_camera_time_summary"/>
 
-    </PreferenceCategory>
+        <SwitchPreferenceCompat
+            app:key="@string/key_auto_sync_camera_time"
+            app:title="@string/auto_sync_camera_time_label"
+            app:defaultValue="@string/default_auto_sync_camera_time"
+            app:summary="@string/auto_sync_camera_time_sumarry"/>
 
+    </PreferenceCategory>
 
     <PreferenceCategory
         app:key="@string/key_location_service_category"

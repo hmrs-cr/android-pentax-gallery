@@ -15,9 +15,10 @@ import android.os.Handler;
 import android.os.PowerManager;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
+import android.os.storage.StorageManager;
+import android.os.storage.StorageVolume;
 import android.provider.MediaStore;
 import android.text.TextUtils;
-import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -185,118 +186,88 @@ public class DownloadService extends IntentService {
 
         boolean canceled = false;
         int status;
-        String statusMessage = "";
         int fileLength = 0;
+        boolean isNewMedia = true;
+        String statusMessage = "";
 
         resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
         resultData.putInt(EXTRA_PROGRESS, 0);
         receiver.send(UPDATE_PROGRESS, resultData);
 
-        Uri uri = null;
+        Uri mediaStoreUri = null;
 
         Context context = MyApplication.ApplicationContext;
         ContentResolver cr = context.getContentResolver();
         try {
             cancelDownload(-1);
+
             ImageData imageData = downloadEntry.getImageData();
-
-            //create url and connect
-            URL url = new URL(imageData.getDownloadUrl());
-            URLConnection connection = url.openConnection();
-
             Camera camera = Camera.instance;
 
-            connection.setConnectTimeout(camera.getPreferences().getConnectTimeout() / 2);
-            connection.connect();
+            isNewMedia = imageData.getLocalStorageUri() == null;
+            mediaStoreUri = insertOrUpdateMediaStoreImage(cr, camera, imageData);
+            if (mediaStoreUri == null) {
+                status = DOWNLOAD_STATUS_ERROR;
+                Logger.warning(TAG, "Failed to insert image in gallery " + imageData.fileName);
+            } else {
+                //create downloadUrl and connect
+                URL downloadUrl = new URL(imageData.getDownloadUrl());
+                URLConnection connection = downloadUrl.openConnection();
 
-            // this will be useful so that you can show a typical 0-100% progress bar
-            fileLength = connection.getContentLength();
+                connection.setConnectTimeout(camera.getPreferences().getConnectTimeout() / 2);
+                connection.connect();
 
-            ImageMetaData imageMetaData = camera.getImageInfo(imageData);
-            uri = imageData.getLocalStorageUri();
+                // this will be useful so that you can show a typical 0-100% progress bar
+                fileLength = connection.getContentLength();
 
-            if (uri == null) {
-                ContentValues values = new ContentValues();
-                values.put(MediaStore.Images.Media.TITLE, imageData.uniqueFileName);
-                values.put(MediaStore.Images.Media.DISPLAY_NAME, imageData.uniqueFileName);
-                values.put(MediaStore.Images.Media.DESCRIPTION, imageData.uniqueFileName);
-                values.put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis());
-                values.put(MediaStore.Images.Media.MIME_TYPE, imageData.isRaw ? "image/x-adobe-dng" : "image/jpeg");
-                values.put(MediaStore.Images.Media.SIZE, fileLength);
+                // downloadDown the file
+                InputStream input = new BufferedInputStream(connection.getInputStream());
+                OutputStream output = context.getContentResolver().openOutputStream(mediaStoreUri);
 
-                if (imageMetaData != null) {
-                    values.put(MediaStore.Images.Media.ORIENTATION, imageMetaData.orientationDegrees);
-                    try {
-                        Date date = dateFormat.parse(imageMetaData.dateTime);
-                        values.put(MediaStore.Images.Media.DATE_TAKEN, date.getTime());
+                byte[] data = new byte[1024];
+                long total = 0;
+                int lastProgress = 0;
+                int count;
+                try {
+                    while ((count = input.read(data)) != -1) {
 
-                        LocationTable.LatLong latLong = LocationService.getLocationAtTime(date);
-                        if (latLong != null) {
-                            if (Logger.DEBUG) Logger.debug(TAG, "Found location info for image: " + latLong.latitude + "," + latLong.longitude);
-                            // TODO: Do no use Images.Media.LATITUDE/Images.Media.LONGITUDE fields, save location data in exif.
-                            values.put(MediaStore.Images.Media.LATITUDE, latLong.latitude);
-                            values.put(MediaStore.Images.Media.LONGITUDE, latLong.longitude);
+                        if (shouldCancelId == downloadId || shouldCancelId == 0) {
+                            canceled = true;
+                            break;
                         }
-                    } catch (ParseException e) {
-                        Logger.warning(TAG, "Error parsing date: " + imageMetaData.dateTime, e);
-                    }
-                }
 
-                //if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-                    File localPath = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-                            camera.getImageLocalPath(imageData).getPath());
-                    values.put(MediaStore.MediaColumns.DATA, localPath.getAbsolutePath());
-                    localPath.getParentFile().mkdirs();
-                //} else {
-                    //MediaStore.MediaColumns.RELATIVE_PATH
-                    //values.put(MediaStore.Images.Media.IS_PENDING, 1);
-                //}
+                        total += count;
+                        output.write(data, 0, count);
 
-                uri = cr.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-                if (uri == null) {
-                    Logger.warning(TAG, "Failed to insert image in gallery " + imageData.fileName);
-                }
-            }
-
-            // downloadDown the file
-            InputStream input = new BufferedInputStream(connection.getInputStream());
-            OutputStream output = context.getContentResolver().openOutputStream(uri);
-
-            byte[] data = new byte[1024];
-            long total = 0;
-            int lastProgress = 0;
-            int count;
-            try {
-                while ((count = input.read(data)) != -1) {
-
-                    if (shouldCancelId == downloadId || shouldCancelId == 0) {
-                        canceled = true;
-                        break;
+                        int progress = (int) (total * 100 / fileLength);
+                        if (progress > lastProgress) {
+                            // publishing the progress....
+                            resultData = new Bundle();
+                            resultData.putInt(EXTRA_PROGRESS, progress);
+                            resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
+                            receiver.send(UPDATE_PROGRESS, resultData);
+                            lastProgress = progress;
+                        }
                     }
 
-                    total += count;
-                    output.write(data, 0, count);
-
-                    int progress = (int) (total * 100 / fileLength);
-                    if (progress > lastProgress) {
-                        // publishing the progress....
-                        resultData = new Bundle();
-                        resultData.putInt(EXTRA_PROGRESS, progress);
-                        resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
-                        receiver.send(UPDATE_PROGRESS, resultData);
-                        lastProgress = progress;
+                    ContentValues values = new ContentValues();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        values.put(MediaStore.Images.Media.IS_PENDING, 0);
                     }
-                }
-                status = DOWNLOAD_STATUS_SUCCESS;
-                downloadErrorCount = 0;
-            } finally {
-                // close streams
-                output.flush();
-                output.close();
-                input.close();
+                    values.put(MediaStore.Images.Media.SIZE, fileLength);
+                    cr.update(mediaStoreUri, values, null, null);
 
-                if (canceled) {
-                    status = DOWNLOAD_STATUS_CANCELED;
+                    status = DOWNLOAD_STATUS_SUCCESS;
+                    downloadErrorCount = 0;
+                } finally {
+                    // close streams
+                    output.flush();
+                    output.close();
+                    input.close();
+
+                    if (canceled) {
+                        status = DOWNLOAD_STATUS_CANCELED;
+                    }
                 }
             }
         } catch (Exception e) {
@@ -306,27 +277,87 @@ public class DownloadService extends IntentService {
             downloadErrorCount++;
         }
 
-        if (status != DOWNLOAD_STATUS_SUCCESS && uri != null) {
+        if (isNewMedia && status != DOWNLOAD_STATUS_SUCCESS && mediaStoreUri != null) {
             try {
-                cr.delete(uri, null, null);
+                cr.delete(mediaStoreUri, null, null);
             } catch (Exception ignored) {
 
             }
-            uri = null;
-        }
-
-        if (Build.VERSION.SDK_INT >= /*Build.VERSION_CODES.Q*/ 29 && uri != null) {
-            //values.put(MediaStore.Images.Media.IS_PENDING, 0);
+            mediaStoreUri = null;
         }
 
         resultData = new Bundle();
         resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
         resultData.putInt(EXTRA_DOWNLOAD_STATUS, status);
         resultData.putString(EXTRA_DOWNLOAD_STATUS_MESSAGE, statusMessage);
-        if (uri != null) {
-            resultData.putString(EXTRA_LOCAL_URI, uri.toString());
+        if (mediaStoreUri != null) {
+            resultData.putString(EXTRA_LOCAL_URI, mediaStoreUri.toString());
         }
         receiver.send(DOWNLOAD_FINISHED, resultData);
+    }
+
+    @Nullable
+    private Uri insertOrUpdateMediaStoreImage(ContentResolver cr, Camera camera, ImageData imageData) {
+        StorageManager storageManager = (StorageManager) getSystemService(Context.STORAGE_SERVICE);
+
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Images.Media.TITLE, imageData.uniqueFileName);
+        values.put(MediaStore.Images.Media.DISPLAY_NAME, imageData.uniqueFileName);
+        values.put(MediaStore.Images.Media.DESCRIPTION, imageData.uniqueFileName);
+        values.put(MediaStore.Images.Media.DATE_ADDED, System.currentTimeMillis());
+        values.put(MediaStore.Images.Media.MIME_TYPE, imageData.isRaw ? "image/x-adobe-dng" : "image/jpeg");
+
+        ImageMetaData imageMetaData = camera.getImageInfo(imageData);
+        if (imageMetaData != null) {
+            values.put(MediaStore.Images.Media.ORIENTATION, imageMetaData.orientationDegrees);
+            try {
+                Date date = dateFormat.parse(imageMetaData.dateTime);
+                values.put(MediaStore.Images.Media.DATE_TAKEN, date.getTime());
+
+                if (camera.getPreferences().isUpdatePictureLocationEnabled()) {
+                    LocationTable.LatLong latLong = LocationService.getLocationAtTime(date);
+                    if (latLong != null) {
+                        if (Logger.DEBUG)
+                            Logger.debug(TAG, "Found location info for image: " + latLong.latitude + "," + latLong.longitude);
+                        // TODO: Do no use Images.Media.LATITUDE/Images.Media.LONGITUDE fields, save location data in exif.
+                        values.put(MediaStore.Images.Media.LATITUDE, latLong.latitude);
+                        values.put(MediaStore.Images.Media.LONGITUDE, latLong.longitude);
+                    }
+                }
+            } catch (ParseException e) {
+                Logger.warning(TAG, "Error parsing date: " + imageMetaData.dateTime, e);
+            }
+        }
+
+        Uri contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            File localPath = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+                    camera.getImageLocalPath(imageData).getPath());
+            values.put(MediaStore.MediaColumns.DATA, localPath.getAbsolutePath());
+            localPath.getParentFile().mkdirs();
+        } else {
+            String downloadVolume = camera.getPreferences().getDownloadVolume();
+            if (downloadVolume != null && !downloadVolume.equals(MediaStore.VOLUME_EXTERNAL_PRIMARY)) {
+                Uri uri =  MediaStore.Images.Media.getContentUri(downloadVolume);
+                StorageVolume sv = storageManager.getStorageVolume(uri);
+                if (Environment.MEDIA_MOUNTED.equals(sv.getState())) {
+                    contentUri = uri;
+                }
+            }
+            values.put(MediaStore.MediaColumns.RELATIVE_PATH, camera.getImageRelativePath(imageData));
+            values.put(MediaStore.Images.Media.IS_PENDING, 1);
+        }
+
+        Uri localStorageUri = imageData.getLocalStorageUri();
+        if (localStorageUri != null) {
+            cr.update(localStorageUri, values, null, null);
+            if (Logger.DEBUG) Logger.debug(TAG, "Updated existing content uri: " + localStorageUri);
+        } else {
+            localStorageUri = cr.insert(contentUri, values);
+            if (Logger.DEBUG) Logger.debug(TAG, "Create new content uri: " + localStorageUri);
+        }
+
+        return localStorageUri;
     }
 
     public static void toggleShutCameraDownWhenDone() {
@@ -480,7 +511,6 @@ public class DownloadService extends IntentService {
                         String localUri = resultData.getString(EXTRA_LOCAL_URI);
                         if(localUri != null && localUri.length() > 0) {
                             Uri uri = Uri.parse(localUri);
-                            imageData.setGalleryId(Integer.parseInt(uri.getLastPathSegment()));
                             imageData.setLocalStorageUri(uri);
                             TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
                                 @Override

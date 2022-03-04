@@ -112,4 +112,6 @@ public interface CameraController {
     BaseResponse updateDateTime(Date dateTime);
     void updateDateTime(Date dateTime, OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
 
+    void updateCameraSetting(String key, String value, final CameraController.OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
+    BaseResponse updateCameraSetting(String key, String value);
 }

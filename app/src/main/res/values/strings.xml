@@ -106,8 +106,16 @@
     <string name="update_picture_location_information_label">Update Picture Location Information</string>
     <string name="update_picture_location_information_summary">When downloading pictures from the camera, update the location information if available.</string>
     <string name="downloaded_images_location_label">Downloaded Images Location</string>
-    <string name="sync_camera_time_label">Sync Camera and Phone Time</string>
+    <string name="sync_camera_time_label">Synchronize</string>
     <string name="sync_camera_time_summary">Set camera time to the same time in the phone</string>
+    <string name="camera_not_in_capture_dialog_title">Camera not in capture mode</string>
+    <string name="camera_not_in_capture_dialog_message">To sync the camera date time it must be in capture mode. Please set the camera to capture mode and try again.</string>
+    <string name="set_to_capture_mode">Set to capture mode</string>
+    <string name="sync_camera_time_success_message">Camera time successfully updated.</string>
+    <string name="sync_camera_time_fail_message">Failed to set camera time</string>
+    <string name="camera_date_label">Camera Time</string>
+    <string name="auto_sync_camera_time_label">Automatically synchronize</string>
+    <string name="auto_sync_camera_time_sumarry">Set camera time to the same time in the phone automatically every time the phone connects to the camera</string>
 
     <string-array name="main_action_options">
         <item>None</item>
