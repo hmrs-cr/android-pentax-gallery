@@ -95,6 +95,14 @@ public class Camera implements CameraController.OnCameraDisconnectedListener {
         return connect(cameraId, null);
     }
 
+    public boolean disconnect() {
+        if (isConnected()) {
+            return WifiHelper.disconnect(MyApplication.ApplicationContext);
+        }
+
+        return false;
+    }
+
     public CameraData connect(OnWifiConnectionAttemptListener listener) {
         return connect(null, listener);
     }

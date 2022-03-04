@@ -278,7 +278,11 @@ public class ImageDetailActivity extends AppCompatActivity implements OnClickLis
         startActivity(Intent.createChooser(shareIntent, getString(R.string.share_in)));
     }
 
-    private void downloadNow() {        
+    private void downloadNow() {
+        if (!mCamera.isConnected()) {
+            Toast.makeText(this, R.string.camera_not_connected_label, Toast.LENGTH_LONG).show();
+            return;
+        }
         DownloadService.downloadDown(imageData);
         updateCurrentImageData();
         updateUiElements();
@@ -302,7 +306,11 @@ public class ImageDetailActivity extends AppCompatActivity implements OnClickLis
         }
     }
 
-    private void download() {        
+    private void download() {
+        if (!mCamera.isConnected()) {
+            Toast.makeText(this, R.string.camera_not_connected_label, Toast.LENGTH_LONG).show();
+            return;
+        }
         DownloadService.addDownloadQueue(imageData);
         updateCurrentImageData();
         updateUiElements();

@@ -286,6 +286,23 @@ public class PentaxController implements CameraController {
         }
     }
 
+    public void updateCameraSetting(String key, String value, final CameraController.OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {
+        TaskExecutor.executeOnSingleThreadExecutor(() -> {
+            BaseResponse imageMetaData = updateCameraSetting(key, value);
+            TaskExecutor.executeOnUIThread(new AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, imageMetaData));
+        });
+    }
+
+    public BaseResponse updateCameraSetting(String key, String value) {
+        try {
+            String response = updateCameraSettingJson(key, value);
+            return  response != null ? new BaseResponse(response) : null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public void powerOff(final CameraController.OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {
         TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
             @Override
@@ -598,13 +615,12 @@ public class PentaxController implements CameraController {
     public BaseResponse updateDateTime(Date dateTime) {
         try {
             if (this.cameraDateTimeFormat == null) {
-                this.cameraDateTimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
-                this.cameraDateTimeFormat.setTimeZone(Calendar.getInstance(TimeZone.getTimeZone("UTC")).getTimeZone());
+                this.cameraDateTimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
             }
 
             String dateTimeStr =  this.cameraDateTimeFormat.format(dateTime);
             return new BaseResponse(updateCameraSettingJson("datetime", dateTimeStr));
-        } catch (JSONException | IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }

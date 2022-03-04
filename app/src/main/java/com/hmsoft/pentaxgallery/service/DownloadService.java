@@ -593,7 +593,10 @@ public class DownloadService extends IntentService {
                     sWackeLock = null;
                     if(BuildConfig.DEBUG) Logger.debug(TAG, "WakeLock released");
                 }
-                if(sShutCameraDownWhenDone && !wasCanceled && !CameraFragment.isInLiveView()) {
+
+                if (Camera.instance.isConnected() && Camera.instance.getCameraData().powerOffTransfer) {
+                    Camera.instance.disconnect();
+                } else if (sShutCameraDownWhenDone && !wasCanceled && !CameraFragment.isInLiveView()) {
                     Camera.instance.powerOff();
                 }
                 downloadNotification(null, donloadId > 0 ? 0 : -1);

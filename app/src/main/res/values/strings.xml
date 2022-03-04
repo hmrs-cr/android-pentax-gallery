@@ -116,6 +116,7 @@
     <string name="camera_date_label">Camera Time</string>
     <string name="auto_sync_camera_time_label">Automatically synchronize</string>
     <string name="auto_sync_camera_time_sumarry">Set camera time to the same time in the phone automatically every time the phone connects to the camera</string>
+    <string name="camera_not_connected_label">Camera not connected.</string>
 
     <string-array name="main_action_options">
         <item>None</item>

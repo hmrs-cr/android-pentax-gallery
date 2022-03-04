@@ -152,6 +152,21 @@ public class WifiHelper {
         return info.getNetworkId();
     }
 
+    public static  boolean disconnect(Context context) {
+        final WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        if (wifiManager == null) {
+            Logger.error(TAG, "No WiFi manager");
+            return false;
+        }
+
+        if (!wifiManager.disconnect()) {
+            Logger.error(TAG, "WiFi disconnect failed");
+            return false;
+        }
+
+        return true;
+    }
+
     public static boolean connectToWifi(Context context, int networkId) {
 
         if(networkId <= -3) return false; // Do nothing
