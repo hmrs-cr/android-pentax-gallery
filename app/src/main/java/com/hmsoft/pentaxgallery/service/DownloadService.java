@@ -231,7 +231,7 @@ public class DownloadService extends IntentService {
                 try {
                     while ((count = input.read(data)) != -1) {
 
-                        if (shouldCancelId == downloadId || shouldCancelId == 0) {
+                        if (shouldCancelId == downloadId) {
                             canceled = true;
                             break;
                         }
@@ -419,8 +419,8 @@ public class DownloadService extends IntentService {
         }
     }
     
-    public static DownloadEntry addDownloadQueue(ImageData imageData) {
-       return Queue.addDownloadQueue(imageData, Queue.inBatchDownload);
+    public static DownloadEntry addDownloadQueue(ImageData imageData, boolean canPowerOff) {
+       return Queue.addDownloadQueue(imageData, Queue.inBatchDownload, canPowerOff);
     }
     
     public static void saveQueueToFile(CameraData cameraData) {
@@ -579,10 +579,11 @@ public class DownloadService extends IntentService {
             }
         }
 
-        private static void doDownloadFinished(ImageData imageData, long donloadId, boolean wasCanceled) {
+        private static void doDownloadFinished(ImageData imageData, DownloadEntry downloadEntry, boolean wasCanceled) {
 
+            int downloadEntryId = downloadEntry != null ? downloadEntry.getDownloadId() : -1;
             if(onDownloadFinishedListener != null) {
-                onDownloadFinishedListener.onDownloadFinished(imageData, donloadId, sDownloadQueue.size(),
+                onDownloadFinishedListener.onDownloadFinished(imageData, downloadEntryId, sDownloadQueue.size(),
                         Queue.downloadCount, Queue.errorCount, wasCanceled);
             }
 
@@ -594,26 +595,32 @@ public class DownloadService extends IntentService {
                     if(BuildConfig.DEBUG) Logger.debug(TAG, "WakeLock released");
                 }
 
-                if (Camera.instance.isConnected() && Camera.instance.getCameraData().powerOffTransfer) {
-                    Camera.instance.disconnect();
-                } else if (sShutCameraDownWhenDone && !wasCanceled && !CameraFragment.isInLiveView()) {
-                    Camera.instance.powerOff();
+                if (downloadEntry != null && downloadEntry.canPowerOff) {
+                    Camera.instance.disconnectIfInPowerOfTransfer();
+                    if (sShutCameraDownWhenDone && !wasCanceled && !CameraFragment.isInLiveView()) {
+                        Camera.instance.powerOff();
+                    }
                 }
-                downloadNotification(null, donloadId > 0 ? 0 : -1);
+
+                downloadNotification(null, downloadEntryId > 0 ? 0 : -1);
                 sStarDownloadTime = -1;
             }
         }
 
         private static void cancelAll() {
             cancelCurrentDownload();
-            for(DownloadEntry downloadEntry : sDownloadQueue) {
+
+            DownloadEntry downloadEntry = null;
+            for(DownloadEntry de : sDownloadQueue) {
+                downloadEntry = de;
                 downloadEntry.getImageData().setIsInDownloadQueue(false);
             }
             sDownloadQueue.clear();
             if(sDownloadQueueDict != null) {
                 sDownloadQueueDict.clear();
             }
-            doDownloadFinished(null, -1, true);
+
+            doDownloadFinished(null, downloadEntry, true);
         }
 
         /*private*/ static void remove(DownloadEntry downloadEntry, boolean canceled) {
@@ -622,7 +629,7 @@ public class DownloadService extends IntentService {
                 sDownloadQueueDict.remove(downloadEntry.getDownloadId());
             }
             downloadEntry.getImageData().setIsInDownloadQueue(false);
-            doDownloadFinished(downloadEntry.mImageData, downloadEntry.getDownloadId(), canceled);
+            doDownloadFinished(downloadEntry.mImageData, downloadEntry, canceled);
         }
               
         /*public*/ static boolean inBatchDownload;
@@ -883,7 +890,7 @@ public class DownloadService extends IntentService {
             return false;
         }
 
-        public static DownloadEntry addDownloadQueue(ImageData imageData, boolean atTheBeginning) {
+        public static DownloadEntry addDownloadQueue(ImageData imageData, boolean atTheBeginning, boolean canPowerOff) {
             if (sDownloadQueue == null) {
                 sDownloadQueue = new ArrayList<DownloadEntry>();
             }
@@ -904,6 +911,8 @@ public class DownloadService extends IntentService {
                 } else {
                   sDownloadQueue.add(downloadEntry);
                 }
+
+                downloadEntry.canPowerOff = canPowerOff;
                 download(downloadEntry);
                 return downloadEntry;
             }
@@ -940,6 +949,7 @@ public class DownloadService extends IntentService {
 
         public final ImageData mImageData;
         public int mDownloadId;
+        public boolean canPowerOff;
         private int mProgress = -1;
 
         public DownloadEntry(ImageData imageData)  {

@@ -4,6 +4,7 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="app/src/main/res/layout/fragment_camera.xml" value="0.15670289855072464" />
+        <entry key="app/src/main/res/layout/test.xml" value="0.20199275362318841" />
         <entry key="app/src/main/res/menu/detail_menu.xml" value="0.19427083333333334" />
         <entry key="app/src/main/res/xml/camera_preferences.xml" value="0.33" />
         <entry key="app/src/main/res/xml/preferences.xml" value="0.1" />

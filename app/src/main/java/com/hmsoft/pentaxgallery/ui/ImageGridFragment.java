@@ -70,6 +70,7 @@ import com.hmsoft.pentaxgallery.camera.Camera;
 import com.hmsoft.pentaxgallery.camera.controller.CameraController;
 import com.hmsoft.pentaxgallery.camera.model.CameraChange;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
+import com.hmsoft.pentaxgallery.camera.model.CameraParams;
 import com.hmsoft.pentaxgallery.camera.model.CameraPreferences;
 import com.hmsoft.pentaxgallery.camera.model.FilteredImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
@@ -313,7 +314,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
         if(imageList == null) {
             //syncPictureList(false);
-            loadPictureList();
+            if (mNoConnectionDialog == null) {
+                loadPictureList();
+            }
 
         } else {
             mProgressBar.setVisibility(View.GONE);
@@ -345,7 +348,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         mImageFetcher.setPauseWork(false);
         mImageFetcher.setExitTasksEarly(true);
         mImageFetcher.flushCache();
-        cancelCacheThread = true;
+        boolean cancelCacheThread = true;
 
         DownloadService.setOnDownloadFinishedListener(null);
         DownloadService.setDisplayNotification(true);
@@ -745,15 +748,13 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     private static void powerOffCameraIfPowerOffTransferEnabled() {
         Camera camera = Camera.instance;
-        if (camera.isConnected() && camera.getCameraData().powerOffTransfer) {
-            TaskExecutor.executeOnUIThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (DownloadService.isDownloading()) {
-                        camera.powerOff();
-                    }
+        int delay = camera.getPreferences().getPowerOffTransferShutdownDelay();
+        if (delay > 0 && camera.isConnected() && camera.getCameraData().powerOffTransfer) {
+            TaskExecutor.executeOnUIThread(() -> {
+                if (DownloadService.isDownloading()) {
+                    camera.powerOff();
                 }
-            }, 2500);
+            }, delay * 1000L);
         }
     }
 
@@ -781,7 +782,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             Toast.makeText(this.getActivity(), "Transferring " + enqueue.size() + " pictures", Toast.LENGTH_LONG).show();
             DownloadService.setInBatchDownload(false);
             for (ImageData imageData : enqueue) {
-                DownloadService.addDownloadQueue(imageData);
+                DownloadService.addDownloadQueue(imageData, true);
             }
             DownloadService.setInBatchDownload(true);
             showView(true, R.id.view_downloads_only);
@@ -847,7 +848,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     private void downloadSelected() {
         List<ImageData> selectedImages = mAdapter.getSelectedItems();
         for(ImageData imageData : selectedImages) {
-            DownloadService.addDownloadQueue(imageData);
+            DownloadService.addDownloadQueue(imageData, true);
         }
 
         Toast.makeText (getActivity(), String.format(getString(R.string.added_to_download_queue), selectedImages.size()), Toast.LENGTH_LONG).show();
@@ -891,7 +892,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 })
                 .setIcon(android.R.drawable.ic_dialog_alert);
 
-                if(mCamera.getRegisteredCameras().size() > 0) {
+                List<CameraData> cameras = mCamera.getRegisteredCameras();
+                if(cameras != null && cameras.size() > 0) {
                     builder.setNeutralButton(R.string.load_cache, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -1077,7 +1079,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 if(added) {
                     if ((imageData.isRaw && mCamera.getPreferences().autoDownloadRaw()) ||
                             (!imageData.isRaw && mCamera.getPreferences().autoDownloadJpg())) {
-                            DownloadService.addDownloadQueue(imageData);
+                            DownloadService.addDownloadQueue(imageData, false);
                     }
                     mAdapter.notifyDataSetChanged();
                 }
@@ -1100,36 +1102,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 layoutParams.bottomMargin + insets.getSystemWindowInsetBottom());
         mMainActionButton.setLayoutParams(layoutParams);
         return insets.consumeSystemWindowInsets();
-    }
-
-    private volatile static Thread cacheThread = null;
-    private volatile boolean cancelCacheThread;
-    private void cacheThumbnails(final ImageList imageList) {
-        if (mCamera.isConnected() && cacheThread == null) {
-            cacheThread = TaskExecutor.executeOnNewThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        for (int c = 0; c < imageList.length(); c++) {
-                            if(cancelCacheThread) {
-                                if(BuildConfig.DEBUG) Logger.debug(TAG, "cancelCacheThread");
-                                break;
-                            }
-                            ImageData imageData = imageList.getImage(c);
-                            String url = imageData.getThumbUrl();
-                            try {
-
-                                mImageFetcher.downloadUrlToCacheIfNeeded(url);
-                            } catch (Exception e) {
-                                Logger.warning(TAG, "cacheThumbnails", e);
-                            }
-                        }
-                        cacheThread = null;
-                        cancelCacheThread = false;
-                    }
-                });
-        } else if(BuildConfig.DEBUG && cacheThread != null) {
-            Logger.debug(TAG, "Cache thread is running");
-        }
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.hmsoft.pentaxgallery.camera;
 
+import android.os.Build;
 import android.os.Environment;
 import android.os.SystemClock;
 
@@ -9,6 +10,7 @@ import com.hmsoft.pentaxgallery.camera.controller.CameraController;
 import com.hmsoft.pentaxgallery.camera.implementation.pentax.PentaxController;
 import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
+import com.hmsoft.pentaxgallery.camera.model.CameraParams;
 import com.hmsoft.pentaxgallery.camera.model.CameraPreferences;
 import com.hmsoft.pentaxgallery.camera.model.FilteredImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
@@ -16,6 +18,7 @@ import com.hmsoft.pentaxgallery.camera.model.ImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageListData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
+import com.hmsoft.pentaxgallery.camera.util.HttpHelper;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 import com.hmsoft.pentaxgallery.util.Utils;
@@ -97,7 +100,13 @@ public class Camera implements CameraController.OnCameraDisconnectedListener {
 
     public boolean disconnect() {
         if (isConnected()) {
-            return WifiHelper.disconnect(MyApplication.ApplicationContext);
+            HttpHelper.unBindWifi();
+            boolean result = WifiHelper.disconnect(MyApplication.ApplicationContext);
+            if (result) {
+                mCameraConnected = false;
+            }
+
+            return result;
         }
 
         return false;
@@ -167,35 +176,37 @@ public class Camera implements CameraController.OnCameraDisconnectedListener {
                           listener.onWifiConnectionAttempt(cameraData.ssid);
                       }
 
+                      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                          if (ci == 1) {
+                              long wifiScanStartTime = SystemClock.elapsedRealtime();
+                              while (!WifiHelper.isWifiInRange(cameraData.ssid)) {
+                                  WifiHelper.startWifiScan(MyApplication.ApplicationContext);
+                                  WifiHelper.waitForScanResultsAvailable(20000);
+                                  if (!WifiHelper.isWifiInRange(cameraData.ssid)) {
+                                      TaskExecutor.sleep(5000);
+                                  }
 
-                      if (ci == 1) {
-                          long wifiScanStartTime = SystemClock.elapsedRealtime();
-                          while (!WifiHelper.isWifiInRange(cameraData.ssid)) {
-                              WifiHelper.startWifiScan(MyApplication.ApplicationContext);
-                              WifiHelper.waitForScanResultsAvailable(20000);
-                              if (!WifiHelper.isWifiInRange(cameraData.ssid)) {
-                                  TaskExecutor.sleep(5000);
-                              }
-
-                              long scanTotalTime = SystemClock.elapsedRealtime() - wifiScanStartTime;
-                              if (scanTotalTime > 30000) {
-                                  break;
+                                  long scanTotalTime = SystemClock.elapsedRealtime() - wifiScanStartTime;
+                                  if (scanTotalTime > 30000) {
+                                      break;
+                                  }
                               }
                           }
-                      }
 
-                      if (!WifiHelper.isWifiInRange(cameraData.ssid)) {
-                          if (BuildConfig.DEBUG)
-                              Logger.debug(TAG, cameraData.ssid + " not in range.");
-                          cameraData = null;
-                          continue;
+                          if (!WifiHelper.isWifiInRange(cameraData.ssid)) {
+                              if (BuildConfig.DEBUG)
+                                  Logger.debug(TAG, cameraData.ssid + " not in range.");
+                              cameraData = null;
+                              continue;
+                          }
                       }
 
                       if (BuildConfig.DEBUG)
                           Logger.debug(TAG, "Attempting to connect to " + cameraData.ssid);
 
                       boolean success = WifiHelper.connectToWifi(MyApplication.ApplicationContext,
-                              cameraData.ssid, cameraData.key);
+                              cameraData.ssid, cameraData.key, this);
+
                       if (!success) {
                           Logger.warning(TAG, "Could not connect to " + cameraData.ssid);
                           cameraData = null;
@@ -205,7 +216,10 @@ public class Camera implements CameraController.OnCameraDisconnectedListener {
                       }
                   } else {
                       Logger.warning(TAG, "No previously connected mCameras found.");
-                      break;
+                      ///boolean success = WifiHelper.connectToWifi(MyApplication.ApplicationContext,null, null, this);
+                      /*if (!success) {
+                          break;
+                      }*/
                   }
               }
 
@@ -417,6 +431,22 @@ public class Camera implements CameraController.OnCameraDisconnectedListener {
 
     public void powerOff() {
         mController.powerOff(null);
+    }
+
+    public boolean disconnectIfInPowerOfTransfer() {
+        if (isConnected()) {
+            CameraData cameraData = getCameraData();
+            if (cameraData != null && cameraData.powerOffTransfer) {
+                getController().getCameraParams(response -> {
+                    if (response != null && "powerOffTransfer".equals(((CameraParams)response).operationMode)) {
+                        this.disconnect();
+                    }
+                });
+                return true;
+            }
+        }
+
+        return false;
     }
   
     private ImageListData createImageListResponseFromFile() {

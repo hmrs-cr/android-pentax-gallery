@@ -43,6 +43,14 @@
             app:summary="@string/shutdown_camera_after_transfer_summary"/>
 
         <ListPreference
+            app:key="@string/key_auto_shutdown_poweroff_transfer"
+            app:title="@string/auto_shutdown_poweroff_transfer_label"
+            app:defaultValue="@string/default_auto_shutdown_poweroff_transfer"
+            app:entryValues="@array/auto_shutdown_poweroff_transfer_values"
+            app:entries="@array/auto_shutdown_poweroff_transfer_options"
+            app:useSimpleSummaryProvider="true"/>
+
+        <ListPreference
             app:key="@string/key_main_action"
             app:title="@string/main_action_label"
             app:defaultValue="@string/default_main_action"

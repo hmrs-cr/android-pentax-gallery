@@ -21,14 +21,28 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.ConnectivityManager;
+import android.net.MacAddress;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
+import android.net.NetworkSpecifier;
 import android.net.wifi.ScanResult;
 import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.net.wifi.WifiNetworkSpecifier;
+import android.os.Build;
+import android.os.PatternMatcher;
+import android.text.TextUtils;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
+import com.hmsoft.pentaxgallery.camera.controller.CameraController;
 
 import java.util.List;
 
@@ -113,46 +127,13 @@ public class WifiHelper {
             if(waitTime > 0) TaskExecutor.sleep(waitTime);
         }
     }
-    
-    public static  String getCurrentWifiName(Context context) {
-        final WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
-        if(wifiManager == null) {
-            return null;
-        }
-
-        WifiInfo info = wifiManager.getConnectionInfo();
-        if(info == null || info.getNetworkId() < 0) {
-            return null;
-        }
-
-        String ssid = info.getSSID();
-
-        if(ssid != null && ssid.startsWith("\"") && ssid.endsWith("\"")) {
-            ssid = ssid.substring(1, ssid.length() - 1);
-        }
-
-        return ssid;
-    }
-
-    public static int getCurrentWiFiNetworkId(Context context) {
-        final WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
-        if(wifiManager == null) {
-            return -3; // Do nothing
-        }
-
-        if(!wifiManager.isWifiEnabled()) {
-            return -2; // Disable
-        }
-
-        WifiInfo info = wifiManager.getConnectionInfo();
-        if(info == null || info.getNetworkId() < 0) {
-            return -1; //  Disconnect
-        }
-
-        return info.getNetworkId();
-    }
 
     public static  boolean disconnect(Context context) {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            return disconnectQ(context);
+        }
+
         final WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
         if (wifiManager == null) {
             Logger.error(TAG, "No WiFi manager");
@@ -167,52 +148,28 @@ public class WifiHelper {
         return true;
     }
 
-    public static boolean connectToWifi(Context context, int networkId) {
+    private static boolean disconnectQ(Context context) {
+        if (networkCallback != null) {
+            final ConnectivityManager connectivityManager = (ConnectivityManager)
+                    context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
-        if(networkId <= -3) return false; // Do nothing
-
-        final WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
-        if (wifiManager == null) {
-            Logger.error(TAG, "No WiFi manager");
-            return false;
-        }
-
-        WifiInfo info = wifiManager.getConnectionInfo();
-        if(info != null && info.getNetworkId() == networkId) {
+            connectivityManager.unregisterNetworkCallback(networkCallback);
+            networkCallback = null;
             return true;
         }
 
-        if(networkId == -2) { // Disable
-            return wifiManager.setWifiEnabled(false);
-        }
-
-        if(!wifiManager.isWifiEnabled()) {
-            return false;
-        }
-
-        if (!wifiManager.disconnect()) {
-            Logger.error(TAG, "WiFi disconnect failed");
-            return false;
-        }
-
-        if(networkId == -1) { // Disconnect
-            return true;
-        }
-
-        if (!wifiManager.enableNetwork(networkId, true)) {
-            Logger.error(TAG, "Could not enable WiFi.");
-            return false;
-        }
-
-        if (!wifiManager.reconnect()) {
-            Logger.error(TAG, "WiFi reconnect failed");
-            return false;
-        }
-
-        return true;
+        return false;
     }
 
-    public static boolean connectToWifi(Context context, final String ssid, String password) {
+    public static boolean connectToWifi(Context context, final String ssid, String password, CameraController.OnCameraDisconnectedListener onCameraDisconnected) {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            return connectToWifiQ(context, ssid, password, onCameraDisconnected);
+        }
+
+        if (TextUtils.isEmpty(ssid)) {
+            return  false;
+        }
 
         int networkId = -1;
         int c;
@@ -301,6 +258,94 @@ public class WifiHelper {
         return false;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    private static boolean connectToWifiQ(Context context, final String ssid, String password, CameraController.OnCameraDisconnectedListener onCameraDisconnected) {
+
+        if (WifiConnectionNotifier.isConnecting()) {
+            Logger.warning(TAG, "Connection in progress");
+            return false;
+        }
+
+        WifiNetworkSpecifier.Builder builder = new WifiNetworkSpecifier.Builder();
+        if (TextUtils.isEmpty(ssid)) {
+            // TODO: Set pentax camera pattern
+            builder.setSsidPattern(new PatternMatcher("GR_", PatternMatcher.PATTERN_PREFIX));
+            builder.setBssidPattern(MacAddress.fromString("e8:e8:b7:00:00:00"), MacAddress.fromString("ff:ff:ff:00:00:00"));
+        } else {
+            builder.setWpa2Passphrase(password);
+            builder.setSsid(ssid);
+        }
+
+        final NetworkSpecifier specifier = builder.build();
+
+        final NetworkRequest request =
+                new NetworkRequest.Builder()
+                        .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+                        .removeCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                        .setNetworkSpecifier(specifier)
+                        .build();
+
+        final ConnectivityManager connectivityManager = (ConnectivityManager)
+                context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        boolean result;
+        WifiConnectionNotifier.startConnection();
+        try {
+
+            if (networkCallback != null) {
+                connectivityManager.unregisterNetworkCallback(networkCallback);
+            }
+
+            networkCallback = new ConnectivityManager.NetworkCallback() {
+                @Override
+                public void onAvailable(@NonNull Network network) {
+                    if (Logger.DEBUG) Logger.debug(TAG, "Connected to " + ssid);
+                    WifiConnectionNotifier.setConnected(true);
+                }
+
+                @Override
+                public void onUnavailable() {
+                    if (Logger.DEBUG) Logger.debug(TAG, "NOT Connected to " + ssid);
+                    WifiConnectionNotifier.setConnected(false);
+                }
+
+                @Override
+                public void onLosing(@NonNull Network network, int maxMsToLive) {
+                    super.onLosing(network, maxMsToLive);
+                    if (Logger.DEBUG) Logger.debug(TAG, "onLosing");
+                }
+
+                @Override
+                public void onLost(@NonNull Network network) {
+                    if (networkCallback != null) {
+                        connectivityManager.unregisterNetworkCallback(networkCallback);
+                        networkCallback = null;
+                    }
+
+                    if (onCameraDisconnected != null) {
+                        onCameraDisconnected.onCameraDisconnected();
+                    }
+
+                    if (Logger.DEBUG) Logger.debug(TAG, "onLost");
+                }
+            };
+
+            connectivityManager.requestNetwork(request, networkCallback);
+
+            result = WifiConnectionNotifier.isConnected();
+            if (!result) {
+                // Release the request when done.
+                connectivityManager.unregisterNetworkCallback(networkCallback);
+                networkCallback = null;
+            }
+
+        } finally {
+            WifiConnectionNotifier.finishConnection();
+        }
+
+        return result;
+    }
+
     public static boolean isWifiInRange(String ssid) {
         for(ScanResult scanResult : getLatestScanResults()) {
             if(scanResult.SSID != null && scanResult.SSID.equalsIgnoreCase(ssid)) {
@@ -310,4 +355,51 @@ public class WifiHelper {
         return false;
     }
 
+    private static ConnectivityManager.NetworkCallback networkCallback;
+    private static class WifiConnectionNotifier {
+        private static  WifiConnectionNotifier instance = null;
+
+        private boolean isConnected;
+
+        public static boolean isConnecting() {
+            return instance != null;
+        }
+
+        public static void startConnection() {
+            instance = new WifiConnectionNotifier();
+        }
+
+        public static void setConnected(boolean  connected) {
+            instance.internalSetConnected(connected);
+        }
+
+        public static boolean isConnected() {
+            boolean result = instance.internalIsConnected();
+            return result;
+        }
+
+        public static void finishConnection() {
+            instance = null;
+        }
+
+        private void waitConnectionResult() {
+            synchronized (this) {
+                try { this.wait(); } catch (InterruptedException ignored) { }
+            }
+        }
+
+        private void internalSetConnected(boolean connected) {
+            synchronized (this) {
+                isConnected = connected;
+                this.notify();
+            }
+        }
+
+        private boolean internalIsConnected() {
+            waitConnectionResult();
+            synchronized (this) {
+                return this.isConnected;
+            }
+        }
+    }
 }

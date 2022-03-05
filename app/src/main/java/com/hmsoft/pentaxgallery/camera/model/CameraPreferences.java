@@ -167,6 +167,10 @@ public class CameraPreferences extends PreferenceDataStore {
         return getBoolean(R.string.key_update_picture_location_information, R.string.default_update_picture_location_information);
     }
 
+    public int getPowerOffTransferShutdownDelay() {
+        return getInt(R.string.key_auto_shutdown_poweroff_transfer, R.string.default_auto_shutdown_poweroff_transfer);
+    }
+
     public String getDownloadVolume() {
         String volume = getString(context.getString(R.string.key_downloaded_images_location), null);
         if (volume == null) {

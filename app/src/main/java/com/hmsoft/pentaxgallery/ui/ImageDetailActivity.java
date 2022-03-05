@@ -311,7 +311,7 @@ public class ImageDetailActivity extends AppCompatActivity implements OnClickLis
             Toast.makeText(this, R.string.camera_not_connected_label, Toast.LENGTH_LONG).show();
             return;
         }
-        DownloadService.addDownloadQueue(imageData);
+        DownloadService.addDownloadQueue(imageData, false);
         updateCurrentImageData();
         updateUiElements();
     }

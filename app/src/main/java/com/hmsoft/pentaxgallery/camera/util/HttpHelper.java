@@ -142,10 +142,17 @@ public final class HttpHelper {
                 if (BuildConfig.DEBUG)
                     Logger.debug(TAG, "isConnectedOrConnecting:" + networkInfo.isConnectedOrConnecting());
                 connectivityManager.bindProcessToNetwork(network);
+
                 return true;
             }
         }
 
         return false;
+    }
+
+    public static boolean unBindWifi() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) MyApplication.ApplicationContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+        connectivityManager.bindProcessToNetwork(null);
+        return true;
     }
 }
