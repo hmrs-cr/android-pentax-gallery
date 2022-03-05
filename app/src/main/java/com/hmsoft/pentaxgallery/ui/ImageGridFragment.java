@@ -476,19 +476,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 return;
             }
 
-            List<CameraData> cameras = mCamera.getRegisteredCameras();
-            if(cameras != null && cameras.size() > 1) {
-                for(CameraData cameraData : cameras) {
-                    MenuItem menuItem = mMenu.findItem(cameraData.hashCode);
-                    if(menuItem == null) {
-                        menuItem = mMenu.add(R.id.camera_menu_list, cameraData.hashCode, 1, cameraData.getDisplayName());
-                        menuItem.setCheckable(true);
-                    }
-                    CameraData currentCamera = mCamera.getCameraData();
-                    menuItem.setChecked(currentCamera != null && currentCamera.hashCode == cameraData.hashCode);
-                }
-            }
-
             MenuItem downloadItem = mMenu.findItem(R.id.download_selected);
             downloadItem.setVisible(false);
             MenuItem clearSelectionItem = mMenu.findItem(R.id.clear_selection);
@@ -584,16 +571,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         if(mCamera.getImageList() == null) {
             if(BuildConfig.DEBUG) Logger.debug(TAG, "No images loaded yet.");
             return false;
-        }
-
-        if(item.getGroupId() == R.id.camera_menu_list) {
-            for (CameraData cameraData :  mCamera.getRegisteredCameras()) {
-                if(cameraData.hashCode == itemId) {
-                    setCurrentCamera(cameraData.cameraId);
-                    return true;
-                }
-            }
-            return true;
         }
 
         switch (itemId) {
@@ -886,7 +863,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 .setIcon(android.R.drawable.ic_dialog_alert);
 
                 List<CameraData> cameras = mCamera.getRegisteredCameras();
-                if(cameras != null && cameras.size() > 0) {
+                if(cameras != null && cameras.size() > 0 && !CameraData.DEFAULT_CAMERA_ID.equals(cameras.get(0).cameraId)) {
                     builder.setNeutralButton(R.string.load_cache, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -1080,12 +1057,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             mNeedUpdateImageList = !added;
         }
         if(BuildConfig.DEBUG) Logger.debug(TAG, change.toString());
-    }
-
-    /*package*/ void rebuildCameraListMenu() {
-        if (mMenu != null) {
-            mMenu.removeGroup(R.id.camera_menu_list);
-        }
     }
 
     @Override

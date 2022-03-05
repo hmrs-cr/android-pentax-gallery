@@ -28,6 +28,7 @@ import org.json.JSONTokener;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -35,7 +36,11 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
+import okhttp3.internal.Util;
+
 public class CameraData extends BaseResponse {
+
+    public static final String DEFAULT_CAMERA_ID = "default.camera.id";
 
     public static final CameraData DefaultCameraData = new CameraData();
     private static final String FOLDER_CAMERAS = "cameras";
@@ -77,7 +82,7 @@ public class CameraData extends BaseResponse {
         serialNo = "Default";
         dateAdded = null;
 
-        cameraId = "default.camera";
+        cameraId = DEFAULT_CAMERA_ID;
 
         powerOffTransfer = false;
         geoTagging = false;
@@ -120,8 +125,12 @@ public class CameraData extends BaseResponse {
         powerOffTransfer = "on".equals(jsonObject.optString("powerOffTransfer"));
         gpsInfo = jsonObject.optString("gpsInfo");
 
-        preferences = new CameraPreferences(this);
-        preferences.load();
+        if (DEFAULT_CAMERA_ID.equals(cameraId)) {
+            preferences = CameraPreferences.Default;
+        } else {
+            preferences = new CameraPreferences(this);
+            preferences.load();
+        }
 
         JSONArray storajesArray = jsonObject.optJSONArray("storages");
         if (storajesArray != null) {
@@ -190,37 +199,48 @@ public class CameraData extends BaseResponse {
 
     public static List<CameraData> getRegisteredCameras() {
         File folder = getParentStorageDirectory();
-        if(!folder.exists()) {
-            return new ArrayList<>(0);
-        }
 
-        File[] files = folder.listFiles();
-        List<CameraData> result = new ArrayList<>(files.length);
+        List<CameraData> result = null;
+        if(folder.exists()) {
+            File[] files = folder.listFiles();
+            result = new ArrayList<>(files.length);
 
-        for(File cameraFolder : files) {
-            if (cameraFolder.isDirectory()) {
-                File cameraDataFile = new File(cameraFolder, FILE_NAME_CAMERA_DATA);
-                if(cameraDataFile.exists() && cameraDataFile.isFile()) {
-                    CameraData cameraData = createFromFile(cameraDataFile);
-                    if (cameraData != null) {
-                        result.add(cameraData);
+            for (File cameraFolder : files) {
+                if (cameraFolder.isDirectory()) {
+                    File cameraDataFile = new File(cameraFolder, FILE_NAME_CAMERA_DATA);
+                    if (cameraDataFile.exists() && cameraDataFile.isFile()) {
+                        CameraData cameraData = createFromFile(cameraDataFile);
+                        if (cameraData != null) {
+                            result.add(cameraData);
+                        }
                     }
                 }
             }
+
+            Collections.sort(result, new Comparator<CameraData>() {
+                @Override
+                public int compare(CameraData o1, CameraData o2) {
+                    if (o1 == null || o1.dateAdded == null) {
+                        return 0;
+                    }
+                    if (o2 == null || o2.dateAdded == null) {
+                        return 0;
+                    }
+                    return o2.dateAdded.compareTo(o1.dateAdded);
+                }
+            });
         }
 
-        Collections.sort(result, new Comparator<CameraData>() {
-            @Override
-            public int compare(CameraData o1, CameraData o2) {
-                if(o1 == null || o1.dateAdded == null) {
-                    return 0;
+        if (result == null || result.size() == 0) {
+            result = new ArrayList<>(1);
+            try {
+                try (InputStream is = MyApplication.ApplicationContext.getAssets().open("default.camera.data.json")) {
+                    result.add(new CameraData(Utils.readTextStream(is)));
                 }
-                if(o2 == null || o2.dateAdded == null) {
-                    return 0;
-                }
-                return o2.dateAdded.compareTo(o1.dateAdded);
+            } catch (Exception ignore) {
+
             }
-        });
+        }
 
         return result;
     }

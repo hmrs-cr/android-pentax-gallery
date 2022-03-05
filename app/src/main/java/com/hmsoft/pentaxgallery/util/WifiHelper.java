@@ -258,6 +258,10 @@ public class WifiHelper {
         return false;
     }
 
+    public static boolean isConnectedToDedicatedDeviceWifi() {
+        return networkCallback != null;
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.Q)
     private static boolean connectToWifiQ(Context context, final String ssid, String password, CameraController.OnCameraDisconnectedListener onCameraDisconnected) {
 

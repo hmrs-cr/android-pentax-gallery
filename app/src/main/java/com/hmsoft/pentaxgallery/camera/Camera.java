@@ -88,16 +88,6 @@ public class Camera implements CameraController.OnCameraDisconnectedListener {
         this.mController.setOnCameraDisconnectedListener(this);
     }
 
-    @WorkerThread
-    public CameraData connect() {
-        return connect((String)null);
-    }
-
-    @WorkerThread
-    public CameraData connect(String cameraId) {
-        return connect(cameraId, null);
-    }
-
     public boolean disconnect() {
         if (isConnected()) {
             HttpHelper.unBindWifi();
@@ -110,10 +100,6 @@ public class Camera implements CameraController.OnCameraDisconnectedListener {
         }
 
         return false;
-    }
-
-    public CameraData connect(OnWifiConnectionAttemptListener listener) {
-        return connect(null, listener);
     }
 
     @WorkerThread
@@ -131,9 +117,7 @@ public class Camera implements CameraController.OnCameraDisconnectedListener {
               }
           }
       } else {
-          int retryes = 3;
-          int ci = 0;
-
+          int retryes = 1;
           latestConnectedCamera = mLatestConnectedCamera;
           while (!mCameraConnected) {
 
@@ -163,13 +147,7 @@ public class Camera implements CameraController.OnCameraDisconnectedListener {
                       }
 
                       WifiHelper.turnWifiOn(MyApplication.ApplicationContext, 1000);
-
-                      if (ci == cameras.size()) {
-                          if(BuildConfig.DEBUG) Logger.debug(TAG, "All registered mCameras failed to connect");
-                          break;
-                      }
-
-                      cameraData = cameras.get(ci++);
+                      cameraData = latestConnectedCamera;
                       mController.setPreferences(cameraData.preferences);
 
                       if (listener != null) {
@@ -177,19 +155,18 @@ public class Camera implements CameraController.OnCameraDisconnectedListener {
                       }
 
                       if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-                          if (ci == 1) {
-                              long wifiScanStartTime = SystemClock.elapsedRealtime();
-                              while (!WifiHelper.isWifiInRange(cameraData.ssid)) {
-                                  WifiHelper.startWifiScan(MyApplication.ApplicationContext);
-                                  WifiHelper.waitForScanResultsAvailable(20000);
-                                  if (!WifiHelper.isWifiInRange(cameraData.ssid)) {
-                                      TaskExecutor.sleep(5000);
-                                  }
 
-                                  long scanTotalTime = SystemClock.elapsedRealtime() - wifiScanStartTime;
-                                  if (scanTotalTime > 30000) {
-                                      break;
-                                  }
+                          long wifiScanStartTime = SystemClock.elapsedRealtime();
+                          while (!WifiHelper.isWifiInRange(cameraData.ssid)) {
+                              WifiHelper.startWifiScan(MyApplication.ApplicationContext);
+                              WifiHelper.waitForScanResultsAvailable(20000);
+                              if (!WifiHelper.isWifiInRange(cameraData.ssid)) {
+                                  TaskExecutor.sleep(5000);
+                              }
+
+                              long scanTotalTime = SystemClock.elapsedRealtime() - wifiScanStartTime;
+                              if (scanTotalTime > 30000) {
+                                  break;
                               }
                           }
 
@@ -215,11 +192,7 @@ public class Camera implements CameraController.OnCameraDisconnectedListener {
                           continue;
                       }
                   } else {
-                      Logger.warning(TAG, "No previously connected mCameras found.");
-                      ///boolean success = WifiHelper.connectToWifi(MyApplication.ApplicationContext,null, null, this);
-                      /*if (!success) {
-                          break;
-                      }*/
+                      Logger.warning(TAG, "No previously connected Cameras found.");
                   }
               }
 
@@ -250,6 +223,7 @@ public class Camera implements CameraController.OnCameraDisconnectedListener {
         setCurrentStorageIndex(storageIndex);
         if(cameraData != null && mCameraConnected) {
             cameraData.saveData();
+            loadCameraList();
         }
       
       return cameraData;

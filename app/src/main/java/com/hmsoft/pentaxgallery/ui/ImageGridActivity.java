@@ -125,8 +125,6 @@ public class ImageGridActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         switch (resultCode) {
             case PreferencesActivity.RESULT_UPDATE_CAMERA_LIST:
-                fragment.rebuildCameraListMenu();
-                break;
             case PreferencesActivity.RESULT_OK:
                 break;
         }

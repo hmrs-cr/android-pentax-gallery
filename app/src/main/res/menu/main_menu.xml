@@ -129,11 +129,6 @@
     </group>
 
     <group
-        android:orderInCategory="2"
-        android:id="@+id/camera_menu_list">
-    </group>
-
-    <group
         android:orderInCategory="3"
         android:id="@+id/misc_menu_group">
         <item
