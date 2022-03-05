@@ -159,7 +159,7 @@ public class CameraPreferences extends PreferenceDataStore {
         return getBoolean(R.string.key_store_location_in_camera, R.string.default_store_location_in_camera);
     }
 
-    public boolean isAutoSyncTime() {
+    public boolean isAutoSyncTimeEnabled() {
         return getBoolean(R.string.key_auto_sync_camera_time, R.string.default_auto_sync_camera_time);
     }
 

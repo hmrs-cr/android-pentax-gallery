@@ -27,14 +27,11 @@ import android.app.SearchManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.provider.Settings;
 import android.text.Html;
 import android.text.TextUtils;
@@ -64,20 +61,18 @@ import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.hmsoft.pentaxgallery.BuildConfig;
-import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.Camera;
 import com.hmsoft.pentaxgallery.camera.controller.CameraController;
+import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
 import com.hmsoft.pentaxgallery.camera.model.CameraChange;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
-import com.hmsoft.pentaxgallery.camera.model.CameraParams;
 import com.hmsoft.pentaxgallery.camera.model.CameraPreferences;
 import com.hmsoft.pentaxgallery.camera.model.FilteredImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageList;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
 import com.hmsoft.pentaxgallery.service.DownloadService;
-import com.hmsoft.pentaxgallery.service.LocationService;
 import com.hmsoft.pentaxgallery.ui.camera.CameraActivity;
 import com.hmsoft.pentaxgallery.ui.preferences.PreferencesActivity;
 import com.hmsoft.pentaxgallery.ui.widgets.ImageThumbWidget;
@@ -89,10 +84,8 @@ import com.hmsoft.pentaxgallery.util.image.ImageFetcher;
 import com.hmsoft.pentaxgallery.util.image.ImageRotatorFetcher;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.Queue;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -1441,6 +1434,12 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 cameraData = mCamera.connect(cameraId, this);
                 if (mCamera.isConnected()) {
                     publishProgress(PROGRESS_CONNECTED, cameraData);
+                    if (mCamera.getPreferences().isAutoSyncTimeEnabled()) {
+                        BaseResponse response = mCamera.getController().updateDateTime(new Date());
+                        if (response.success) {
+                            TaskExecutor.executeOnUIThread(() -> Toast.makeText(getActivity(), R.string.sync_camera_time_success_message, Toast.LENGTH_SHORT).show());
+                        }
+                    }
                 }
             }
 
