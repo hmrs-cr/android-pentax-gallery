@@ -73,6 +73,7 @@ public class LocationService extends Service {
     private int mLocationCount;
     private PowerManager mPowerManager;
     private PowerManager.WakeLock mWakeLock;
+    private PendingIntent mStopPendingIntent = null;
 
     public static void start(Context context) {
         start(context, ACTION_UPDATE_LOCATION);
@@ -535,6 +536,13 @@ public class LocationService extends Service {
     }
 
     private Notification createNotification(String contentText, String contentTitle, long when, PendingIntent contentIntent) {
+
+        if (mStopPendingIntent == null) {
+            Intent i = new Intent(getApplicationContext(), LocationService.class);
+            i.setAction(ACTION_STOP_LOCATION_UPDATES);
+            mStopPendingIntent = PendingIntent.getService(getApplicationContext(), 0, i, 0);
+        }
+
         NotificationCompat.Builder notificationBuilder = (new NotificationCompat.Builder(getApplicationContext(), MyApplication.NOTIFICATION_CHANNEL_ID)).
                 setAutoCancel(false).
                 setOngoing(true).
@@ -542,6 +550,7 @@ public class LocationService extends Service {
                 setContentText(contentText).
                 setSubText("Location Service").
                 setSmallIcon(R.drawable.ic_sync_white_24dp).
+                addAction(R.drawable.ic_cancel_white_24dp,  getString(R.string.stop_label), mStopPendingIntent).
                 setShowWhen(when > 0);
 
 
