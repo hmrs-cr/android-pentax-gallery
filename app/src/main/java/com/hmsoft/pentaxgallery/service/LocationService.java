@@ -548,8 +548,8 @@ public class LocationService extends Service {
                 setOngoing(true).
                 setContentTitle(contentTitle).
                 setContentText(contentText).
-                setSubText("Location Service").
-                setSmallIcon(R.drawable.ic_sync_white_24dp).
+                setSubText(getString(R.string.location_service_label)).
+                setSmallIcon(R.drawable.ic_stat_service).
                 addAction(R.drawable.ic_cancel_white_24dp,  getString(R.string.stop_label), mStopPendingIntent).
                 setShowWhen(when > 0);
 
@@ -569,8 +569,8 @@ public class LocationService extends Service {
         long when = 0;
         int accuracy = 0;
         String provider = "-";
-        String contentText = "Updating location...";
-        String contentTitle = "Location Service";
+        String contentText = getString(R.string.updating_location_label);
+        String contentTitle = getString(R.string.location_service_label);
 
         PendingIntent mapPendingIntent = null;
         if (mLastSavedLocation != null) {
