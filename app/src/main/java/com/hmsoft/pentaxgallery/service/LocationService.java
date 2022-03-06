@@ -112,7 +112,7 @@ public class LocationService extends Service {
             sLocationUpdateInterval = MyApplication.getIntPref(R.string.key_location_update_interval, R.string.default_location_update_interval);
         }
 
-        return LocationTable.getLocationAtTimestamp(time, sLocationUpdateInterval * 2);
+        return LocationTable.getLocationAtTimestamp(time, Math.max(sLocationUpdateInterval * 2000, 180000));
     }
 
     void updateConfig() {

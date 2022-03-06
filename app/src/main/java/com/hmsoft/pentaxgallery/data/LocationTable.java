@@ -60,9 +60,7 @@ public class LocationTable {
 
     public static LatLong getLocationAtTimestamp(long timestamp, long window) {
 
-        String selectionExpression = COLUMN_NAME_TIMESTAMP + " BETWEEN " +
-                                     COLUMN_NAME_TIMESTAMP + " - " + window + " AND " +
-                                     COLUMN_NAME_TIMESTAMP + " + " + window;
+        String selectionExpression = COLUMN_NAME_TIMESTAMP + " BETWEEN " + (timestamp - window) + " AND " + (timestamp + window);
 
         String orderByExpression = "ABS(" + COLUMN_NAME_TIMESTAMP + " - " + timestamp + ")/1000," + COLUMN_NAME_ACCURACY;
 
