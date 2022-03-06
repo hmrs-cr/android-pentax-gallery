@@ -12,8 +12,6 @@ import android.os.Bundle;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
 import android.provider.MediaStore;
-import android.provider.Settings;
-import android.text.Html;
 import android.text.InputType;
 import android.text.format.Formatter;
 import android.widget.EditText;
@@ -21,6 +19,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.preference.EditTextPreference;
@@ -30,8 +29,6 @@ import androidx.preference.PreferenceFragmentCompat;
 
 import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.Camera;
-import com.hmsoft.pentaxgallery.camera.controller.CameraController;
-import com.hmsoft.pentaxgallery.camera.model.BaseResponse;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
 import com.hmsoft.pentaxgallery.camera.model.CameraPreferences;
 import com.hmsoft.pentaxgallery.camera.model.ImageList;
@@ -88,14 +85,12 @@ public class CameraPreferenceFragment extends PreferenceFragmentCompat implement
         } else {
             Set<String> externalVolumes =  MediaStore.getExternalVolumeNames(getContext());
             if (externalVolumes.size() > 1) {
-                StorageManager sm = (StorageManager)getContext().getSystemService(Context.STORAGE_SERVICE);
-                List<StorageVolume> sv = sm.getStorageVolumes();
-
                 int i = 0;
                 String[] volumesDesc = new String[externalVolumes.size()];
                 String[] volumes = new String[externalVolumes.size()];
+                StorageManager sm = (StorageManager)getContext().getSystemService(Context.STORAGE_SERVICE);
                 for (String evn : externalVolumes) {
-                    volumesDesc[i] = getVolumeDescription(evn, sv);
+                    volumesDesc[i] = getVolumeDescription(evn, sm);
                     volumes[i++] = evn;
                 }
 
@@ -126,7 +121,18 @@ public class CameraPreferenceFragment extends PreferenceFragmentCompat implement
         }
     }
 
-    private String getVolumeDescription(String volumeName, List<StorageVolume> svs) {
+    private String getVolumeDescription(String volumeName, StorageManager sm) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            Uri uri = MediaStore.Images.Media.getContentUri(volumeName);
+            if (uri != null) {
+                StorageVolume sv = sm.getStorageVolume(uri);
+                if (sv != null) {
+                    return sv.getDescription(getContext());
+                }
+            }
+        }
+
+        List<StorageVolume> svs = sm.getStorageVolumes();
         for (StorageVolume sv : svs) {
             String description = sv.getDescription(getContext());
             if (volumeName.equals(sv.getUuid()) || sv.toString().contains(volumeName) || description.contains(volumeName) ||
@@ -134,6 +140,7 @@ public class CameraPreferenceFragment extends PreferenceFragmentCompat implement
                 return description;
             }
         }
+
         return  volumeName;
     }
 
