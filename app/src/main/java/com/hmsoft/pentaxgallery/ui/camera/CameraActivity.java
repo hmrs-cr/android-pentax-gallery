@@ -8,6 +8,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Surface;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.Camera;
@@ -24,8 +25,12 @@ public class CameraActivity extends AppCompatActivity {
     private CameraFragment  fragment;
 
     public static void start(FragmentActivity activity) {
-        Intent i = new Intent(activity, CameraActivity.class);
-        activity.startActivity(i);
+        if (Camera.instance.isConnected()) {
+            Intent i = new Intent(activity, CameraActivity.class);
+            activity.startActivity(i);
+        } else {
+            Toast.makeText(activity, R.string.camera_not_connected_label, Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override

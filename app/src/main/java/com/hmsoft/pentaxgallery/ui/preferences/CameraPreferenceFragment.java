@@ -192,7 +192,7 @@ public class CameraPreferenceFragment extends PreferenceFragmentCompat implement
                     }
                 });
             } else {
-                Toast.makeText(this.getContext(), "Camera not connected", Toast.LENGTH_LONG).show();
+                Toast.makeText(this.getContext(), R.string.camera_not_connected_label, Toast.LENGTH_LONG).show();
             }
         }  else if(preference.getKey().equals(getString(R.string.key_remove_camera))) {
             message = String.format(getString(R.string.remove_camera_confirmation), cameraData.getDisplayName());
