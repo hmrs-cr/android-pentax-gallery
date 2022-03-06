@@ -106,12 +106,12 @@ public class LocationService extends Service {
         }
     }
 
-    public static LocationTable.LatLong getLocationAtTime(Date dateTime) {
+    public static LocationTable.LatLong getLocationAtTime(long time) {
         if (sLocationUpdateInterval == 0) {
             sLocationUpdateInterval = MyApplication.getIntPref(R.string.key_location_update_interval, R.string.default_location_update_interval);
         }
 
-        return LocationTable.getLocationAtTimestamp(dateTime.getTime(), sLocationUpdateInterval * 2);
+        return LocationTable.getLocationAtTimestamp(time, sLocationUpdateInterval * 2);
     }
 
     void updateConfig() {

@@ -111,12 +111,47 @@ public class LocationTable {
     }
 
     public static final class LatLong {
-        public final Double latitude;
-        public final Double longitude;
+        public final double latitude;
+        public final double longitude;
 
-        protected LatLong(Double latitude, Double longitude) {
+        protected LatLong(double latitude, double longitude) {
             this.latitude = latitude;
             this.longitude = longitude;
+        }
+
+        public String getLatGeoCoordinates() {
+            return getGeoCoordinates(latitude);
+        }
+
+        public String getLatRef() {
+            return latitude < 0 ? "S" : "N";
+        }
+
+        public String getLongRef() {
+            return longitude < 0 ? "W" : "E";
+        }
+
+        public String getLongGeoCoordinates() {
+            return getGeoCoordinates(longitude);
+        }
+
+        private String getGeoCoordinates(double value) {
+            // degrees, minutes, and seconds
+            // ddd/1,mm/1,ss/1
+
+            value = Math.abs(value);
+            int degrees = (int)value;
+
+            value *= 60;
+            value -= (degrees * 60.0d);
+            int minutes = (int)value;
+
+            value *= 60;
+            value -= (minutes * 60.0d);
+            int seconds = (int)(value * 1000.0d);
+
+
+            return degrees + "/1," + minutes + "/1," + seconds + "/1000";
         }
     }
 

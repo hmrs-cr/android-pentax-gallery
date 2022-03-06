@@ -7,11 +7,13 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.ParcelFileDescriptor;
 import android.os.PowerManager;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
@@ -52,10 +54,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Hashtable;
 import java.util.List;
 
@@ -81,8 +80,6 @@ public class DownloadService extends IntentService {
     public static final String EXTRA_DOWNLOAD_STATUS_MESSAGE = "extra.DOWNLOAD_STATUS_MESSAGE";
     public static final String EXTRA_LOCAL_URI = "extra.LOCAL_URI";
     private static final String EXTRA_RECEIVER = "extra.RECEIVER";
-
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
     private static int downloadId = 0;
     private static int downloadErrorCount = 0;
@@ -222,7 +219,7 @@ public class DownloadService extends IntentService {
 
                 // downloadDown the file
                 InputStream input = new BufferedInputStream(connection.getInputStream());
-                OutputStream output = context.getContentResolver().openOutputStream(mediaStoreUri);
+                OutputStream output = cr.openOutputStream(mediaStoreUri);
 
                 byte[] data = new byte[1024];
                 long total = 0;
@@ -269,6 +266,10 @@ public class DownloadService extends IntentService {
                         status = DOWNLOAD_STATUS_CANCELED;
                     }
                 }
+
+                if (camera.getPreferences().isUpdatePictureLocationEnabled()) {
+                    updateLocationInfo(cr, mediaStoreUri, camera.getImageInfo(imageData).getTime());
+                }
             }
         } catch (Exception e) {
             Logger.warning(TAG, "Error downloading file", e);
@@ -296,6 +297,32 @@ public class DownloadService extends IntentService {
         receiver.send(DOWNLOAD_FINISHED, resultData);
     }
 
+    private static final float[] ll = new float[2];
+    private void updateLocationInfo(ContentResolver cr, Uri mediaStoreUri, long time) {
+        LocationTable.LatLong latLong = LocationService.getLocationAtTime(time);
+        if (latLong != null) {
+            if (Logger.DEBUG) Logger.debug(TAG, "Found location info for image: " + latLong.latitude + "," + latLong.longitude);
+            try {
+                try (ParcelFileDescriptor fd = cr.openFileDescriptor(mediaStoreUri, "rw")) {
+                    ExifInterface ei = new ExifInterface(fd.getFileDescriptor());
+                    if (!ei.getLatLong(ll)) {
+                        if (Logger.DEBUG) Logger.debug(TAG, "Updating exif location info");
+                        ei.setAttribute(ExifInterface.TAG_GPS_LATITUDE, latLong.getLatGeoCoordinates());
+                        ei.setAttribute(ExifInterface.TAG_GPS_LATITUDE_REF, latLong.getLatRef());
+                        ei.setAttribute(ExifInterface.TAG_GPS_LONGITUDE, latLong.getLongGeoCoordinates());
+                        ei.setAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF, latLong.getLongRef());
+                        ei.saveAttributes();
+                        if (Logger.DEBUG) Logger.debug(TAG, "Exif location info updated");
+                    } else {
+                        if (Logger.DEBUG) Logger.debug(TAG, "Exif location info already present in image");
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     @Nullable
     private Uri insertOrUpdateMediaStoreImage(ContentResolver cr, Camera camera, ImageData imageData) {
         StorageManager storageManager = (StorageManager) getSystemService(Context.STORAGE_SERVICE);
@@ -310,22 +337,9 @@ public class DownloadService extends IntentService {
         ImageMetaData imageMetaData = camera.getImageInfo(imageData);
         if (imageMetaData != null) {
             values.put(MediaStore.Images.Media.ORIENTATION, imageMetaData.orientationDegrees);
-            try {
-                Date date = dateFormat.parse(imageMetaData.dateTime);
-                values.put(MediaStore.Images.Media.DATE_TAKEN, date.getTime());
-
-                if (camera.getPreferences().isUpdatePictureLocationEnabled()) {
-                    LocationTable.LatLong latLong = LocationService.getLocationAtTime(date);
-                    if (latLong != null) {
-                        if (Logger.DEBUG)
-                            Logger.debug(TAG, "Found location info for image: " + latLong.latitude + "," + latLong.longitude);
-                        // TODO: Do no use Images.Media.LATITUDE/Images.Media.LONGITUDE fields, save location data in exif.
-                        values.put(MediaStore.Images.Media.LATITUDE, latLong.latitude);
-                        values.put(MediaStore.Images.Media.LONGITUDE, latLong.longitude);
-                    }
-                }
-            } catch (ParseException e) {
-                Logger.warning(TAG, "Error parsing date: " + imageMetaData.dateTime, e);
+            long imageTime = imageMetaData.getTime();
+            if (imageTime > 0) {
+                values.put(MediaStore.Images.Media.DATE_TAKEN, imageTime);
             }
         }
 

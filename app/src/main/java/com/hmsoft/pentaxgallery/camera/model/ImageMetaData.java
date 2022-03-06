@@ -18,12 +18,22 @@ package com.hmsoft.pentaxgallery.camera.model;
 
 
 import android.media.ExifInterface;
+import android.provider.MediaStore;
+
+import com.hmsoft.pentaxgallery.util.Logger;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class ImageMetaData extends BaseResponse {
+
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+    private static final String TAG = "ImageMetaData";
 
     public final String directory;
     public final String fileName;
@@ -39,6 +49,7 @@ public class ImageMetaData extends BaseResponse {
     public final String shutterSpeed;
     public final String latlng;
     public final float orientationDegrees;
+    private long imageTime = -1;
 
 
     public ImageMetaData(String directory, String fileName, boolean captured, int orientation, 
@@ -101,5 +112,19 @@ public class ImageMetaData extends BaseResponse {
         shutterSpeed = jsonObject.optString("tv");
 
         this.orientationDegrees = ImageMetaData.getDegrees(orientation);
-    }          
+    }
+
+    public long getTime() {
+        if (imageTime == -1) {
+            try {
+                Date date = dateFormat.parse(dateTime);
+                imageTime = date.getTime();
+            } catch (ParseException e) {
+                imageTime = 0;
+                Logger.warning(TAG, "Error parsing date: " + dateTime, e);
+            }
+        }
+
+        return imageTime;
+    }
 }
