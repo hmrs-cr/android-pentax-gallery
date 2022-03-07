@@ -54,6 +54,8 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentStatePagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
+import java.io.File;
+
 public class ImageDetailActivity extends AppCompatActivity implements OnClickListener,
         GestureDetector.OnGestureListener,
         GestureDetector.OnDoubleTapListener, ViewPager.OnPageChangeListener,
@@ -77,26 +79,7 @@ public class ImageDetailActivity extends AppCompatActivity implements OnClickLis
         super.onCreate(savedInstanceState);
         setContentView(R.layout.image_detail_pager);
 
-
-        // Fetch screen height and width, to use as our max size when loading images as this
-        // activity runs full screen
-        final DisplayMetrics displayMetrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-        final int height = displayMetrics.heightPixels;
-        final int width = displayMetrics.widthPixels;
-
-        final int longest = (height > width ? height : width) / 2;
-
-        ImageCache.ImageCacheParams cacheParams =
-                new ImageCache.ImageCacheParams(this, IMAGE_CACHE_DIR);
-        cacheParams.setMemCacheSizePercent(0.40f); // Set memory cache to 35% of app memory
-
-        // The ImageFetcher takes care of loading images into our ImageView children asynchronously
-        boolean loadLocalImageData = Camera.instance.getPreferences().loadLocalImageData();
-
-        mImageFetcher = loadLocalImageData ? new ImageLocalFetcher(this, longest) : new ImageRotatorFetcher(this, longest);
-        mImageFetcher.addImageCache(getSupportFragmentManager(), cacheParams);
-        mImageFetcher.setImageFadeIn(false);
+        createImageFetcher();
 
         // Set up ViewPager and backing adapter
         mAdapter = new ImagePagerAdapter(getSupportFragmentManager());
@@ -160,7 +143,7 @@ public class ImageDetailActivity extends AppCompatActivity implements OnClickLis
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mImageFetcher.closeCache();
+        destroyImageFetcher();
     }
 
     @Override
@@ -169,6 +152,38 @@ public class ImageDetailActivity extends AppCompatActivity implements OnClickLis
         updateOptionsMenu();
         return super.onPrepareOptionsMenu(menu);
     }
+
+    private void createImageFetcher() {
+        if (mImageFetcher != null) {
+            destroyImageFetcher();
+        }
+
+        ImageCache.ImageCacheParams cacheParams =
+                new ImageCache.ImageCacheParams(this, Camera.instance.getCameraData().cameraId + File.separator + IMAGE_CACHE_DIR);
+        cacheParams.setMemCacheSizePercent(0.40f); // Set memory cache to 35% of app memory
+
+        // Fetch screen height and width, to use as our max size when loading images as this
+        // activity runs full screen
+        final DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        final int height = displayMetrics.heightPixels;
+        final int width = displayMetrics.widthPixels;
+        final int longest = Math.max(height, width) / 2;
+
+        // The ImageFetcher takes care of loading images into our ImageView children asynchronously
+        boolean loadLocalImageData = Camera.instance.getPreferences().loadLocalImageData();
+        mImageFetcher = loadLocalImageData ? new ImageLocalFetcher(this, longest) : new ImageRotatorFetcher(this, longest);
+        mImageFetcher.addImageCache(getSupportFragmentManager(), cacheParams);
+        mImageFetcher.setImageFadeIn(false);
+    }
+
+    private void destroyImageFetcher() {
+        if (mImageFetcher != null) {
+            mImageFetcher.closeCache();
+            mImageFetcher = null;
+        }
+    }
+
 
     private void updateOptionsMenu() {
         if(mMenu != null) {

@@ -50,53 +50,6 @@ public class Utils {
 
     public static final String VERSION_STRING = "v" + BuildConfig.VERSION_NAME + " (" + BuildConfig.BUILD_TYPE + ")";
 
-    public static boolean hasPermission(String permission) {
-        return MyApplication.ApplicationContext.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED;
-    }
-
-    public static String[] getAllNeededPermissions() {
-        return new String[]{
-                Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                Manifest.permission.READ_EXTERNAL_STORAGE,
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.CHANGE_WIFI_STATE,
-                Manifest.permission.WAKE_LOCK
-        };
-    }
-
-    public static boolean hasAllPermissions() {
-
-        String[] permissions = getAllNeededPermissions();
-
-        for(String permission : permissions) {
-            if(!hasPermission(permission)) {
-                if(BuildConfig.DEBUG) {
-                    Logger.debug(TAG, "Missing permission: " + permission);
-                }
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public static void showSettingActivity(Context context) {
-        final Intent i = new Intent();
-        i.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-        i.addCategory(Intent.CATEGORY_DEFAULT);
-        i.setData(Uri.parse("package:" + context.getPackageName()));
-        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        i.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-        i.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-        context.startActivity(i);
-    }
-
-    public static void requestAllPermissions(Activity activity) {
-        String[] permissions = getAllNeededPermissions();
-        activity.requestPermissions(permissions,0);
-    }
-
     public static void saveTextFile(File file, String text) throws IOException {
 
         OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(file));

@@ -13,6 +13,7 @@ import com.hmsoft.pentaxgallery.service.LocationService;
 
 import java.util.List;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NavUtils;
@@ -84,6 +85,16 @@ public class PreferencesActivity extends AppCompatActivity implements
         List<Fragment>  fragments = getSupportFragmentManager().getFragments();
         if(fragments.size() == 1 && fragments.get(0) instanceof PreferencesFragment) {
             setTitle(R.string.setting_title);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        List<Fragment>  fragments = getSupportFragmentManager().getFragments();
+        if(fragments.size() == 1 && fragments.get(0) instanceof PreferencesFragment) {
+            ((PreferencesFragment)fragments.get(0)).requestPermissionsResult(requestCode, permissions, grantResults);
+        } else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
     }
 

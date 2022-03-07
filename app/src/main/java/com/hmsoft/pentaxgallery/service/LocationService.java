@@ -2,6 +2,7 @@ package com.hmsoft.pentaxgallery.service;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -9,6 +10,7 @@ import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
@@ -102,7 +104,7 @@ public class LocationService extends Service {
             return;
         }
 
-        if (checkLocationPermission(context)) {
+        if (hasLocationPermission()) {
             context.startForegroundService(intent);
         }
     }
@@ -113,6 +115,27 @@ public class LocationService extends Service {
         }
 
         return LocationTable.getLocationAtTimestamp(time, Math.max(sLocationUpdateInterval * 2000, 180000));
+    }
+
+    private static final String[] sLocationPermissions =  new String[]{
+                Manifest.permission.ACCESS_FINE_LOCATION
+    };
+
+    public static boolean hasLocationPermission() {
+        Context ctx = MyApplication.ApplicationContext;
+        for (String permission : sLocationPermissions) {
+            if (ctx.checkSelfPermission(permission) == PackageManager.PERMISSION_DENIED) {
+                if (Logger.DEBUG) Logger.debug(TAG, "Missing location permission.");
+                Toast.makeText(ctx, R.string.grand_location_permission_label, Toast.LENGTH_LONG).show();
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static void requestLocationPermissions(Activity activity, int requestCode) {
+        activity.requestPermissions(sLocationPermissions, requestCode);
     }
 
     void updateConfig() {
@@ -352,9 +375,9 @@ public class LocationService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        if (!checkLocationPermission(getApplicationContext())) {
+        if (!hasLocationPermission()) {
             stopSelf();
-            return  START_NOT_STICKY;
+            return START_NOT_STICKY;
         }
 
         updateNotification();
@@ -414,16 +437,6 @@ public class LocationService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return null;
-    }
-
-    private static boolean checkLocationPermission(Context context) {
-        if (!Utils.hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)) {
-            if (Logger.DEBUG) Logger.debug(TAG, "Missing location permission.");
-            Toast.makeText(context.getApplicationContext(), "Please grant location permission to Pentax Gallery", Toast.LENGTH_LONG).show();
-            return  false;
-        }
-
-        return  true;
     }
 
     private void acquireWakeLock() {
