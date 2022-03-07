@@ -83,6 +83,7 @@ import com.hmsoft.pentaxgallery.util.image.ImageCache;
 import com.hmsoft.pentaxgallery.util.image.ImageFetcher;
 import com.hmsoft.pentaxgallery.util.image.ImageRotatorFetcher;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -144,16 +145,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
         mImageThumbSize = getResources().getDimensionPixelSize(R.dimen.image_thumbnail_size);
         mImageThumbSpacing = getResources().getDimensionPixelSize(R.dimen.image_thumbnail_spacing);
-
-        ImageCache.ImageCacheParams cacheParams =
-                new ImageCache.ImageCacheParams(getActivity(), IMAGE_CACHE_DIR);
-
-        cacheParams.setMemCacheSizePercent(0.25f); // Set memory cache to 25% of app memory
-
-        // The ImageFetcher takes care of loading images into our ImageView children asynchronously
-        mImageFetcher = new ImageRotatorFetcher(getActivity(), mImageThumbSize);
-        mImageFetcher.setLoadingImage(R.drawable.empty_photo);
-        mImageFetcher.addImageCache(getActivity().getSupportFragmentManager(), cacheParams);
     }
 
     @SuppressLint("RestrictedApi")
@@ -200,7 +191,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             public void onScrollStateChanged(AbsListView absListView, int scrollState) {
                 // Pause fetcher to ensure smoother scrolling when flinging
                 if (scrollState != AbsListView.OnScrollListener.SCROLL_STATE_FLING) {
-                    mImageFetcher.setPauseWork(false);
+                    if (mImageFetcher != null) {
+                        mImageFetcher.setPauseWork(false);
+                    }
                 }
             }
 
@@ -292,12 +285,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     public void onResume() {
         super.onResume();
 
-        if(!Utils.hasAllPermissions()) {
-            Utils.requestAllPermissions(getActivity());
-        }
 
-        mImageFetcher.setCancel(false);
-        mImageFetcher.setExitTasksEarly(false);
 
         ImageList imageList = mCamera.getImageList();
 
@@ -313,7 +301,16 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
         } else {
             mProgressBar.setVisibility(View.GONE);
+            if (mImageFetcher == null) {
+                createImageFetcher();
+            }
         }
+
+        if (mImageFetcher != null) {
+            mImageFetcher.setCancel(false);
+            mImageFetcher.setExitTasksEarly(false);
+        }
+
         DownloadService.setOnDownloadFinishedListener(this);
         updateActionBarTitle();
 
@@ -338,9 +335,12 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             });
         }
 
-        mImageFetcher.setPauseWork(false);
-        mImageFetcher.setExitTasksEarly(true);
-        mImageFetcher.flushCache();
+        if (mImageFetcher != null) {
+            mImageFetcher.setPauseWork(false);
+            mImageFetcher.setExitTasksEarly(true);
+            mImageFetcher.flushCache();
+        }
+
         boolean cancelCacheThread = true;
 
         DownloadService.setOnDownloadFinishedListener(null);
@@ -354,7 +354,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             mCamera.getController().addCameraChangeListener(null);
         }
         super.onDestroy();
-        mImageFetcher.closeCache();
+        destroyImageFetcher();
         //CacheUtils.close();
         if(mImageListTask != null) {
             mImageListTask.cancel(true);
@@ -625,6 +625,32 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void createImageFetcher() {
+        if (mImageFetcher != null) {
+            destroyImageFetcher();
+        }
+
+        ImageCache.ImageCacheParams cacheParams =
+                new ImageCache.ImageCacheParams(getActivity(), Camera.instance.getCameraData().cameraId + File.separator + IMAGE_CACHE_DIR);
+
+        cacheParams.setMemCacheSizePercent(0.25f); // Set memory cache to 25% of app memory
+
+        // The ImageFetcher takes care of loading images into our ImageView children asynchronously
+        mImageFetcher = new ImageRotatorFetcher(getActivity(), mImageThumbSize);
+        mImageFetcher.setLoadingImage(R.drawable.empty_photo);
+        mImageFetcher.addImageCache(getActivity().getSupportFragmentManager(), cacheParams);
+        if (mAdapter.getItemHeight() > 0) {
+            mImageFetcher.setImageSize(mAdapter.getItemHeight());
+        }
+    }
+
+    private void destroyImageFetcher() {
+        if (mImageFetcher != null) {
+            mImageFetcher.closeCache();
+            mImageFetcher = null;
+        }
     }
 
     private void showView(boolean show, int itemId) {
@@ -1127,6 +1153,10 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             }
         }
 
+        public int getItemHeight() {
+            return  mItemHeight;
+        }
+
         public void selectItem(ImageData imageData) {
             mSelectionList.add(imageData);
             if(!isInBulkOperation()) {
@@ -1271,14 +1301,16 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             // setting a placeholder image while the background thread runs
             ImageList imageList = mCamera.getImageList();
             final ImageData imageData = imageList.getImage(position - mNumColumns);
-            mImageFetcher.loadImage(imageData.getThumbUrl(), imageData, imageView, new ImageFetcher.OnImageLoadedListener() {
-                public void onImageLoaded(boolean success) {
-                    Drawable drawable = imageView.getDrawable();
-                    if (success && drawable instanceof BitmapDrawable) {
-                        imageData.setThumbBitmap(((BitmapDrawable) drawable).getBitmap());
+            if (mImageFetcher != null) {
+                mImageFetcher.loadImage(imageData.getThumbUrl(), imageData, imageView, new ImageFetcher.OnImageLoadedListener() {
+                    public void onImageLoaded(boolean success) {
+                        Drawable drawable = imageView.getDrawable();
+                        if (success && drawable instanceof BitmapDrawable) {
+                            imageData.setThumbBitmap(((BitmapDrawable) drawable).getBitmap());
+                        }
                     }
-                }
-            });
+                });
+            }
 
             if(isItemSelected(imageData)) {
                 imageThumb.showAsSelected();
@@ -1304,7 +1336,11 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             mItemHeight = height;
             mImageViewLayoutParams =
                     new GridView.LayoutParams(LayoutParams.MATCH_PARENT, mItemHeight);
-            mImageFetcher.setImageSize(height);
+
+            if (mImageFetcher != null) {
+                mImageFetcher.setImageSize(height);
+            }
+
             notifyDataSetChanged();
         }
 
@@ -1476,6 +1512,9 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             mAdapter.notifyDataSetChanged();
 
             if(imageList != null) {
+
+                createImageFetcher();
+
                 mNeedUpdateImageList = false;
                 String msg = String.format(getString(R.string.pictures_loaded), mCamera.imageCount(), from);
                 Toast.makeText(ImageGridFragment.this.getContext(),  msg, Toast.LENGTH_LONG).show();

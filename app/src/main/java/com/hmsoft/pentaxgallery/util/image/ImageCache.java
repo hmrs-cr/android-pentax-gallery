@@ -135,7 +135,19 @@ public class ImageCache {
 
         //BEGIN_INCLUDE(init_memory_cache)
         // Set up memory cache
-        if (mCacheParams.memoryCacheEnabled) {
+        createMemoryCache();
+        //END_INCLUDE(init_memory_cache)
+
+        // By default the disk cache is not initialized here as it should be initialized
+        // on a separate thread due to disk access.
+        if (cacheParams.initDiskCacheOnCreate) {
+            // Set up disk cache
+            initDiskCache();
+        }
+    }
+
+    private void createMemoryCache() {
+        if (mCacheParams.memoryCacheEnabled && mMemoryCache == null) {
             if (BuildConfig.DEBUG) {
                 Logger.debug(TAG, "Memory cache created (size = " + mCacheParams.memCacheSize + ")");
             }
@@ -173,14 +185,6 @@ public class ImageCache {
                     return bitmapSize == 0 ? 1 : bitmapSize;
                 }
             };
-        }
-        //END_INCLUDE(init_memory_cache)
-
-        // By default the disk cache is not initialized here as it should be initialized
-        // on a separate thread due to disk access.
-        if (cacheParams.initDiskCacheOnCreate) {
-            // Set up disk cache
-            initDiskCache();
         }
     }
 
@@ -388,12 +392,7 @@ public class ImageCache {
      * this includes disk access so this should not be executed on the main/UI thread.
      */
     public void clearCache() {
-        if (mMemoryCache != null) {
-            mMemoryCache.evictAll();
-            if (BuildConfig.DEBUG) {
-                Logger.debug(TAG, "Memory cache cleared");
-            }
-        }
+        clearMemCache();
 
         synchronized (mDiskCacheLock) {
             mDiskCacheStarting = true;
@@ -408,6 +407,15 @@ public class ImageCache {
                 }
                 mDiskLruCache = null;
                 initDiskCache();
+            }
+        }
+    }
+
+    private void clearMemCache() {
+        if (mMemoryCache != null) {
+            mMemoryCache.evictAll();
+            if (BuildConfig.DEBUG) {
+                Logger.debug(TAG, "Memory cache cleared");
             }
         }
     }
@@ -436,6 +444,7 @@ public class ImageCache {
      * disk access so this should not be executed on the main/UI thread.
      */
     public void close() {
+        clearMemCache();
         synchronized (mDiskCacheLock) {
             if (mDiskLruCache != null) {
                 try {

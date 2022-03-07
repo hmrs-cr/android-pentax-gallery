@@ -22,6 +22,7 @@ package com.hmsoft.pentaxgallery.util.image;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.text.TextUtils;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.camera.Camera;
@@ -82,7 +83,8 @@ public class ImageFetcher extends ImageResizer {
     }
 
     private void init(Context context) {
-        mHttpCacheDir = Utils.getDiskCacheDir(context, HTTP_CACHE_DIR);
+        String cameraId = Camera.instance.getCameraData() != null ? Camera.instance.getCameraData().cameraId : null;
+        mHttpCacheDir = Utils.getDiskCacheDir(context, TextUtils.isEmpty(cameraId) ? HTTP_CACHE_DIR : cameraId + File.separator + HTTP_CACHE_DIR);
         mContentResolver = context.getContentResolver();
     }
 
@@ -169,30 +171,6 @@ public class ImageFetcher extends ImageResizer {
                 }
             }
         }
-    }
-
-    public boolean downloadUrlToCacheIfNeeded(String url) throws IOException {
-        DiskLruCache.Editor editor = null;
-        synchronized (mHttpDiskCacheLock) { 
-           while (mHttpDiskCacheStarting) {
-                try {
-                    mHttpDiskCacheLock.wait();
-                } catch (InterruptedException e) {
-                }
-            }
-            final String key = ImageCache.hashKeyForDisk(url);
-            if (!mHttpDiskCache.hasKey(key)) {
-                if(BuildConfig.DEBUG) Logger.debug(TAG, "Cache Key not found for " + url);
-                editor = mHttpDiskCache.edit(key);
-            } else if(BuildConfig.DEBUG) Logger.debug(TAG, "Cache Key found for " + url);
-        }
-      
-        boolean downloaded = false;
-        if(editor != null) {
-            downloaded = downloadUrlToCache(editor, url);
-        }
-      
-        return downloaded;
     }
   
     private boolean downloadUrlToCache(DiskLruCache.Editor editor, String url) throws IOException {
