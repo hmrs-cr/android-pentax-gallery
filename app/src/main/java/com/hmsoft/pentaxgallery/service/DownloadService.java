@@ -1,5 +1,7 @@
 package com.hmsoft.pentaxgallery.service;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.IntentService;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -7,6 +9,7 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
@@ -374,6 +377,36 @@ public class DownloadService extends IntentService {
         return localStorageUri;
     }
 
+    private static final String[] sWriteExternalStoragePermissions =  new String[]{
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+    };
+
+
+    private static long lastNoPermissionToast = 0;
+    public static boolean hasWriteExternalStoragePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            return true;
+        }
+
+        Context ctx = MyApplication.ApplicationContext;
+        for (String permission : sWriteExternalStoragePermissions) {
+            if (ctx.checkSelfPermission(permission) == PackageManager.PERMISSION_DENIED) {
+                if (Logger.DEBUG) Logger.debug(TAG, "Missing write external storage permission permission.");
+                if (SystemClock.elapsedRealtime() - lastNoPermissionToast > 5000) {
+                    TaskExecutor.executeOnUIThread(() -> Toast.makeText(ctx, R.string.grand_external_storage_permission_label, Toast.LENGTH_LONG).show());
+                    lastNoPermissionToast = SystemClock.elapsedRealtime();
+                }
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static void requestWriteExternalStoragePermissions(Activity activity, int requestCode) {
+        activity.requestPermissions(sWriteExternalStoragePermissions, requestCode);
+    }
+
     public static void toggleShutCameraDownWhenDone() {
         sShutCameraDownWhenDone = !sShutCameraDownWhenDone;
     }
@@ -441,8 +474,8 @@ public class DownloadService extends IntentService {
         Queue.saveToFile(cameraData);
     }
     
-    public static void processDownloadQueue() {
-        int added = Queue.processDownloadQueue(true);
+    public static int processDownloadQueue() {
+        return Queue.processDownloadQueue(true);
     }
     
     public static void setInBatchDownload(boolean inBatchDownload) {
@@ -459,6 +492,10 @@ public class DownloadService extends IntentService {
 
     public static String getQueueFinishETA() {
         return Queue.getETAString();
+    }
+
+    public static int getQueueSize() {
+        return Queue.size();
     }
 
     private static class Queue {
@@ -761,6 +798,10 @@ public class DownloadService extends IntentService {
             return  getETAString((float)sDownloadQueue.size());
         }
 
+        public static int size() {
+            return sDownloadQueue.size();
+        }
+
         private static String getETAString(float remainingDownloads) {
             String etaText = null;
             long elapsedRealTime = SystemClock.elapsedRealtime();
@@ -838,6 +879,10 @@ public class DownloadService extends IntentService {
         }
 
         /*private*/ static void download(DownloadEntry downloadEntry) {
+            if (!hasWriteExternalStoragePermission()) {
+                return;
+            }
+
             if(sWackeLock == null) {
                 sWackeLock = MyApplication.acquireWakeLock();
             }            
@@ -934,6 +979,10 @@ public class DownloadService extends IntentService {
         }
 
         public static int processDownloadQueue(boolean all) {
+            if (!hasWriteExternalStoragePermission()) {
+                return -1;
+            }
+
             int count = 0;
             if (all || !isDownloading()) {
                 DownloadEntry downloadEntry = null;

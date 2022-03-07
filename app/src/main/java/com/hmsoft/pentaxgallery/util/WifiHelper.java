@@ -43,6 +43,7 @@ import androidx.annotation.RequiresApi;
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.camera.controller.CameraController;
+import com.hmsoft.pentaxgallery.service.LocationService;
 
 import java.util.List;
 
@@ -52,7 +53,7 @@ public class WifiHelper {
 
     private static List<ScanResult> sLatestScanResults = null;
     private static boolean sScanResultsAvailable = false;
-  
+
     private static BroadcastReceiver wifiScanReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
@@ -63,65 +64,65 @@ public class WifiHelper {
           }
           setScanResultsAvailable(true);
       }
-    };  
-  
+    };
+
     private static synchronized void setScanResultsAvailable(boolean available) {
         sScanResultsAvailable = available;
     }
-  
+
     private static synchronized boolean areScanResultsAvailable() {
         return sScanResultsAvailable;
     }
-  
+
     public static void waitForScanResultsAvailable(long timeOut) {
         int c = 0;
         final int sleepms = 500;
-        
+
         while(!areScanResultsAvailable() && (c++ * sleepms) <  timeOut) {
             TaskExecutor.sleep(sleepms);
         }
-      
+
         if(BuildConfig.DEBUG) Logger.debug(TAG, "Scan results " + (areScanResultsAvailable() ? "" : "NOT ") + "available" +
                 (c > 0 ? " after " + ((c-1)*sleepms) + "ms" : ""));
     }
-  
+
     private static synchronized void updateScanResults(Context context) {
         final WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
-        
+
         if(wifiManager == null) {
             return ;
         }
         sLatestScanResults = wifiManager.getScanResults();
     }
-  
+
     public static boolean startWifiScan(Context context) {
        final WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
-        
+
         if(wifiManager == null) {
             return false;
         }
-      
+
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
         context.registerReceiver(wifiScanReceiver, intentFilter);
         setScanResultsAvailable(false);
         return wifiManager.startScan();
     }
-  
+
     public static synchronized List<ScanResult> getLatestScanResults() {
         if(sLatestScanResults == null) {
             updateScanResults(MyApplication.ApplicationContext);
         }
         return sLatestScanResults;
     }
-  
+
     public static void turnWifiOn(Context context, long waitTime) {
         final WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
-        
+
         if(wifiManager == null) {
             return ;
         }
-        
+
         if(!wifiManager.isWifiEnabled()) {
             wifiManager.setWifiEnabled(true);
             if(waitTime > 0) TaskExecutor.sleep(waitTime);
@@ -180,20 +181,22 @@ public class WifiHelper {
             return false;
         }
 
-        List<WifiConfiguration> list;
+        List<WifiConfiguration> list = null;
 
-        if (wifiManager.isWifiEnabled()) {
-            list = wifiManager.getConfiguredNetworks();
-        } else {
-            if (!wifiManager.setWifiEnabled(true)) {
-                Logger.error(TAG, "Enable WiFi failed");
-                return false;
-            }
-            c = 0;
-            do {
-                TaskExecutor.sleep(500L);
+        if (LocationService.hasLocationPermission()) {
+            if (wifiManager.isWifiEnabled()) {
                 list = wifiManager.getConfiguredNetworks();
-            } while (list == null && ++c < 10);
+            } else {
+                if (!wifiManager.setWifiEnabled(true)) {
+                    Logger.error(TAG, "Enable WiFi failed");
+                    return false;
+                }
+                c = 0;
+                do {
+                    TaskExecutor.sleep(500L);
+                    list = wifiManager.getConfiguredNetworks();
+                } while (list == null && ++c < 10);
+            }
         }
 
         if (list == null) {

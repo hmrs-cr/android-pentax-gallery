@@ -31,9 +31,11 @@ import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
@@ -100,12 +102,15 @@ public class ImageGridActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (getSupportFragmentManager().findFragmentByTag(TAG) == null) {
+        Fragment f = getSupportFragmentManager().findFragmentByTag(TAG);
+        if (!(f instanceof ImageGridFragment)) {
             final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
             fragment = new ImageGridFragment();
             ft.add(android.R.id.content, fragment, TAG);
             //ft.add(android.R.id.content, new ImageGalleryFragment(), TAG);
             ft.commit();
+        } else {
+            fragment = (ImageGridFragment)f;
         }
 
         final ActionBar actionBar = getSupportActionBar();
@@ -128,5 +133,13 @@ public class ImageGridActivity extends AppCompatActivity {
             case PreferencesActivity.RESULT_OK:
                 break;
         }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (fragment != null) {
+            fragment.requestPermissionsResult(requestCode, permissions, grantResults);
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 }

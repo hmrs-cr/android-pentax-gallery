@@ -46,6 +46,7 @@ public class LocationService extends Service {
     private static final String ACTION_UPDATE_CONFIG = BuildConfig.APPLICATION_ID + ".ACTION_UPDATES_CONFIG";
 
     private static final String TAG = "LocationService";
+    private static long lastNoPermissionToast;
 
     private AlarmManager mAlarm = null;
     private PendingIntent mAlarmLocationCallback = null;
@@ -126,7 +127,10 @@ public class LocationService extends Service {
         for (String permission : sLocationPermissions) {
             if (ctx.checkSelfPermission(permission) == PackageManager.PERMISSION_DENIED) {
                 if (Logger.DEBUG) Logger.debug(TAG, "Missing location permission.");
-                Toast.makeText(ctx, R.string.grand_location_permission_label, Toast.LENGTH_LONG).show();
+                if (SystemClock.elapsedRealtime() - lastNoPermissionToast > 9000) {
+                    TaskExecutor.executeOnUIThread(() -> Toast.makeText(ctx, R.string.grand_location_permission_label, Toast.LENGTH_LONG).show());
+                    lastNoPermissionToast = SystemClock.elapsedRealtime();
+                }
                 return false;
             }
         }

@@ -93,9 +93,8 @@ public class PreferencesActivity extends AppCompatActivity implements
         List<Fragment>  fragments = getSupportFragmentManager().getFragments();
         if(fragments.size() == 1 && fragments.get(0) instanceof PreferencesFragment) {
             ((PreferencesFragment)fragments.get(0)).requestPermissionsResult(requestCode, permissions, grantResults);
-        } else {
-            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     @Override

@@ -121,6 +121,7 @@
     <string name="stop_label">Stop</string>
     <string name="updating_location_label">Updating location...</string>
     <string name="grand_location_permission_label">Please grant location permission to Pentax Gallery</string>
+    <string name="grand_external_storage_permission_label">Please grant write external storage permission to Pentax Gallery</string>
 
     <string-array name="auto_shutdown_poweroff_transfer_options">
         <item>Never</item>

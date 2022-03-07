@@ -27,6 +27,7 @@ import android.app.SearchManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
@@ -59,6 +60,14 @@ import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.MenuCompat;
+import androidx.fragment.app.Fragment;
+import androidx.preference.SwitchPreferenceCompat;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.R;
@@ -73,12 +82,12 @@ import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageList;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
 import com.hmsoft.pentaxgallery.service.DownloadService;
+import com.hmsoft.pentaxgallery.service.StartLocationServiceReceiver;
 import com.hmsoft.pentaxgallery.ui.camera.CameraActivity;
 import com.hmsoft.pentaxgallery.ui.preferences.PreferencesActivity;
 import com.hmsoft.pentaxgallery.ui.widgets.ImageThumbWidget;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
-import com.hmsoft.pentaxgallery.util.Utils;
 import com.hmsoft.pentaxgallery.util.image.ImageCache;
 import com.hmsoft.pentaxgallery.util.image.ImageFetcher;
 import com.hmsoft.pentaxgallery.util.image.ImageRotatorFetcher;
@@ -87,12 +96,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.MenuCompat;
-import androidx.fragment.app.Fragment;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 /**
  * The main fragment that powers the ImageGridActivity screen. Fairly straight forward GridView
@@ -111,6 +114,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         SearchView.OnCloseListener, View.OnApplyWindowInsetsListener {
     private static final String TAG = "ImageGridFragment";
     private static final String IMAGE_CACHE_DIR = "thumbs";
+    private static final int WRITE_EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE = 8;
 
     private static ImageListTask mImageListTask = null;
 
@@ -756,6 +760,11 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     /*package*/ void downloadJpgs(boolean forceRefresh) {
 
+        if (!mCamera.isConnected()) {
+            Toast.makeText(this.getContext(), R.string.camera_not_connected_label, Toast.LENGTH_LONG).show();
+            return;
+        }
+
         List<ImageData> enqueue = getDownloadList();
         if ((mNeedUpdateImageList && (enqueue == null || enqueue.size() == 0)) || forceRefresh) {
             syncPictureList(mCamera.getCurrentStorageIndex(), true, false, true,
@@ -773,6 +782,27 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         }
     }
 
+    private boolean checkWriteExternalPermissions() {
+        boolean hasPermission = DownloadService.hasWriteExternalStoragePermission();
+        if (!hasPermission) {
+            DownloadService.requestWriteExternalStoragePermissions(this.getActivity(), WRITE_EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE);
+        }
+        return hasPermission;
+    }
+
+    void requestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (WRITE_EXTERNAL_STORAGE_PERMISSION_REQUEST_CODE == requestCode && grantResults.length == 1) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (DownloadService.getQueueSize() > 0) {
+                    showView(true, R.id.view_downloads_only);
+                }
+                if (DownloadService.processDownloadQueue() <= 0) {
+                    Toast.makeText(this.getActivity(), R.string.no_new_images_to_transfer, Toast.LENGTH_LONG).show();
+                };
+            }
+        }
+    }
+
     private void addToDownloadQueue(List<ImageData> enqueue) {
         if (enqueue != null && enqueue.size() > 0) {
             Toast.makeText(this.getActivity(), "Transferring " + enqueue.size() + " pictures", Toast.LENGTH_LONG).show();
@@ -781,11 +811,16 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 DownloadService.addDownloadQueue(imageData, true);
             }
             DownloadService.setInBatchDownload(true);
-            showView(true, R.id.view_downloads_only);
-        } else {
-            Toast.makeText(this.getActivity(), R.string.no_new_images_to_transfer, Toast.LENGTH_LONG).show();
         }
-        DownloadService.processDownloadQueue();
+
+        if (checkWriteExternalPermissions()) {
+            if (DownloadService.getQueueSize() > 0) {
+                showView(true, R.id.view_downloads_only);
+            }
+            if (DownloadService.processDownloadQueue() <= 0) {
+                Toast.makeText(this.getActivity(), R.string.no_new_images_to_transfer, Toast.LENGTH_LONG).show();
+            };
+        }
     }
 
     private List<ImageData> getDownloadList() {

@@ -19,6 +19,7 @@ import com.hmsoft.pentaxgallery.camera.model.ImageListData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
 import com.hmsoft.pentaxgallery.camera.util.HttpHelper;
+import com.hmsoft.pentaxgallery.service.LocationService;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 import com.hmsoft.pentaxgallery.util.Utils;
@@ -156,16 +157,23 @@ public class Camera implements CameraController.OnCameraDisconnectedListener {
 
                       if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
 
+                          boolean hasLocationPermission = LocationService.hasLocationPermission();
+
                           long wifiScanStartTime = SystemClock.elapsedRealtime();
                           while (!WifiHelper.isWifiInRange(cameraData.ssid)) {
-                              WifiHelper.startWifiScan(MyApplication.ApplicationContext);
-                              WifiHelper.waitForScanResultsAvailable(20000);
+                              if (hasLocationPermission) {
+                                  WifiHelper.startWifiScan(MyApplication.ApplicationContext);
+                                  WifiHelper.waitForScanResultsAvailable(20000);
+                              }
+
                               if (!WifiHelper.isWifiInRange(cameraData.ssid)) {
-                                  TaskExecutor.sleep(5000);
+                                  if (hasLocationPermission) {
+                                      TaskExecutor.sleep(5000);
+                                  }
                               }
 
                               long scanTotalTime = SystemClock.elapsedRealtime() - wifiScanStartTime;
-                              if (scanTotalTime > 30000) {
+                              if (scanTotalTime > (hasLocationPermission ? 30000 : 1000)) {
                                   break;
                               }
                           }
