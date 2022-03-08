@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.Properties;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 import androidx.preference.PreferenceDataStore;
 
 public class CameraPreferences extends PreferenceDataStore {
@@ -36,6 +37,7 @@ public class CameraPreferences extends PreferenceDataStore {
         context = MyApplication.ApplicationContext;
     }
 
+    @WorkerThread
     public void save() {
         if (settingsFile != null) {
             try {
@@ -179,5 +181,9 @@ public class CameraPreferences extends PreferenceDataStore {
             }
         }
         return volume;
+    }
+
+    public void setDownloadVolume(String volume) {
+        putString(context.getString(R.string.key_downloaded_images_location), volume);
     }
 }

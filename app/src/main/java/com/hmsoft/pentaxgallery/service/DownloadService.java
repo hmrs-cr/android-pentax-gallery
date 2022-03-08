@@ -35,6 +35,7 @@ import com.hmsoft.pentaxgallery.MyApplication;
 import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.Camera;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
+import com.hmsoft.pentaxgallery.camera.model.CameraPreferences;
 import com.hmsoft.pentaxgallery.camera.model.FilteredImageList;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageList;
@@ -353,13 +354,21 @@ public class DownloadService extends IntentService {
             values.put(MediaStore.MediaColumns.DATA, localPath.getAbsolutePath());
             localPath.getParentFile().mkdirs();
         } else {
-            String downloadVolume = camera.getPreferences().getDownloadVolume();
+            CameraPreferences camPrefs = camera.getPreferences();
+            String downloadVolume = camPrefs.getDownloadVolume();
             if (downloadVolume != null && !downloadVolume.equals(MediaStore.VOLUME_EXTERNAL_PRIMARY)) {
-                Uri uri =  MediaStore.Images.Media.getContentUri(downloadVolume);
-                StorageVolume sv = storageManager.getStorageVolume(uri);
-                if (Environment.MEDIA_MOUNTED.equals(sv.getState())) {
-                    contentUri = uri;
+                try {
+                    Uri uri = MediaStore.Images.Media.getContentUri(downloadVolume);
+                    StorageVolume sv = storageManager.getStorageVolume(uri);
+                    if (Environment.MEDIA_MOUNTED.equals(sv.getState())) {
+                        contentUri = uri;
+                    }
+                } catch (Exception e) {
+                    camPrefs.setDownloadVolume(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+                    camPrefs.save();
+                    Logger.warning(TAG, e.getLocalizedMessage());
                 }
+
             }
             values.put(MediaStore.MediaColumns.RELATIVE_PATH, camera.getImageRelativePath(imageData));
             values.put(MediaStore.Images.Media.IS_PENDING, 1);
