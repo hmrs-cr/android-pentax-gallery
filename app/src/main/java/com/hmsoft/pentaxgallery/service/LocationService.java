@@ -32,9 +32,7 @@ import com.hmsoft.pentaxgallery.camera.model.UpdateGpsLocationResponse;
 import com.hmsoft.pentaxgallery.data.LocationTable;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
-import com.hmsoft.pentaxgallery.util.Utils;
 
-import java.util.Date;
 import java.util.Locale;
 
 @SuppressLint("MissingPermission")
@@ -44,6 +42,7 @@ public class LocationService extends Service {
     private static final String ACTION_UPDATE_LOCATION = BuildConfig.APPLICATION_ID + ".UPDATE_LOCATION";
     private static final String ACTION_STOP_LOCATION_UPDATES = BuildConfig.APPLICATION_ID + ".STOP_LOCATION_UPDATES";
     private static final String ACTION_UPDATE_CONFIG = BuildConfig.APPLICATION_ID + ".ACTION_UPDATES_CONFIG";
+    private static final String EXTRA_MANUAL_LOCATION_UPDATE = "EXTRA_MANUAL_LOCATION_UPDATE";
 
     private static final String TAG = "LocationService";
     private static long lastNoPermissionToast;
@@ -77,6 +76,7 @@ public class LocationService extends Service {
     private PowerManager mPowerManager;
     private PowerManager.WakeLock mWakeLock;
     private PendingIntent mStopPendingIntent = null;
+    private PendingIntent mUpdateNowEndingIntent = null;
 
     public static void start(Context context) {
         start(context, ACTION_UPDATE_LOCATION);
@@ -166,6 +166,11 @@ public class LocationService extends Service {
         return enabled;
     }
 
+    static boolean canAutoStartAtBoot() {
+        boolean enabled =  MyApplication.getBooleanPref(R.string.key_enable_location_service_at_boot , R.string.default_enable_location_service_at_boot);
+        return enabled;
+    }
+
     void startLocationListener() {
         acquireWakeLock();
         if (mLocationManager == null) {
@@ -219,7 +224,7 @@ public class LocationService extends Service {
     }
 
     private void stopLocationListener() {
-        stopLocationListener(true);
+        stopLocationListener(sLocationUpdateInterval > 0);
     }
 
     private void stopLocationListener(boolean triggerNextAlarm) {
@@ -341,7 +346,7 @@ public class LocationService extends Service {
                     mLastSavedLocation = location;
                     if (Logger.DEBUG) logLocation(location, "Saved last best location.");
                     mLocationCount++;
-                    updateNotification();
+                    updateNotification(false);
                 });
             }
 
@@ -395,7 +400,10 @@ public class LocationService extends Service {
 
         switch (action) {
             case ACTION_UPDATE_LOCATION:
-                startLocationListener();
+                if (sLocationUpdateInterval > 0 || intent.hasExtra(EXTRA_MANUAL_LOCATION_UPDATE)) {
+                    startLocationListener();
+                    updateNotification();
+                }
                 break;
             case ACTION_STOP_LOCATION_UPDATES:
                 stopLocationListener(false);
@@ -405,18 +413,21 @@ public class LocationService extends Service {
                 stopSelf();
                 break;
             case ACTION_UPDATE_CONFIG:
+                stopPassiveLocationListener();
                 stopLocationListener(false);
                 updateConfig();
-                startLocationListener();
+                if (sLocationUpdateInterval > 0) {
+                    startLocationListener();
+                }
                 break;
         }
 
-        // Passive updates are always on.
-        if (mLocationManager == null) {
-            mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        if (sLocationUpdateInterval > 0 && mPassiveLocationListener == null) {
+            // Passive updates are always on.
             mPassiveLocationListener = new LocationListener(this, LocationManager.PASSIVE_PROVIDER);
-            mLocationManager.requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, 60000,
+            ((LocationManager)getSystemService(Context.LOCATION_SERVICE)).requestLocationUpdates(LocationManager.PASSIVE_PROVIDER, 60000,
                     mMinimumDistance / 2, mPassiveLocationListener);
+            if (Logger.DEBUG) Logger.debug(TAG, "PassiveLocationListener started");
         }
 
         return START_STICKY;
@@ -426,16 +437,21 @@ public class LocationService extends Service {
     public void onDestroy() {
         if (Logger.DEBUG) Logger.debug(TAG, "onDestroy");
 
-        if (mPassiveLocationListener != null && mLocationManager != null) {
-            mLocationManager.removeUpdates(mPassiveLocationListener);
-            mPassiveLocationListener.mService = null;
-            mPassiveLocationListener = null;
-        }
+        stopPassiveLocationListener();
 
         stopLocationListener(false);
         mAlarm.cancel(mAlarmLocationCallback);
 
         super.onDestroy();
+    }
+
+    private void stopPassiveLocationListener() {
+        if (mPassiveLocationListener != null && mLocationManager != null) {
+            mLocationManager.removeUpdates(mPassiveLocationListener);
+            mPassiveLocationListener.mService = null;
+            mPassiveLocationListener = null;
+            if (Logger.DEBUG) Logger.debug(TAG, "PassiveLocationListener stopped");
+        }
     }
 
     @Override
@@ -560,6 +576,17 @@ public class LocationService extends Service {
             mStopPendingIntent = PendingIntent.getService(getApplicationContext(), 0, i, 0);
         }
 
+        if (mUpdateNowEndingIntent == null) {
+            Intent i = new Intent(getApplicationContext(), LocationService.class);
+            i.setAction(ACTION_UPDATE_LOCATION);
+            i.putExtra(EXTRA_MANUAL_LOCATION_UPDATE, true);
+            mUpdateNowEndingIntent = PendingIntent.getService(getApplicationContext(), 10, i, 0);
+        }
+
+        if (contentIntent == null) {
+            contentIntent = mUpdateNowEndingIntent;
+        }
+
         NotificationCompat.Builder notificationBuilder = (new NotificationCompat.Builder(getApplicationContext(), MyApplication.NOTIFICATION_CHANNEL_ID)).
                 setAutoCancel(false).
                 setOngoing(true).
@@ -567,13 +594,10 @@ public class LocationService extends Service {
                 setContentText(contentText).
                 setSubText(getString(R.string.location_service_label)).
                 setSmallIcon(R.drawable.ic_stat_service).
+                addAction(R.drawable.ic_stat_service, getString(R.string.update_now_label), mUpdateNowEndingIntent).
                 addAction(R.drawable.ic_cancel_white_24dp,  getString(R.string.stop_label), mStopPendingIntent).
+                setContentIntent(contentIntent).
                 setShowWhen(when > 0);
-
-
-        if (contentIntent != null) {
-            notificationBuilder.setContentIntent(contentIntent);
-        }
 
         if (when > 0) {
             notificationBuilder.setWhen(when);
@@ -583,10 +607,15 @@ public class LocationService extends Service {
     }
 
     private void updateNotification() {
+        updateNotification(mLocationManager != null);
+    }
+
+    private void updateNotification(boolean locationRequestInProgress) {
+        boolean manualUpdates = sLocationUpdateInterval > 0;
         long when = 0;
         int accuracy = 0;
         String provider = "-";
-        String contentText = getString(R.string.updating_location_label);
+        String contentText = getString(manualUpdates || locationRequestInProgress ? R.string.updating_location_label : R.string.updating_location_manual_label);
         String contentTitle = getString(R.string.location_service_label);
 
         PendingIntent mapPendingIntent = null;
@@ -611,6 +640,10 @@ public class LocationService extends Service {
 
             contentText = getString(R.string.location_service_notification_content,
                     mLocationCount, accuracy, provider);
+
+            if (locationRequestInProgress) {
+                contentText += " - " + getString(R.string.updating_location_label);
+            }
 
             contentTitle = (mLastSavedLocation != null ?
                     String.format(Locale.US, "Last Location: %f,%f", mLastSavedLocation.getLatitude(), mLastSavedLocation.getLongitude()) :

@@ -21,6 +21,13 @@
             app:defaultValue="@string/default_enable_location_service"
             app:summary="@string/enable_location_service_summary"/>
 
+        <SwitchPreferenceCompat
+            app:key="@string/key_enable_location_service_at_boot"
+            app:title="@string/enable_location_service_at_boot_label"
+            app:defaultValue="@string/default_enable_location_service_at_boot"
+            app:summary="@string/enable_location_service_at_boot_summary"/>
+
+
         <ListPreference
             app:key="@string/key_location_update_interval"
             app:title="@string/location_update_interval_label"

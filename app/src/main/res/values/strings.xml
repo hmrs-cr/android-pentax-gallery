@@ -119,9 +119,14 @@
     <string name="camera_not_connected_label">Camera not connected.</string>
     <string name="auto_shutdown_poweroff_transfer_label">Shutdown when power-off transfer enabled</string>
     <string name="stop_label">Stop</string>
-    <string name="updating_location_label">Updating location...</string>
+    <string name="updating_location_label">Waiting for location fix</string>
+    <string name="updating_location_manual_label">Waiting for manual update</string>
     <string name="grand_location_permission_label">Please grant location permission to Pentax Gallery</string>
     <string name="grand_external_storage_permission_label">Please grant write external storage permission to Pentax Gallery</string>
+    <string name="update_now_label">Update now</string>
+    <string name="enable_location_service_at_boot_label">Start location service at boot</string>
+    <string name="default_enable_location_service_at_boot">true</string>
+    <string name="enable_location_service_at_boot_summary">Start location service (if enabled) at boot time</string>
 
     <string-array name="auto_shutdown_poweroff_transfer_options">
         <item>Never</item>
@@ -133,9 +138,6 @@
         <item>After 2 minutes</item>
         <item>After 3 minutes</item>
         <item>After 5 minutes</item>
-        <item>After 10 minutes</item>
-        <item>After 15 minutes</item>
-        <item>After 30 minutes</item>
     </string-array>
 
     <string-array name="auto_shutdown_poweroff_transfer_values">
@@ -148,9 +150,6 @@
         <item>120</item>
         <item>180</item>
         <item>300</item>
-        <item>600</item>
-        <item>900</item>
-        <item>1800</item>
     </string-array>
 
     <string-array name="main_action_options">
@@ -180,9 +179,7 @@
         <item>30 minutes</item>
         <item>45 minutes</item>
         <item>1 hour</item>
-        <item>4 hours</item>
-        <item>8 hours</item>
-        <item>12 hours</item>
+        <item>I will do it manually</item>
     </string-array>
 
     <string-array name="update_location_interval_options_values">
@@ -199,8 +196,6 @@
         <item>1800</item>
         <item>2700</item>
         <item>3600</item>
-        <item>14400</item>
-        <item>28800</item>
-        <item>43200</item>
+        <item>0</item>
     </string-array>
 </resources>

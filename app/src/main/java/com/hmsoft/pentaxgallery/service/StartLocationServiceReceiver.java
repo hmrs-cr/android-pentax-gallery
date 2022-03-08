@@ -20,7 +20,9 @@ public class StartLocationServiceReceiver extends BroadcastReceiver {
             Toast.makeText(context, "" + intent, Toast.LENGTH_LONG).show();
         }
 
-        LocationService.start(context);
+        if (LocationService.canAutoStartAtBoot()) {
+            LocationService.start(context);
+        }
     }
 
     public static void enable(Context context) {

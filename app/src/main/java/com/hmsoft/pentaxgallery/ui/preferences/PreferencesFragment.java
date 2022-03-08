@@ -65,7 +65,9 @@ public class PreferencesFragment extends PreferenceFragmentCompat implements Sha
         getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
         SwitchPreferenceCompat p = mPrefCategoryLocationService.findPreference(getString(R.string.key_enable_location_service));
         Preference intervalPref = mPrefCategoryLocationService.findPreference(getString(R.string.key_location_update_interval));
+        Preference startAtBootPref = mPrefCategoryLocationService.findPreference(getString(R.string.key_enable_location_service_at_boot));
         intervalPref.setEnabled(p.isChecked());
+        startAtBootPref.setEnabled(p.isChecked());
     }
 
     @Override
@@ -134,7 +136,9 @@ public class PreferencesFragment extends PreferenceFragmentCompat implements Sha
                 }
             }
             Preference intervalPref = mPrefCategoryLocationService.findPreference(getString(R.string.key_location_update_interval));
+            Preference startAtBootPref = mPrefCategoryLocationService.findPreference(getString(R.string.key_enable_location_service_at_boot));
             intervalPref.setEnabled(p.isChecked());
+            startAtBootPref.setEnabled(p.isChecked());
         }
     }
 
