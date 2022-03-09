@@ -664,14 +664,12 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         }
 
         mCamera.setImageFilter(null);
-        removeScreenOnFlag();
 
         int emptyViewText = R.string.no_pictures_in_camera;
         if(show) {
             switch (itemId) {
                 case R.id.view_downloads_only:
                     mCamera.setImageFilter(DownloadService.DownloadQueueFilter);
-                    addScreenOnFlag();
                     emptyViewText = R.string.all_pictures_transferred;
                     break;
                 case R.id.view_downloaded_only:
@@ -1010,25 +1008,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 }
                 updateEmptyViewText(viewText);
             }
-            removeScreenOnFlag();
-        }
-    }
-
-    private void removeScreenOnFlag() {
-        Window window = getActivity().getWindow();
-        int flags = window.getAttributes().flags;
-        if((flags & WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) != 0) {
-            getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-            if (Logger.DEBUG) Logger.debug(TAG, "removeScreenOnFlag");
-        }
-    }
-
-    private void addScreenOnFlag() {
-        Window window = getActivity().getWindow();
-        int flags = window.getAttributes().flags;
-        if((flags & WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) == 0) {
-            getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-            if (Logger.DEBUG) Logger.debug(TAG, "addScreenOnFlag");
         }
     }
 
