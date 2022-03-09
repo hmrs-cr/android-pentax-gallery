@@ -114,4 +114,7 @@ public interface CameraController {
 
     void updateCameraSetting(String key, String value, final CameraController.OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
     BaseResponse updateCameraSetting(String key, String value);
+
+    BaseResponse updateExposureCompensation(String xv);
+    void updateExposureCompensation(String xv, OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
 }

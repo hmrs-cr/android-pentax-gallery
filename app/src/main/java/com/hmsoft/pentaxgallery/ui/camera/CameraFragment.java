@@ -1,12 +1,18 @@
 package com.hmsoft.pentaxgallery.ui.camera;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.SystemClock;
+import android.util.Log;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -14,6 +20,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.Camera;
@@ -23,6 +30,7 @@ import com.hmsoft.pentaxgallery.camera.model.CameraChange;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
 import com.hmsoft.pentaxgallery.camera.model.CameraParams;
 import com.hmsoft.pentaxgallery.camera.model.PowerOffResponse;
+import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 
 import androidx.annotation.NonNull;
@@ -31,7 +39,9 @@ import androidx.fragment.app.Fragment;
 
 public class CameraFragment extends Fragment implements CameraController.OnLiveViewFrameReceivedListener,
         CameraController.OnCameraChangeListener,
-        CameraController.OnAsyncCommandExecutedListener {
+        CameraController.OnAsyncCommandExecutedListener,
+        GestureDetector.OnGestureListener,
+        GestureDetector.OnDoubleTapListener {
 
     private static final String TAG = "CameraFragment";
 
@@ -44,6 +54,7 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
     private CameraController cameraController = Camera.instance.getController();
 
     private static boolean sInLiveView;
+    private GestureDetector mDetector;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -72,14 +83,34 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
             }
         });
 
+        mDetector = new GestureDetector(getContext(), this);
+        mDetector.setOnDoubleTapListener(this);
+
+        mImageLiveView.setOnTouchListener((view, motionEvent) -> {
+            if (this.mDetector.onTouchEvent(motionEvent)) {
+                return true;
+            }
+            return false;
+        });
+
         CameraData cameraData = Camera.instance.getCameraData();
 
         mXvSeekBar = v.findViewById(R.id.xvSeekBar);
-        mXvSeekBar.setVisibility(View.GONE);
         mExposureCompensationBtn = v.findViewById(R.id.exposureCompensationBtn);
         if(cameraData != null) {
             final String[] xvList = cameraData.getParamList("xv");
             if(xvList != null) {
+
+                mExposureCompensationBtn.setOnClickListener(view -> new AlertDialog.Builder(getContext())
+                        .setTitle("Exposure compensation")
+                        .setItems(xvList, (dialogInterface, i) -> {
+                            String xv = xvList[i];
+                            mExposureCompensationBtn.setText(xv);
+                            mXvSeekBar.setProgress(i);
+                            updateExposureCompensation();
+                        }).setCancelable(true).show());
+
+
                 mXvSeekBar.setMax(xvList.length - 1);
                 mXvSeekBar.setTag(xvList);
                 mXvSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -91,12 +122,13 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
 
                     @Override
                     public void onStartTrackingTouch(SeekBar seekBar) {
-
+                        if (Logger.DEBUG) Logger.debug(TAG, "onStartTrackingTouch");
                     }
 
                     @Override
                     public void onStopTrackingTouch(SeekBar seekBar) {
-
+                        if (Logger.DEBUG) Logger.debug(TAG, "onStopTrackingTouch");
+                        updateExposureCompensation();
                     }
                 });
             }
@@ -107,6 +139,12 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
         cameraController.addCameraChangeListener(this);
 
         return v;
+    }
+
+    private void updateExposureCompensation() {
+        cameraController.updateExposureCompensation(mExposureCompensationBtn.getText().toString(), response -> {
+            if (Logger.DEBUG) Logger.debug(TAG, "updateExposureCompensation:" + response.errMsg);
+        });
     }
 
     /*private*/ void shoot() {
@@ -195,7 +233,7 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
     private void cameraNotConnected() {
         Context context = getContext();
         if (context != null) {
-            Toast.makeText(getContext(), "Camera not connected", Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), R.string.camera_not_connected_label, Toast.LENGTH_LONG).show();
         }
 
         Activity activity = getActivity();
@@ -248,5 +286,65 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
 
     public static boolean isInLiveView() {
         return sInLiveView;
+    }
+
+    @Override
+    public boolean onSingleTapConfirmed(MotionEvent motionEvent) {
+        if (Logger.DEBUG) Logger.debug(TAG, "onSingleTapConfirmed");
+        return false;
+    }
+
+    @Override
+    public boolean onDoubleTap(MotionEvent motionEvent) {
+        if (Logger.DEBUG) Logger.debug(TAG, "onDoubleTap");
+        return false;
+    }
+
+    @Override
+    public boolean onDoubleTapEvent(MotionEvent motionEvent) {
+        if (Logger.DEBUG) Logger.debug(TAG, "onDoubleTapEvent");
+        return false;
+    }
+
+    @Override
+    public boolean onDown(MotionEvent motionEvent) {
+        if (Logger.DEBUG) Logger.debug(TAG, "onDown");
+        return false;
+    }
+
+    @Override
+    public void onShowPress(MotionEvent motionEvent) {
+        if (Logger.DEBUG) Logger.debug(TAG, "onShowPress");
+
+    }
+
+    @Override
+    public boolean onSingleTapUp(MotionEvent motionEvent) {
+        if (Logger.DEBUG) Logger.debug(TAG, "onSingleTapUp");
+        return false;
+    }
+
+    long lastXvProgressIncrement;
+    @Override
+    public boolean onScroll(MotionEvent motionEvent, MotionEvent motionEvent1, float distanceX,
+                            float distanceY) {
+        if (SystemClock.elapsedRealtime() - lastXvProgressIncrement > 75) {
+            if (Logger.DEBUG) Logger.debug(TAG, "onScroll:" + distanceY);
+            mXvSeekBar.incrementProgressBy(distanceY > 0 ? 1 : -1);
+            updateExposureCompensation();
+            lastXvProgressIncrement = SystemClock.elapsedRealtime();
+        }
+        return false;
+    }
+
+    @Override
+    public void onLongPress(MotionEvent motionEvent) {
+        if (Logger.DEBUG) Logger.debug(TAG, "onLongPress");
+    }
+
+    @Override
+    public boolean onFling(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1) {
+        if (Logger.DEBUG) Logger.debug(TAG, "onFling");
+        return false;
     }
 }

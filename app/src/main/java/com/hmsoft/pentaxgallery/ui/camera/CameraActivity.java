@@ -2,10 +2,12 @@ package com.hmsoft.pentaxgallery.ui.camera;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.WindowManager;
 import android.widget.Toast;
@@ -15,6 +17,7 @@ import com.hmsoft.pentaxgallery.camera.Camera;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.MotionEventCompat;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
 
@@ -25,12 +28,12 @@ public class CameraActivity extends AppCompatActivity {
     private CameraFragment  fragment;
 
     public static void start(FragmentActivity activity) {
-        if (Camera.instance.isConnected()) {
+        //if (Camera.instance.isConnected()) {
             Intent i = new Intent(activity, CameraActivity.class);
             activity.startActivity(i);
-        } else {
+        /*} else {
             Toast.makeText(activity, R.string.camera_not_connected_label, Toast.LENGTH_SHORT).show();
-        }
+        }*/
     }
 
     @Override

@@ -57,7 +57,7 @@ import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 
 public class PentaxController implements CameraController {
-    
+
     private static final int NORMAL_CLOSURE_STATUS = 1000;
 
     private int connectTimeOut;
@@ -87,24 +87,35 @@ public class PentaxController implements CameraController {
     }
 
     protected String getImageInfoJson(ImageData imageData) {
-        return checkIfDisconnected(HttpHelper.getStringResponse(UrlHelper.getInfoUrl(imageData), connectTimeOut,  readTimeOut));
+        return checkIfDisconnected(HttpHelper.getStringResponse(UrlHelper.getInfoUrl(imageData), connectTimeOut, readTimeOut));
     }
 
     protected String powerOffJson() {
-        String response = checkIfDisconnected(HttpHelper.getStringResponse(UrlHelper.URL_POWEROFF, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.POST));
+        String response = checkIfDisconnected(HttpHelper.getStringResponse(UrlHelper.URL_POWEROFF, connectTimeOut, readTimeOut, HttpHelper.RequestMethod.POST));
         return response;
     }
 
     protected String shootJson() {
-        return checkIfDisconnected(HttpHelper.getStringResponse(UrlHelper.URL_SHOOT, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.POST));
+        return checkIfDisconnected(HttpHelper.getStringResponse(UrlHelper.URL_SHOOT, connectTimeOut, readTimeOut, HttpHelper.RequestMethod.POST));
     }
 
     protected String pingJson() {
-        return HttpHelper.getStringResponse(UrlHelper.URL_PING, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.GET);
+        return HttpHelper.getStringResponse(UrlHelper.URL_PING, connectTimeOut, readTimeOut, HttpHelper.RequestMethod.GET);
     }
 
     protected String focusJson() {
-        return checkIfDisconnected(HttpHelper.getStringResponse(UrlHelper.URL_FOCUS, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.POST));
+        return checkIfDisconnected(HttpHelper.getStringResponse(UrlHelper.URL_FOCUS, connectTimeOut, readTimeOut, HttpHelper.RequestMethod.POST));
+    }
+
+
+    protected String updateCameraCaptureSettingJson(String key, String value) throws IOException {
+        return checkIfDisconnected(HttpHelper.getStringResponse(
+                UrlHelper.URL_CAMERA_PARAMS,
+                connectTimeOut,
+                readTimeOut,
+                HttpHelper.RequestMethod.PUT,
+                "text/plain",
+                key + "=" + value));
     }
 
     protected String updateCameraSettingJson(String key, String value) throws IOException {
@@ -118,7 +129,7 @@ public class PentaxController implements CameraController {
     }
 
     private String getCameraParamsJson() {
-        return checkIfDisconnected(HttpHelper.getStringResponse(UrlHelper.URL_CAMERA_PARAMS, connectTimeOut,  readTimeOut, HttpHelper.RequestMethod.GET));
+        return checkIfDisconnected(HttpHelper.getStringResponse(UrlHelper.URL_CAMERA_PARAMS, connectTimeOut, readTimeOut, HttpHelper.RequestMethod.GET));
     }
 
     private String checkIfDisconnected(String response) {
@@ -135,17 +146,17 @@ public class PentaxController implements CameraController {
 
     private WebSocket cameraWebSocket;
     private List<OnCameraChangeListener> cameraChangeListeners = new LinkedList<>();
-    private WebSocketListener webSocketListener =  new WebSocketListener() {
+    private WebSocketListener webSocketListener = new WebSocketListener() {
         private static final String TAG = "CameraWebSocketClient";
 
         @Override
         public void onOpen(WebSocket webSocket, Response response) {
-            if(Logger.DEBUG) Logger.debug(TAG, "onOpen: " + response);
+            if (Logger.DEBUG) Logger.debug(TAG, "onOpen: " + response);
         }
 
         @Override
         public void onMessage(WebSocket webSocket, final String response) {
-            if(Logger.DEBUG) Logger.debug(TAG, "onMessage: " + response);
+            if (Logger.DEBUG) Logger.debug(TAG, "onMessage: " + response);
             for (OnCameraChangeListener listener : cameraChangeListeners) {
                 final OnCameraChangeListener cameraChangeListener = listener;
                 TaskExecutor.executeOnUIThread(new Runnable() {
@@ -164,21 +175,21 @@ public class PentaxController implements CameraController {
         @Override
         public void onClosing(WebSocket webSocket, int code, String reason) {
             webSocket.close(NORMAL_CLOSURE_STATUS, null);
-            if(Logger.DEBUG) Logger.debug(TAG, "onClosing: " + reason);
+            if (Logger.DEBUG) Logger.debug(TAG, "onClosing: " + reason);
         }
-      
+
         @Override
         public void onClosed(WebSocket webSocket, int code, String reason) {
             cameraWebSocket = null;
-            if(Logger.DEBUG) Logger.debug(TAG, "onClosed: " + reason);
+            if (Logger.DEBUG) Logger.debug(TAG, "onClosed: " + reason);
         }
 
         @Override
         public void onFailure(WebSocket webSocket, Throwable error, Response response) {
-          cameraWebSocket = null;
-          webSocket.close(NORMAL_CLOSURE_STATUS, null);  
-          if(error instanceof EOFException) {
-                
+            cameraWebSocket = null;
+            webSocket.close(NORMAL_CLOSURE_STATUS, null);
+            if (error instanceof EOFException) {
+
             } else {
                 Logger.warning(TAG, response != null ? response.toString() : "", error);
             }
@@ -188,7 +199,7 @@ public class PentaxController implements CameraController {
     public boolean connectToCamera() {
         return HttpHelper.bindToWifi();
     }
-  
+
     public BaseResponse ping() {
         String response = pingJson();
         try {
@@ -209,18 +220,18 @@ public class PentaxController implements CameraController {
             }
         });
     }
-    
-    public  CameraData getDeviceInfo() {
+
+    public CameraData getDeviceInfo() {
         CameraData cameraData = null;
         String response = getDeviceInfoJson();
-        if(response != null) {            
+        if (response != null) {
             try {
                 return new CameraData(response);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
-        
+
         return cameraData;
     }
 
@@ -228,10 +239,10 @@ public class PentaxController implements CameraController {
         return getImageList(null);
     }
 
-    public ImageListData getImageList(StorageData storage) {        
-        
+    public ImageListData getImageList(StorageData storage) {
+
         String response = getImageListJson(storage);
-        if(response != null) {
+        if (response != null) {
             try {
                 return createImageList(response);
             } catch (JSONException e) {
@@ -254,8 +265,9 @@ public class PentaxController implements CameraController {
                     if (response != null) {
                         imageData.setMetaData(new ImageMetaData(response));
                         imageData.saveData();
-                        if(BuildConfig.DEBUG) Logger.debug(imageData.fileName, "Image metadata loaded from camera");
-                    } else  {
+                        if (BuildConfig.DEBUG)
+                            Logger.debug(imageData.fileName, "Image metadata loaded from camera");
+                    } else {
                         imageData.setMetaData(imageData.readMetadata());
                     }
                 } catch (JSONException e) {
@@ -279,7 +291,7 @@ public class PentaxController implements CameraController {
     public BaseResponse powerOff() {
         String response = powerOffJson();
         try {
-            return  response != null ? new PowerOffResponse(response) : null;
+            return response != null ? new PowerOffResponse(response) : null;
         } catch (JSONException e) {
             e.printStackTrace();
             return null;
@@ -296,7 +308,7 @@ public class PentaxController implements CameraController {
     public BaseResponse updateCameraSetting(String key, String value) {
         try {
             String response = updateCameraSettingJson(key, value);
-            return  response != null ? new BaseResponse(response) : null;
+            return response != null ? new BaseResponse(response) : null;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -308,7 +320,7 @@ public class PentaxController implements CameraController {
             @Override
             public void run() {
                 BaseResponse response = powerOff();
-                if(onAsyncCommandExecutedListener != null) {
+                if (onAsyncCommandExecutedListener != null) {
                     TaskExecutor.executeOnUIThread(new CameraController.AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, response));
                 }
 
@@ -326,7 +338,7 @@ public class PentaxController implements CameraController {
             return;
         }
 
-        if(!this.cameraChangeListeners.contains(onCameraChangeListener)) {
+        if (!this.cameraChangeListeners.contains(onCameraChangeListener)) {
             this.cameraChangeListeners.add(onCameraChangeListener);
         }
 
@@ -346,7 +358,7 @@ public class PentaxController implements CameraController {
     }
 
     private void stopWebSocket() {
-        if(this.cameraWebSocket != null) {
+        if (this.cameraWebSocket != null) {
             this.cameraWebSocket.close(NORMAL_CLOSURE_STATUS, null);
             this.cameraWebSocket = null;
         }
@@ -367,36 +379,36 @@ public class PentaxController implements CameraController {
         private volatile static LiveViewThread instance;
 
         static synchronized void start(OkHttpClient httpClient,
-                                               OnLiveViewFrameReceivedListener listener) {
+                                       OnLiveViewFrameReceivedListener listener) {
 
-            if(instance == null) {
+            if (instance == null) {
                 instance = new LiveViewThread();
                 instance.httpClient = httpClient;
                 instance.start();
             }
             instance.listener = listener;
             instance.isPaused = false;
-            if(Logger.DEBUG) Logger.debug(TAG, "start");
+            if (Logger.DEBUG) Logger.debug(TAG, "start");
         }
 
         static synchronized void pause() {
-            if(instance != null) {
+            if (instance != null) {
                 instance.isPaused = true;
-                if(Logger.DEBUG) Logger.debug(TAG, "pause");
+                if (Logger.DEBUG) Logger.debug(TAG, "pause");
             }
         }
 
         static synchronized void finish() {
-            if(instance != null) {
+            if (instance != null) {
                 instance.isRunning = false;
                 instance.listener = null;
                 instance = null;
-                if(Logger.DEBUG) Logger.debug(TAG, "finish");
+                if (Logger.DEBUG) Logger.debug(TAG, "finish");
             }
         }
 
         private LiveViewThread() {
-            if(Logger.DEBUG) Logger.debug(TAG, "created");
+            if (Logger.DEBUG) Logger.debug(TAG, "created");
         }
 
         private volatile boolean isRunning;
@@ -418,7 +430,7 @@ public class PentaxController implements CameraController {
             OkHttpClient client = httpClient.newBuilder().readTimeout(0, TimeUnit.MILLISECONDS).build();
             try {
                 Response response = client.newCall(request).execute();
-                if(response.code() == 200) {
+                if (response.code() == 200) {
                     return new LiveViewInputStream(response.body().byteStream());
                 }
             } catch (IOException e) {
@@ -437,31 +449,31 @@ public class PentaxController implements CameraController {
                         int buffSize = inputStream.getFrame(buffer);
                         if (buffSize > 0 && !isPaused) {
                             byte[] frame = Arrays.copyOf(buffer, buffSize);
-                            if(listener != null) {
+                            if (listener != null) {
                                 listener.onLiveViewFrameReceived(frame);
                             }
                         } else {
-                            if(Logger.DEBUG) Logger.debug(TAG, "Paused:" + isPaused +
+                            if (Logger.DEBUG) Logger.debug(TAG, "Paused:" + isPaused +
                                     ", isRunning:" + isRunning + ", buffSize:" + buffSize);
                         }
                     }
                 } else {
-                    if(Logger.DEBUG) Logger.debug(TAG, "error");
-                    if(listener != null) {
+                    if (Logger.DEBUG) Logger.debug(TAG, "error");
+                    if (listener != null) {
                         listener.onLiveViewFrameReceived(null);
                     }
                 }
             } catch (Exception e) {
-                if(Logger.DEBUG) Logger.warning(TAG, "Thread error", e);
+                if (Logger.DEBUG) Logger.warning(TAG, "Thread error", e);
             } finally {
-                if(inputStream != null) {
+                if (inputStream != null) {
                     try {
                         inputStream.close();
                     } catch (IOException ignored) {
 
                     }
                 }
-                if(Logger.DEBUG) Logger.debug(TAG, "Thread finished");
+                if (Logger.DEBUG) Logger.debug(TAG, "Thread finished");
                 isRunning = false;
                 instance = null;
             }
@@ -485,7 +497,7 @@ public class PentaxController implements CameraController {
     public BaseResponse shoot() {
         String response = shootJson();
         try {
-            return  response != null ? new BaseResponse(response) : null;
+            return response != null ? new BaseResponse(response) : null;
         } catch (JSONException e) {
             e.printStackTrace();
             return null;
@@ -497,7 +509,7 @@ public class PentaxController implements CameraController {
             @Override
             public void run() {
                 BaseResponse response = shoot();
-                if(onAsyncCommandExecutedListener != null) {
+                if (onAsyncCommandExecutedListener != null) {
                     TaskExecutor.executeOnUIThread(new CameraController.AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, response));
                 }
 
@@ -509,7 +521,7 @@ public class PentaxController implements CameraController {
     public BaseResponse focus() {
         String response = focusJson();
         try {
-            return  response != null ? new BaseResponse(response) : null;
+            return response != null ? new BaseResponse(response) : null;
         } catch (JSONException e) {
             e.printStackTrace();
             return null;
@@ -522,7 +534,7 @@ public class PentaxController implements CameraController {
             @Override
             public void run() {
                 BaseResponse response = focus();
-                if(onAsyncCommandExecutedListener != null) {
+                if (onAsyncCommandExecutedListener != null) {
                     TaskExecutor.executeOnUIThread(new CameraController.AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, response));
                 }
 
@@ -534,7 +546,7 @@ public class PentaxController implements CameraController {
     public CameraParams getCameraParams() {
         String response = getDeviceInfoJson();
         try {
-            return  response != null ? new CameraParams(response) : null;
+            return response != null ? new CameraParams(response) : null;
         } catch (JSONException e) {
             e.printStackTrace();
             return null;
@@ -547,7 +559,7 @@ public class PentaxController implements CameraController {
             @Override
             public void run() {
                 BaseResponse response = getCameraParams();
-                if(onAsyncCommandExecutedListener != null) {
+                if (onAsyncCommandExecutedListener != null) {
                     TaskExecutor.executeOnUIThread(new CameraController.AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, response));
                 }
 
@@ -560,7 +572,6 @@ public class PentaxController implements CameraController {
         try {
             return new BaseResponse(updateCameraSettingJson("geoTagging", enabled ? "on" : "off"));
         } catch (JSONException | IOException e) {
-            e.printStackTrace();
             return null;
         }
     }
@@ -587,9 +598,9 @@ public class PentaxController implements CameraController {
             }
 
             String gpsInfo = location.getLatitude() + "," +
-                             location.getLongitude() + "," +
-                             location.getAltitude() + "," +
-                             this.gpsDateTimeFormat.format(new Date(location.getTime())) + ",WGS84";
+                    location.getLongitude() + "," +
+                    location.getAltitude() + "," +
+                    this.gpsDateTimeFormat.format(new Date(location.getTime())) + ",WGS84";
 
             return new UpdateGpsLocationResponse(updateCameraSettingJson("gpsInfo", gpsInfo), gpsInfo);
         } catch (JSONException | IOException e) {
@@ -618,7 +629,7 @@ public class PentaxController implements CameraController {
                 this.cameraDateTimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
             }
 
-            String dateTimeStr =  this.cameraDateTimeFormat.format(dateTime);
+            String dateTimeStr = this.cameraDateTimeFormat.format(dateTime);
             return new BaseResponse(updateCameraSettingJson("datetime", dateTimeStr));
         } catch (Exception e) {
             e.printStackTrace();
@@ -628,13 +639,29 @@ public class PentaxController implements CameraController {
 
     @Override
     public void updateDateTime(final Date dateTime, OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {
-        TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
-            @Override
-            public void run() {
-                BaseResponse response = updateDateTime(dateTime);
-                if (onAsyncCommandExecutedListener != null) {
-                    TaskExecutor.executeOnUIThread(new CameraController.AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, response));
-                }
+        TaskExecutor.executeOnSingleThreadExecutor(() -> {
+            BaseResponse response = updateDateTime(dateTime);
+            if (onAsyncCommandExecutedListener != null) {
+                TaskExecutor.executeOnUIThread(new AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, response));
+            }
+        });
+    }
+
+    @Override
+    public BaseResponse updateExposureCompensation(String xv) {
+        try {
+            return new BaseResponse(updateCameraCaptureSettingJson("xv", xv));
+        } catch (JSONException | IOException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public void updateExposureCompensation(String xv, OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {
+        TaskExecutor.executeOnSingleThreadExecutor(() -> {
+            BaseResponse response = updateExposureCompensation(xv);
+            if (onAsyncCommandExecutedListener != null) {
+                TaskExecutor.executeOnUIThread(new AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, response));
             }
         });
     }
