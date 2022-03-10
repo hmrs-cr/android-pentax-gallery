@@ -4,10 +4,15 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="app/src/main/res/layout-land/fragment_camera.xml" value="0.25" />
+        <entry key="app/src/main/res/layout/activity_camera.xml" value="0.25225225225225223" />
         <entry key="app/src/main/res/layout/fragment_camera.xml" value="0.18" />
         <entry key="app/src/main/res/layout/image_detail_fragment.xml" value="0.15360360360360362" />
+        <entry key="app/src/main/res/layout/search_view.xml" value="0.17612612612612613" />
+        <entry key="app/src/main/res/layout/switch_item.xml" value="0.17612612612612613" />
         <entry key="app/src/main/res/layout/test.xml" value="0.20199275362318841" />
-        <entry key="app/src/main/res/menu/detail_menu.xml" value="0.19427083333333334" />
+        <entry key="app/src/main/res/menu/camera_menu.xml" value="0.33" />
+        <entry key="app/src/main/res/menu/detail_menu.xml" value="0.33" />
+        <entry key="app/src/main/res/menu/main_menu.xml" value="0.33" />
         <entry key="app/src/main/res/xml/camera_preferences.xml" value="0.33" />
         <entry key="app/src/main/res/xml/preferences.xml" value="0.1" />
       </map>

@@ -127,6 +127,9 @@
     <string name="enable_location_service_at_boot_label">Start location service at boot</string>
     <string name="default_enable_location_service_at_boot">true</string>
     <string name="enable_location_service_at_boot_summary">Start location service (if enabled) at boot time</string>
+    <string name="live_view">Live View</string>
+    <string name="power_of_camera">Power Of Camera</string>
+    <string name="are_you_sure">Are you sure?</string>
 
     <string-array name="auto_shutdown_poweroff_transfer_options">
         <item>Never</item>

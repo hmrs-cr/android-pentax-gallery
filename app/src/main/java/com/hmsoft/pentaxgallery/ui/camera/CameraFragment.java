@@ -1,7 +1,9 @@
 package com.hmsoft.pentaxgallery.ui.camera;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -90,6 +92,7 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
             return false;
         });
 
+
         CameraData cameraData = Camera.instance.getCameraData();
 
         mXvSeekBar = v.findViewById(R.id.xvSeekBar);
@@ -166,10 +169,29 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
             case R.id.powerOff:
-                cameraController.powerOff(this);
+                new AlertDialog.Builder(getContext())
+                        .setNegativeButton(android.R.string.no, null)
+                        .setPositiveButton(android.R.string.yes, (dialogInterface, i) -> cameraController.powerOff(CameraFragment.this))
+                        .setTitle(R.string.power_of_camera)
+                        .setMessage(R.string.are_you_sure)
+                        .show();
+                return true;
+            case R.id.liveView:
+                toggleLiveView();
+                item.setChecked(sInLiveView);
                 return true;
         }
         return false;
+    }
+
+    private void toggleLiveView() {
+        if (sInLiveView) {
+            cameraController.stopLiveView();
+            sInLiveView = false;
+        } else {
+            cameraController.startLiveView(this);
+            sInLiveView = true;
+        }
     }
 
     @Override

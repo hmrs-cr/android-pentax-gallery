@@ -16,13 +16,21 @@
 -->
 <menu xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android" >
+<group android:id="@+id/lvGroup">
+    <item
+        android:id="@+id/liveView"
+        android:title="@string/live_view"
+        android:checkable="true"
+        android:checked="true"
+        app:showAsAction="never"/>
+</group>
 
-
-
+<group android:id="@+id/poGroup">
     <item
         android:id="@+id/powerOff"
         android:title="@string/power_off"
         android:icon="@android:drawable/ic_lock_power_off"
-        app:showAsAction="always"/>
+        app:showAsAction="never"/>
+</group>
 
 </menu>
