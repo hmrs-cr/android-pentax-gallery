@@ -103,8 +103,15 @@ public class PentaxController implements CameraController {
         return HttpHelper.getStringResponse(UrlHelper.URL_PING, connectTimeOut, readTimeOut, HttpHelper.RequestMethod.GET);
     }
 
-    protected String focusJson() {
-        return checkIfDisconnected(HttpHelper.getStringResponse(UrlHelper.URL_FOCUS, connectTimeOut, readTimeOut, HttpHelper.RequestMethod.POST));
+    protected String focusJson(int afpX, int afpY) {
+        String body = afpX > 0 && afpY > 0 ? "pos=" + afpX + "," + afpY : null;
+        return checkIfDisconnected(HttpHelper.getStringResponse(
+                UrlHelper.URL_FOCUS,
+                connectTimeOut,
+                readTimeOut,
+                HttpHelper.RequestMethod.POST,
+                null,
+                body));
     }
 
 
@@ -518,8 +525,8 @@ public class PentaxController implements CameraController {
     }
 
     @Override
-    public BaseResponse focus() {
-        String response = focusJson();
+    public BaseResponse focus(int afpX, int afpY) {
+        String response = focusJson(afpX, afpY);
         try {
             return response != null ? new BaseResponse(response) : null;
         } catch (JSONException e) {
@@ -529,11 +536,11 @@ public class PentaxController implements CameraController {
     }
 
     @Override
-    public void focus(final OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {
+    public void focus(int afpX, int afpY, final OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {
         TaskExecutor.executeOnSingleThreadExecutor(new Runnable() {
             @Override
             public void run() {
-                BaseResponse response = focus();
+                BaseResponse response = focus(afpX, afpY);
                 if (onAsyncCommandExecutedListener != null) {
                     TaskExecutor.executeOnUIThread(new CameraController.AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, response));
                 }

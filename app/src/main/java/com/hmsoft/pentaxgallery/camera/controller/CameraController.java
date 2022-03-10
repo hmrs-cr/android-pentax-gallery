@@ -97,8 +97,8 @@ public interface CameraController {
     BaseResponse shoot();
     void shoot(OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
 
-    BaseResponse focus();
-    void focus(OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
+    BaseResponse focus(int afpX, int afpY);
+    void focus(int afpX, int afpY, OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
 
     CameraParams getCameraParams();
     void getCameraParams(OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);

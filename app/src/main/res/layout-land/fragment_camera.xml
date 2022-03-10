@@ -24,20 +24,20 @@
 
 
 
-            <SeekBar
-                android:id="@+id/xvSeekBar"
-                style="@style/Widget.AppCompat.SeekBar.Discrete"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_gravity="left"
-                android:max="10"
-                android:progress="5"
-                android:progressDrawable="@android:color/transparent"
-                android:rotation="270"
-                android:splitTrack="false"/>
+        <SeekBar
+            android:id="@+id/xvSeekBar"
+            android:visibility="gone"
+            style="@style/Widget.AppCompat.SeekBar.Discrete"
+            android:layout_width="@dimen/margin_large"
+            android:layout_height="match_parent"
+            android:layout_gravity="left"
+            android:max="10"
+            android:progress="5"
+            android:progressDrawable="@android:color/transparent"
+            android:rotation="270"
+            android:splitTrack="false"/>
 
-
-    <FrameLayout
+        <FrameLayout
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="right"

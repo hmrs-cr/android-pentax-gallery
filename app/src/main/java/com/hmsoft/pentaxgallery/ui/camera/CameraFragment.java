@@ -1,14 +1,11 @@
 package com.hmsoft.pentaxgallery.ui.camera;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.SystemClock;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -20,7 +17,9 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.Camera;
@@ -32,9 +31,6 @@ import com.hmsoft.pentaxgallery.camera.model.CameraParams;
 import com.hmsoft.pentaxgallery.camera.model.PowerOffResponse;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
-
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
 
 
 public class CameraFragment extends Fragment implements CameraController.OnLiveViewFrameReceivedListener,
@@ -56,6 +52,10 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
     private static boolean sInLiveView;
     private GestureDetector mDetector;
 
+    private int mLiveViewOriginalLongSide;
+    private int mLiveViewOriginalShortSide;
+    private Float mLiveViewAspectRatio;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -76,11 +76,8 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
         });
 
         mImageLiveView = v.findViewById(R.id.liveImageView);
-        mImageLiveView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                focus();
-            }
+        mImageLiveView.setOnClickListener(v1 -> {
+            //focus();
         });
 
         mDetector = new GestureDetector(getContext(), this);
@@ -101,14 +98,10 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
             final String[] xvList = cameraData.getParamList("xv");
             if(xvList != null) {
 
-                mExposureCompensationBtn.setOnClickListener(view -> new AlertDialog.Builder(getContext())
-                        .setTitle("Exposure compensation")
-                        .setItems(xvList, (dialogInterface, i) -> {
-                            String xv = xvList[i];
-                            mExposureCompensationBtn.setText(xv);
-                            mXvSeekBar.setProgress(i);
-                            updateExposureCompensation();
-                        }).setCancelable(true).show());
+                mExposureCompensationBtn.setOnClickListener(view -> {
+                    updateXvUI("0.0");
+                    updateExposureCompensation();
+                });
 
 
                 mXvSeekBar.setMax(xvList.length - 1);
@@ -151,8 +144,22 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
         cameraController.shoot(this);
     }
 
-    /*private*/ void focus() {
-        cameraController.focus(this);
+    /*private*/ void focus(int afpX, int afpY) {
+        cameraController.focus(afpX, afpY, this);
+    }
+
+    boolean focus(MotionEvent motionEvent) {
+        int x = Math.round(motionEvent.getAxisValue(MotionEvent.AXIS_X));
+        int y = Math.round(motionEvent.getAxisValue(MotionEvent.AXIS_Y));
+        if (x <= getLiveViewWidth() && y <= getLiveViewHeight()) {
+            int afpX = Math.round((float)x / (float)getLiveViewWidth() * 100F);
+            int afpY =  Math.round((float)y / (float)getLiveViewHeight() * 100F);
+            if (Logger.DEBUG) Logger.debug(TAG, "Autofocus points:" + afpX + "/" + afpY);
+            focus(afpX, afpY);
+            return true;
+        }
+
+        return false;
     }
 
     @Override
@@ -219,15 +226,46 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
 
         if(mImageLiveView != null) {
             final Bitmap bitmap = BitmapFactory.decodeByteArray(frameData, 0, frameData.length);
+
             TaskExecutor.executeOnUIThread(new Runnable() {
                 @Override
                 public void run() {
                     if(mImageLiveView != null) {
+                        if (mLiveViewAspectRatio == null) {
+                            mLiveViewOriginalLongSide = Math.max(bitmap.getHeight(), bitmap.getWidth());
+                            mLiveViewOriginalShortSide = Math.min(bitmap.getHeight(), bitmap.getWidth());
+                            mLiveViewAspectRatio = (float)mLiveViewOriginalLongSide / (float)mLiveViewOriginalShortSide;
+                        }
                         mImageLiveView.setImageBitmap(bitmap);
                     }
                 }
             });
         }
+    }
+
+    private int getLiveViewWidth() {
+        int iw = this.mImageLiveView.getWidth();
+        int ih = this.mImageLiveView.getHeight();
+
+        if (iw < ih) {
+            return iw;
+        }
+
+
+        float aspectRatio = mLiveViewAspectRatio != null ? mLiveViewAspectRatio : 1;
+        return Math.round(ih * aspectRatio);
+    }
+
+    private int getLiveViewHeight() {
+        int iw = this.mImageLiveView.getWidth();
+        int ih = this.mImageLiveView.getHeight();
+
+        if (ih < iw) {
+            return ih;
+        }
+
+        float aspectRatio = mLiveViewAspectRatio != null ? mLiveViewAspectRatio : 1;
+        return Math.round(iw / aspectRatio);
     }
 
     private void cameraNotConnected() {
@@ -253,18 +291,30 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
         TaskExecutor.executeOnUIThread(new Runnable() {
             @Override
             public void run() {
-                String[] xvList = (String[])mXvSeekBar.getTag();
-                for(int c = 0; c < xvList.length; c++) {
-                    if (xvList[c].equals(params.xv)) {
-                        mXvSeekBar.setProgress(c);
-                        break;
-                    }
-                }
-
-                mExposureCompensationBtn.setText(params.xv);
+                updateXvUI(params.xv);
                 mExposureModeBtn.setText(params.exposureMode);
             }
         });
+    }
+
+    private int findXvPosition(String xv) {
+        String[] xvList = (String[])mXvSeekBar.getTag();
+        for(int c = 0; c < xvList.length; c++) {
+            if (xvList[c].equals(xv)) {
+                mXvSeekBar.setProgress(c);
+                break;
+            }
+        }
+
+        return -1;
+    }
+
+    private void updateXvUI(String xv) {
+        int pos = findXvPosition(xv);
+        if (pos > -1) {
+            mXvSeekBar.setProgress(pos);
+            mExposureCompensationBtn.setText(xv);
+        }
     }
 
     private void updateCameraParams() {
@@ -282,6 +332,8 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
         } else if (response == null) {
             cameraNotConnected();
         }
+
+        if (Logger.DEBUG && response != null) Logger.debug(TAG, response.getClass().getName() + ": " + response.errMsg);
     }
 
     public static boolean isInLiveView() {
@@ -290,19 +342,22 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
 
     @Override
     public boolean onSingleTapConfirmed(MotionEvent motionEvent) {
-        if (Logger.DEBUG) Logger.debug(TAG, "onSingleTapConfirmed");
+        focus(motionEvent);
         return false;
     }
 
     @Override
     public boolean onDoubleTap(MotionEvent motionEvent) {
         if (Logger.DEBUG) Logger.debug(TAG, "onDoubleTap");
+        shoot();
         return false;
     }
 
     @Override
     public boolean onDoubleTapEvent(MotionEvent motionEvent) {
-        if (Logger.DEBUG) Logger.debug(TAG, "onDoubleTapEvent");
+        if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
+            if (Logger.DEBUG) Logger.debug(TAG, "onDoubleTapEvent:" + motionEvent);
+        }
         return false;
     }
 
@@ -328,12 +383,15 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
     @Override
     public boolean onScroll(MotionEvent motionEvent, MotionEvent motionEvent1, float distanceX,
                             float distanceY) {
-        if (SystemClock.elapsedRealtime() - lastXvProgressIncrement > 75) {
-            if (Logger.DEBUG) Logger.debug(TAG, "onScroll:" + distanceY);
-            mXvSeekBar.incrementProgressBy(distanceY > 0 ? 1 : -1);
-            updateExposureCompensation();
+        if (Math.abs(distanceY) > 1 && Math.abs(distanceX) < 8 && SystemClock.elapsedRealtime() - lastXvProgressIncrement > 75) {
+            //mXvSeekBar.incrementProgressBy(distanceY > 0 ? 1 : -1);
+            if (Logger.DEBUG) Logger.debug(TAG, "onScroll:" + distanceX + "/" + distanceY);
+            //updateExposureCompensation();
             lastXvProgressIncrement = SystemClock.elapsedRealtime();
+            return true;
         }
+
+        if (Logger.DEBUG) Logger.debug(TAG, "onScroll:" + motionEvent);
         return false;
     }
 

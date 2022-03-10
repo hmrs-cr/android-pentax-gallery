@@ -2,22 +2,18 @@ package com.hmsoft.pentaxgallery.ui.camera;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.WindowManager;
-import android.widget.Toast;
 
 import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.Camera;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.MotionEventCompat;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentTransaction;
 
@@ -90,7 +86,7 @@ public class CameraActivity extends AppCompatActivity {
                 fragment.shoot();
                 return true;
             case KeyEvent.KEYCODE_VOLUME_UP:
-                fragment.focus();
+                fragment.focus(0, 0);
                 return true;
         }
 
