@@ -6,7 +6,7 @@
     android:background="@drawable/background"
     tools:context=".ui.camera.CameraFragment">
 
-    <ImageView
+    <com.hmsoft.pentaxgallery.ui.camera.LiveViewImageView
         android:id="@+id/liveImageView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

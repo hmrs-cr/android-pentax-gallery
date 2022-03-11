@@ -1,5 +1,6 @@
 package com.hmsoft.pentaxgallery.ui.camera;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -35,7 +36,7 @@ import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 
 
-public class CameraFragment extends Fragment implements CameraController.OnLiveViewFrameReceivedListener,
+public class CameraFragment extends Fragment implements
         CameraController.OnCameraChangeListener,
         CameraController.OnAsyncCommandExecutedListener,
         GestureDetector.OnGestureListener,
@@ -43,26 +44,24 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
 
     private static final String TAG = "CameraFragment";
 
-    private ImageView mImageLiveView;
+    private LiveViewImageView mImageLiveView;
     private FloatingActionButton shutterActionButton;
     private SeekBar mXvSeekBar;
     private TextView mExposureCompensationBtn;
     private TextView mExposureModeBtn;
+    private boolean mNeedToUpdateXv = false;
 
     private CameraController cameraController = Camera.instance.getController();
 
     private static boolean sInLiveView;
     private GestureDetector mDetector;
 
-    private int mLiveViewOriginalLongSide;
-    private int mLiveViewOriginalShortSide;
-    private Float mLiveViewAspectRatio;
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public View onCreateView(LayoutInflater inflater, final ViewGroup container,
                              Bundle savedInstanceState) {
@@ -86,6 +85,12 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
         mDetector.setOnDoubleTapListener(this);
 
         mImageLiveView.setOnTouchListener((view, motionEvent) -> {
+            if (motionEvent.getAction() == MotionEvent.ACTION_UP && mNeedToUpdateXv) {
+                updateExposureCompensation();
+                mNeedToUpdateXv = false;
+                return true;
+            }
+
             if (this.mDetector.onTouchEvent(motionEvent)) {
                 return true;
             }
@@ -152,14 +157,20 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
     }
 
     boolean focus(MotionEvent motionEvent) {
-        int x = Math.round(motionEvent.getAxisValue(MotionEvent.AXIS_X));
-        int y = Math.round(motionEvent.getAxisValue(MotionEvent.AXIS_Y));
-        if (x <= getLiveViewWidth() && y <= getLiveViewHeight()) {
-            int afpX = Math.round((float)x / (float)getLiveViewWidth() * 100F);
-            int afpY =  Math.round((float)y / (float)getLiveViewHeight() * 100F);
-            if (Logger.DEBUG) Logger.debug(TAG, "Autofocus points:" + afpX + "/" + afpY);
-            focus(afpX, afpY);
-            return true;
+        if (Camera.instance.isConnected()) {
+            int x = Math.round(motionEvent.getAxisValue(MotionEvent.AXIS_X));
+            int y = Math.round(motionEvent.getAxisValue(MotionEvent.AXIS_Y));
+            float lvw = mImageLiveView.getLiveViewWidth();
+            float lvh = mImageLiveView.getLiveViewHeight();
+            if (x <= lvw && y <= lvh) {
+                int afpX = Math.round((float) x / lvw * 100F);
+                int afpY = Math.round((float) y / lvh * 100F);
+                if (Logger.DEBUG) Logger.debug(TAG, "Autofocus points:" + afpX + "/" + afpY);
+
+                mImageLiveView.setFocusing(x, y);
+                focus(afpX, afpY);
+                return true;
+            }
         }
 
         return false;
@@ -189,7 +200,7 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
             cameraController.stopLiveView();
             sInLiveView = false;
         } else {
-            cameraController.startLiveView(this);
+            cameraController.startLiveView(mImageLiveView);
             sInLiveView = true;
         }
     }
@@ -207,7 +218,7 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
     @Override
     public void onStart() {
         super.onStart();
-        cameraController.startLiveView(this);
+        cameraController.startLiveView(mImageLiveView);
     }
 
     @Override
@@ -232,64 +243,6 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
         cameraController.removeCameraChangeListener(this);
     }
 
-    @Override
-    public void onLiveViewFrameReceived(byte[] frameData) {
-
-        if(frameData == null) {
-            TaskExecutor.executeOnUIThread(new Runnable() {
-                @Override
-                public void run() {
-                    cameraNotConnected();
-                }
-            });
-
-            return;
-        }
-
-        if(mImageLiveView != null) {
-            final Bitmap bitmap = BitmapFactory.decodeByteArray(frameData, 0, frameData.length);
-
-            TaskExecutor.executeOnUIThread(new Runnable() {
-                @Override
-                public void run() {
-                    if(mImageLiveView != null) {
-                        if (mLiveViewAspectRatio == null) {
-                            mLiveViewOriginalLongSide = Math.max(bitmap.getHeight(), bitmap.getWidth());
-                            mLiveViewOriginalShortSide = Math.min(bitmap.getHeight(), bitmap.getWidth());
-                            mLiveViewAspectRatio = (float)mLiveViewOriginalLongSide / (float)mLiveViewOriginalShortSide;
-                        }
-                        mImageLiveView.setImageBitmap(bitmap);
-                    }
-                }
-            });
-        }
-    }
-
-    private int getLiveViewWidth() {
-        int iw = this.mImageLiveView.getWidth();
-        int ih = this.mImageLiveView.getHeight();
-
-        if (iw < ih) {
-            return iw;
-        }
-
-
-        float aspectRatio = mLiveViewAspectRatio != null ? mLiveViewAspectRatio : 1;
-        return Math.round(ih * aspectRatio);
-    }
-
-    private int getLiveViewHeight() {
-        int iw = this.mImageLiveView.getWidth();
-        int ih = this.mImageLiveView.getHeight();
-
-        if (ih < iw) {
-            return ih;
-        }
-
-        float aspectRatio = mLiveViewAspectRatio != null ? mLiveViewAspectRatio : 1;
-        return Math.round(iw / aspectRatio);
-    }
-
     private void cameraNotConnected() {
         Context context = getContext();
         if (context != null) {
@@ -304,8 +257,14 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
 
     @Override
     public void onCameraChange(CameraChange change) {
-        if(change.isChanged(CameraChange.CHANGED_CAMERA)) {
+        if (change.isChanged(CameraChange.CHANGED_CAMERA)) {
             updateCameraParams();
+        } else if (change.isChanged(CameraChange.CHANGED_LENS)) {
+            if (change.focused) {
+                mImageLiveView.setFocused();
+            } else {
+                mImageLiveView.setNotFocused();
+            }
         }
     }
 
@@ -406,9 +365,9 @@ public class CameraFragment extends Fragment implements CameraController.OnLiveV
     public boolean onScroll(MotionEvent motionEvent, MotionEvent motionEvent1, float distanceX,
                             float distanceY) {
         if (Math.abs(distanceY) > 1 && Math.abs(distanceX) < 8 && SystemClock.elapsedRealtime() - lastXvProgressIncrement > 75) {
-            //mXvSeekBar.incrementProgressBy(distanceY > 0 ? 1 : -1);
+            mXvSeekBar.incrementProgressBy(distanceY > 0 ? 1 : -1);
             if (Logger.DEBUG) Logger.debug(TAG, "onScroll:" + distanceX + "/" + distanceY);
-            //updateExposureCompensation();
+            mNeedToUpdateXv = true;
             lastXvProgressIncrement = SystemClock.elapsedRealtime();
             return true;
         }

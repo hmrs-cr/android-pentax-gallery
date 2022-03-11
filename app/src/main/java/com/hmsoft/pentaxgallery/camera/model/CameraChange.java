@@ -11,12 +11,14 @@ public class CameraChange extends BaseResponse {
     public static final String ACTION_ADD = "add";
     public static final String CHANGED_STORAGE = "storage";
     public static final String CHANGED_CAMERA = "camera";
+    public static final String CHANGED_LENS = "lens";
 
     public final String changed;
     public final String action;
     public final String storage;
     public final String filepath;
     public final int captureId;
+    public final boolean focused;
 
     public CameraChange(String response) throws JSONException {
         this(new JSONTokener(response));
@@ -31,6 +33,7 @@ public class CameraChange extends BaseResponse {
         changed = jsonObject.optString("changed");
         action = jsonObject.optString("action");
         storage = jsonObject.optString("storage");
+        focused = jsonObject.optBoolean("focused");
         filepath = jsonObject.optString("filepath");
         captureId = jsonObject.optInt ("captureId", 0);
     }
