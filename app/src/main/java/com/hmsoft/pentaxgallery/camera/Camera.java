@@ -3,6 +3,7 @@ package com.hmsoft.pentaxgallery.camera;
 import android.os.Build;
 import android.os.Environment;
 import android.os.SystemClock;
+import android.util.Log;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
@@ -132,6 +133,15 @@ public class Camera implements CameraController.OnCameraDisconnectedListener {
               }
 
               if (cameraData != null) {
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !WifiHelper.isConnectedToDedicatedDeviceWifi()) {
+                      if (Logger.DEBUG) Logger.debug(TAG, "Not connected to dedicated device network.");
+                      if (WifiHelper.connectToWifi(MyApplication.ApplicationContext,
+                              cameraData.ssid, cameraData.key, this)) {
+                          if (Logger.DEBUG) Logger.debug(TAG, "Connected to dedicated device network.");
+                          continue;
+                      }
+                      if (Logger.DEBUG) Logger.debug(TAG, "Failed to connecte to dedicated device network.");
+                  }
                   mController.setPreferences(cameraData.preferences);
               } else {
 
