@@ -28,6 +28,7 @@ import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
 import android.provider.MediaStore;
 import android.view.Display;
+import android.view.KeyEvent;
 import android.view.Surface;
 import android.view.WindowManager;
 
@@ -141,5 +142,25 @@ public class ImageGridActivity extends AppCompatActivity {
             fragment.requestPermissionsResult(requestCode, permissions, grantResults);
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (super.onKeyDown(keyCode, event)) {
+            return true;
+        }
+
+        if(fragment == null) {
+            return false;
+        }
+
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_CAMERA:
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+                fragment.shoot();
+                return true;
+        }
+
+        return false;
     }
 }

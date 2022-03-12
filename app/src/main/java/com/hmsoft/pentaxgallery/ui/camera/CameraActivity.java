@@ -84,11 +84,10 @@ public class CameraActivity extends AppCompatActivity {
         }
 
         switch (keyCode) {
+            case KeyEvent.KEYCODE_CAMERA:
             case KeyEvent.KEYCODE_VOLUME_DOWN:
-                fragment.shoot();
-                return true;
             case KeyEvent.KEYCODE_VOLUME_UP:
-                fragment.focus(0, 0);
+                fragment.shoot();
                 return true;
         }
 

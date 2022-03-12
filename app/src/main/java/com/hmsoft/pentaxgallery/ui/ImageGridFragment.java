@@ -1109,6 +1109,10 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         return insets.consumeSystemWindowInsets();
     }
 
+    public void shoot() {
+        mCamera.getController().shoot(null);
+    }
+
     /**
      * The main adapter that backs the GridView. This is fairly standard except the number of
      * columns in the GridView is used to create a fake top row of empty views as we use a
