@@ -1103,8 +1103,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     @Override
     public WindowInsets onApplyWindowInsets(View v, WindowInsets insets) {
         FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) mMainActionButton.getLayoutParams();
-        layoutParams.setMargins(layoutParams.leftMargin, layoutParams.topMargin,layoutParams.rightMargin,
-                layoutParams.bottomMargin + insets.getSystemWindowInsetBottom());
+        int floatingBtnMargin = layoutParams.rightMargin;
+        layoutParams.setMargins(layoutParams.leftMargin, layoutParams.topMargin, floatingBtnMargin, floatingBtnMargin + insets.getSystemWindowInsetBottom());
         mMainActionButton.setLayoutParams(layoutParams);
         return insets.consumeSystemWindowInsets();
     }
