@@ -96,8 +96,16 @@ public class PentaxController implements CameraController {
         return response;
     }
 
-    protected String shootJson() {
-        return checkIfDisconnected(HttpHelper.getStringResponse(UrlHelper.URL_SHOOT, connectTimeOut, readTimeOut, HttpHelper.RequestMethod.POST));
+    protected String shootJson(int afpX, int afpY) {
+        String body = afpX > 0 && afpY > 0 ? "pos=" + afpX + "," + afpY + "&af=on" : null;
+        return checkIfDisconnected(
+                HttpHelper.getStringResponse(
+                        UrlHelper.URL_SHOOT,
+                        connectTimeOut,
+                        readTimeOut,
+                        HttpHelper.RequestMethod.POST,
+                        null,
+                        body));
     }
 
     protected String pingJson() {
@@ -502,14 +510,28 @@ public class PentaxController implements CameraController {
         LiveViewThread.finish();
     }
 
-    public BaseResponse shoot() {
-        String response = shootJson();
+    public ShootResponse shoot() {
+        return shoot(-1, -1);
+    }
+
+    public ShootResponse shoot(int afpX, int afpY) {
+        String response = shootJson(afpX, afpY);
         try {
             return response != null ? new ShootResponse(response) : null;
         } catch (JSONException e) {
             e.printStackTrace();
             return null;
         }
+    }
+
+    @Override
+    public void shoot(int afpX, int afpY, OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {
+        TaskExecutor.executeOnSingleThreadExecutor(() -> {
+            BaseResponse response = shoot(afpX, afpY);
+            if (onAsyncCommandExecutedListener != null) {
+                TaskExecutor.executeOnUIThread(new AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, response));
+            }
+        });
     }
 
     public void shoot(final OnAsyncCommandExecutedListener onAsyncCommandExecutedListener) {

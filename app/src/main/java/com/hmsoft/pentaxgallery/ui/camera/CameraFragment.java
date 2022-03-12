@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.view.GestureDetector;
@@ -157,28 +158,50 @@ public class CameraFragment extends Fragment implements
         cameraController.shoot(this);
     }
 
+    private void shoot(MotionEvent motionEvent) {
+        if (Camera.instance.isConnected() || BuildConfig.DEBUG) {
+            Point afp = getFocusPoint(motionEvent);
+            if (afp != null) {
+                shoot(afp.x, afp.y);
+            }
+        }
+    }
+
+    private void shoot(int x, int y) {
+        cameraController.shoot(x, y, this);
+    }
+
     /*private*/ void focus(int afpX, int afpY) {
         cameraController.focus(afpX, afpY, this);
     }
 
-    boolean focus(MotionEvent motionEvent) {
+    void focus(MotionEvent motionEvent) {
         if (Camera.instance.isConnected() || BuildConfig.DEBUG) {
-            int x = Math.round(motionEvent.getAxisValue(MotionEvent.AXIS_X));
-            int y = Math.round(motionEvent.getAxisValue(MotionEvent.AXIS_Y));
-            float lvw = mImageLiveView.getLiveViewWidth();
-            float lvh = mImageLiveView.getLiveViewHeight();
-            if (x <= lvw && y <= lvh) {
-                int afpX = Math.round((float) x / lvw * 100F);
-                int afpY = Math.round((float) y / lvh * 100F);
-                if (Logger.DEBUG) Logger.debug(TAG, "Autofocus points:" + afpX + "/" + afpY);
-
-                mImageLiveView.setFocusing(x, y);
-                focus(afpX, afpY);
-                return true;
+            Point afp = getFocusPoint(motionEvent);
+            if (afp != null) {
+                focus(afp.x, afp.y);
             }
         }
+    }
 
-        return false;
+    private Point getFocusPoint(MotionEvent motionEvent) {
+        int x = Math.round(motionEvent.getAxisValue(MotionEvent.AXIS_X));
+        int y = Math.round(motionEvent.getAxisValue(MotionEvent.AXIS_Y));
+
+        float lvw = mImageLiveView.getLiveViewWidth();
+        float lvh = mImageLiveView.getLiveViewHeight();
+
+        if (x <= lvw && y <= lvh) {
+            int afpX = Math.round((float) x / lvw * 100F);
+            int afpY = Math.round((float) y / lvh * 100F);
+
+            if (Logger.DEBUG) Logger.debug(TAG, "Autofocus points:" + afpX + "/" + afpY);
+            mImageLiveView.setFocusing(x, y);
+
+            return new Point(afpX, afpY);
+        }
+
+        return null;
     }
 
     @Override
@@ -342,7 +365,7 @@ public class CameraFragment extends Fragment implements
     @Override
     public boolean onDoubleTap(MotionEvent motionEvent) {
         if (Logger.DEBUG) Logger.debug(TAG, "onDoubleTap");
-        shoot();
+        shoot(motionEvent);
         return false;
     }
 

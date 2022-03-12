@@ -26,6 +26,7 @@ import com.hmsoft.pentaxgallery.camera.model.CameraParams;
 import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageListData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
+import com.hmsoft.pentaxgallery.camera.model.ShootResponse;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
 
 import org.json.JSONException;
@@ -94,7 +95,9 @@ public interface CameraController {
     void pauseLiveView();
     void stopLiveView();
 
-    BaseResponse shoot();
+    ShootResponse shoot();
+    ShootResponse shoot(int afpX, int afpY);
+    void shoot(int afpX, int afpY, OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
     void shoot(OnAsyncCommandExecutedListener onAsyncCommandExecutedListener);
 
     BaseResponse focus(int afpX, int afpY);
