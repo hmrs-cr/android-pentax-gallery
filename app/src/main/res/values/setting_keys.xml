@@ -41,7 +41,7 @@
     <string name="key_auto_sync_camera_time">auto_sync_camera_time</string>
     <string name="default_auto_sync_camera_time">true</string>
     <string name="key_auto_shutdown_poweroff_transfer">auto_shutdown_poweroff_transfer</string>
-    <string name="default_auto_shutdown_poweroff_transfer">3</string>
+    <string name="default_auto_shutdown_poweroff_transfer">120</string>
     <string name="key_enable_location_service_at_boot">enable_location_service_at_boot</string>
 
 </resources>
