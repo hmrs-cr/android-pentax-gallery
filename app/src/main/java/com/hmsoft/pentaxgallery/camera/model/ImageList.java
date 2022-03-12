@@ -16,6 +16,8 @@
 
 package com.hmsoft.pentaxgallery.camera.model;
 
+import android.text.TextUtils;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -78,6 +80,21 @@ public abstract class ImageList {
         ImageData imageData = createImageData(dirName, fileName);
         mImageList.add(imageData);
         return imageData;
+    }
+
+    public ImageData removeImage(String dirName, String fileName) {
+        if (TextUtils.isEmpty(dirName) || TextUtils.isEmpty(fileName)) {
+            return null;
+        }
+
+        for (int c = 0; c < mImageList.size(); c++) {
+            ImageData imageData = mImageList.get(c);
+            if (dirName.equals(imageData.directory) && fileName.equals(imageData.fileName)) {
+                return mImageList.remove(c);
+            }
+        }
+
+        return null;
     }
 
     public ImageData insertImage(String dirName, String fileName) {

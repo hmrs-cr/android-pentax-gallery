@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 public class CameraChange extends BaseResponse {
 
     public static final String ACTION_ADD = "add";
+    public static final String ACTION_DELETE = "delete";
     public static final String CHANGED_STORAGE = "storage";
     public static final String CHANGED_CAMERA = "camera";
     public static final String CHANGED_LENS = "lens";
@@ -49,6 +50,6 @@ public class CameraChange extends BaseResponse {
     }
 
     public boolean isChanged(String changed) {
-        return  this.changed != null && this.changed.equals(changed);
+        return this.changed != null && this.changed.equals(changed);
     }
 }

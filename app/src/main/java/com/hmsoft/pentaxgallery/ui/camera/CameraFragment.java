@@ -4,9 +4,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.view.GestureDetector;
@@ -15,7 +12,6 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,6 +20,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.R;
 import com.hmsoft.pentaxgallery.camera.Camera;
 import com.hmsoft.pentaxgallery.camera.controller.CameraController;
@@ -32,6 +29,7 @@ import com.hmsoft.pentaxgallery.camera.model.CameraChange;
 import com.hmsoft.pentaxgallery.camera.model.CameraData;
 import com.hmsoft.pentaxgallery.camera.model.CameraParams;
 import com.hmsoft.pentaxgallery.camera.model.PowerOffResponse;
+import com.hmsoft.pentaxgallery.camera.model.ShootResponse;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 
@@ -84,6 +82,7 @@ public class CameraFragment extends Fragment implements
         mDetector = new GestureDetector(getContext(), this);
         mDetector.setOnDoubleTapListener(this);
 
+        mImageLiveView.restoreState(savedInstanceState);
         mImageLiveView.setOnTouchListener((view, motionEvent) -> {
             if (motionEvent.getAction() == MotionEvent.ACTION_UP && mNeedToUpdateXv) {
                 updateExposureCompensation();
@@ -142,6 +141,12 @@ public class CameraFragment extends Fragment implements
         return v;
     }
 
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        mImageLiveView.saveState(outState);
+        super.onSaveInstanceState(outState);
+    }
+
     private void updateExposureCompensation() {
         cameraController.updateExposureCompensation(mExposureCompensationBtn.getText().toString(), response -> {
             if (Logger.DEBUG) Logger.debug(TAG, "updateExposureCompensation:" + response.errMsg);
@@ -157,7 +162,7 @@ public class CameraFragment extends Fragment implements
     }
 
     boolean focus(MotionEvent motionEvent) {
-        if (Camera.instance.isConnected()) {
+        if (Camera.instance.isConnected() || BuildConfig.DEBUG) {
             int x = Math.round(motionEvent.getAxisValue(MotionEvent.AXIS_X));
             int y = Math.round(motionEvent.getAxisValue(MotionEvent.AXIS_Y));
             float lvw = mImageLiveView.getLiveViewWidth();
@@ -212,7 +217,6 @@ public class CameraFragment extends Fragment implements
             mImageLiveView = getActivity().findViewById(R.id.liveImageView);
         }
         updateCameraParams();
-        sInLiveView = true;
     }
 
     @Override
@@ -225,8 +229,6 @@ public class CameraFragment extends Fragment implements
     public void onPause() {
         super.onPause();
         cameraController.pauseLiveView();
-        mImageLiveView = null;
-        sInLiveView = false;
     }
 
     @Override
@@ -309,6 +311,16 @@ public class CameraFragment extends Fragment implements
         } if (response instanceof PowerOffResponse) {
             if(response.success && getActivity() != null) {
                 getActivity().finish();
+            }
+        } else if (response instanceof ShootResponse) {
+            if (!response.success) {
+                new AlertDialog.Builder(getContext())
+                        .setIcon(android.R.drawable.stat_sys_warning)
+                        .setTitle(R.string.image_capture_failed)
+                        .setMessage(R.string.error_capturing_image)
+                        .setCancelable(true)
+                        .setPositiveButton(android.R.string.ok, null)
+                        .show();
             }
         } else if (response == null) {
             cameraNotConnected();

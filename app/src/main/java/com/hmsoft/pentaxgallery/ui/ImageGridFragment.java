@@ -1082,19 +1082,20 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     @Override
     public void onCameraChange(CameraChange change) {
         if(change.isChanged(CameraChange.CHANGED_STORAGE)) {
-            boolean added = false;
             if(change.filepath != null && change.filepath.length() > 0) {
-                ImageData imageData = mCamera.addImageToStorage(change.storage, change.filepath);
-                added = imageData != null;
-                if(added) {
-                    if ((imageData.isRaw && mCamera.getPreferences().autoDownloadRaw()) ||
-                            (!imageData.isRaw && mCamera.getPreferences().autoDownloadJpg())) {
+                if(change.isAction(CameraChange.ACTION_ADD)) {
+                    ImageData imageData = mCamera.addImageToStorage(change.storage, change.filepath);
+                    mNeedUpdateImageList = imageData == null;
+                    if (imageData != null && ((imageData.isRaw && mCamera.getPreferences().autoDownloadRaw()) ||
+                            (!imageData.isRaw && mCamera.getPreferences().autoDownloadJpg()))) {
                             DownloadService.addDownloadQueue(imageData, false);
                     }
                     mAdapter.notifyDataSetChanged();
+                } else if (change.isAction(CameraChange.ACTION_DELETE)) {
+                    mNeedUpdateImageList = !mCamera.removeImageFromStorage(change.storage, change.filepath);
+                    mAdapter.notifyDataSetChanged();
                 }
             }
-            mNeedUpdateImageList = !added;
         }
         if(BuildConfig.DEBUG) Logger.debug(TAG, change.toString());
     }

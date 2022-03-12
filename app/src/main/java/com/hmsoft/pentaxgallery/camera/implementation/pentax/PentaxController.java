@@ -30,6 +30,7 @@ import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageListData;
 import com.hmsoft.pentaxgallery.camera.model.ImageMetaData;
 import com.hmsoft.pentaxgallery.camera.model.PowerOffResponse;
+import com.hmsoft.pentaxgallery.camera.model.ShootResponse;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
 import com.hmsoft.pentaxgallery.camera.model.UpdateGpsLocationResponse;
 import com.hmsoft.pentaxgallery.camera.util.HttpHelper;
@@ -504,7 +505,7 @@ public class PentaxController implements CameraController {
     public BaseResponse shoot() {
         String response = shootJson();
         try {
-            return response != null ? new BaseResponse(response) : null;
+            return response != null ? new ShootResponse(response) : null;
         } catch (JSONException e) {
             e.printStackTrace();
             return null;
@@ -519,7 +520,6 @@ public class PentaxController implements CameraController {
                 if (onAsyncCommandExecutedListener != null) {
                     TaskExecutor.executeOnUIThread(new CameraController.AsyncCommandExecutedListenerRunnable(onAsyncCommandExecutedListener, response));
                 }
-
             }
         });
     }

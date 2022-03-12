@@ -770,7 +770,7 @@ public class DownloadService extends IntentService {
                 }
 
                 if(contentText != null) {
-                    int totalTime = Math.round((SystemClock.elapsedRealtime() - sStarDownloadTime) / 1000);
+                    int totalTime = Math.round((SystemClock.elapsedRealtime() - sStarDownloadTime) / 1000F);
                     if (totalTime > 0) {
                         String ataText = "Total: ";
                         if (totalTime < 60) {

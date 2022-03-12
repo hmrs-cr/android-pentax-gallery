@@ -381,6 +381,23 @@ public class Camera implements CameraController.OnCameraDisconnectedListener {
         return mController;
     }
 
+    public boolean removeImageFromStorage(String storage, String filepath) {
+        if(mCameraData != null) {
+            for (StorageData storageData : mCameraData.storages) {
+                if(storageData.name.equals(storage)) {
+                    File file = new File(filepath);
+                    String dirName = file.getParent();
+                    String fileName = file.getName();
+                    ImageData imageData = storageData.getImageList().removeImage(dirName, fileName);
+                    rebuildFilter(imageData);
+                    break;
+                }
+            }
+        }
+
+        return false;
+    }
+
     public ImageData addImageToStorage(String storage, String filepath) {
         ImageData imageData = null;
         if(mCameraData != null) {
@@ -394,14 +411,19 @@ public class Camera implements CameraController.OnCameraDisconnectedListener {
                     break;
                 }
             }
-            if(imageData != null && imageData.getStorageData().equals(getCurrentStorage())) {
-                if((imageData.isRaw && hasFilter(FilteredImageList.RawFilter)) ||
-                        (!imageData.isRaw && hasFilter(FilteredImageList.JpgFilter))) {
-                    rebuildFilter();
-                }
-            }
+
+            rebuildFilter(imageData);
         }
         return imageData;
+    }
+
+    private void rebuildFilter(ImageData imageData) {
+        if(imageData != null && imageData.getStorageData().equals(getCurrentStorage())) {
+            if((imageData.isRaw && hasFilter(FilteredImageList.RawFilter)) ||
+                    (!imageData.isRaw && hasFilter(FilteredImageList.JpgFilter))) {
+                rebuildFilter();
+            }
+        }
     }
 
     public void rebuildFilter() {

@@ -39,6 +39,7 @@ public class LiveViewImageView extends ImageView implements CameraController.OnL
     private final int mFocusFocusingColor = Color.rgb(255,255,255);
     private final int mFocusNotFocusedColor = Color.rgb(237,72,63);
     private final int mFocusSquareBorderStrokeColor = Color.rgb(22,22,22);
+    private Bundle mSavedState;
 
     public LiveViewImageView(Context context) {
         super(context);
@@ -88,6 +89,10 @@ public class LiveViewImageView extends ImageView implements CameraController.OnL
             mLiveViewOriginalShortSide = Math.min(bitmap.getHeight(), bitmap.getWidth());
             mLiveViewAspectRatio = (float)mLiveViewOriginalLongSide / (float)mLiveViewOriginalShortSide;
         }
+        if (mSavedState != null) {
+            this.restoreState(mSavedState);
+            mSavedState = null;
+        }
         super.setImageBitmap(bitmap);
     }
 
@@ -134,9 +139,9 @@ public class LiveViewImageView extends ImageView implements CameraController.OnL
     }
 
     private void setFocusSquareStartPoint(int fpX, int fpY) {
+        mFocusSquareDimen = Math.round(getLiveViewWidth() * FOCUS_BOX_SIZE_RELATION);
         mFocusSquareX = fpX - (mFocusSquareDimen / 2);
         mFocusSquareY = fpY - (mFocusSquareDimen / 2);
-        mFocusSquareDimen = Math.round(getLiveViewWidth() * FOCUS_BOX_SIZE_RELATION);
         mFocusSquareStrokeWidth = Math.round(mFocusSquareDimen * FOCUS_BOX_BORDER_SIZE_RELATION);
     }
 
@@ -169,5 +174,24 @@ public class LiveViewImageView extends ImageView implements CameraController.OnL
     public void removeFocusSquare() {
         setFocusSquareStartPoint(-1, -1);
         invalidate();
+    }
+
+
+    public void saveState(Bundle state) {
+        state.putFloat("X", (float)(mFocusSquareX + mFocusSquareDimen / 2) / getLiveViewWidth());
+        state.putFloat("Y", (float)(mFocusSquareY + mFocusSquareDimen / 2) / getLiveViewHeight());
+        state.putInt("C", mFocusSquareStrokeColor);
+    }
+
+    public void restoreState(Bundle state) {
+        if (mSavedState == null) {
+            mSavedState = state;
+        } else {
+            state = mSavedState;
+            int x = Math.round(getLiveViewWidth() * state.getFloat("X", -1));
+            int y =  Math.round(getLiveViewHeight() * state.getFloat("Y", -1));
+            setFocusSquareStartPoint(x, y);
+            mFocusSquareStrokeColor = state.getInt("C", mFocusFocusingColor);
+        }
     }
 }
