@@ -88,6 +88,6 @@ public class StorageData {
 
     public File getImageDataDirectory() {
         CameraData cameraData = getCameraData();
-        return new File(cameraData.getStorageDirectory(), FOLDER_IMAGES + File.separator + name);
+        return new File(cameraData.getCameraFilesDirectory(), FOLDER_IMAGES + File.separator + name);
     }
 }

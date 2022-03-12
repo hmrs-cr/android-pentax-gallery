@@ -19,7 +19,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.preference.EditTextPreference;
@@ -300,7 +299,7 @@ public class CameraPreferenceFragment extends PreferenceFragmentCompat implement
         }
 
         private void deleteCamera(final CameraData camera) {
-            File cameraDirectory = camera.getStorageDirectory();
+            File cameraDirectory = camera.getCameraFilesDirectory();
             deleteFolderRecursive(cameraDirectory);
             Camera.instance.loadCameraList();
         }

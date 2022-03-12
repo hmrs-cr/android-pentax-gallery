@@ -36,8 +36,6 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
-import okhttp3.internal.Util;
-
 public class CameraData extends BaseResponse {
 
     public static final String DEFAULT_CAMERA_ID = "default.camera.id";
@@ -66,7 +64,7 @@ public class CameraData extends BaseResponse {
     public final int hashCode;
 
     public final List<StorageData> storages = new LinkedList<>();
-    private File storageDirectory;
+    private File cameraFilesDirectory;
 
     public CameraData(String response) throws JSONException {
         this(new JSONTokener(response));
@@ -158,16 +156,16 @@ public class CameraData extends BaseResponse {
         return model;
     }
 
-    private static File getParentStorageDirectory() {
+    private static File getParentCameraFilesDirectory() {
         return new File(MyApplication.ApplicationContext.getFilesDir(), FOLDER_CAMERAS);
     }
 
-    public File getStorageDirectory() {
-        if(storageDirectory == null) {
-            storageDirectory = new File(getParentStorageDirectory(),cameraId);
-            storageDirectory.mkdirs();
+    public File getCameraFilesDirectory() {
+        if(cameraFilesDirectory == null) {
+            cameraFilesDirectory = new File(getParentCameraFilesDirectory(),cameraId);
+            cameraFilesDirectory.mkdirs();
         }
-        return storageDirectory;
+        return cameraFilesDirectory;
     }
 
     public void saveData() {
@@ -176,7 +174,7 @@ public class CameraData extends BaseResponse {
         }
         try {
             mJSONObject.put("dataAdded", DateFormat.format("yyyyMMddHHmmss", new Date()));
-            saveData(new File(getStorageDirectory(), FILE_NAME_CAMERA_DATA));
+            saveData(new File(getCameraFilesDirectory(), FILE_NAME_CAMERA_DATA));
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -198,7 +196,7 @@ public class CameraData extends BaseResponse {
     }
 
     public static List<CameraData> getRegisteredCameras() {
-        File folder = getParentStorageDirectory();
+        File folder = getParentCameraFilesDirectory();
 
         List<CameraData> result = null;
         if(folder.exists()) {

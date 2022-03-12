@@ -850,7 +850,7 @@ public class DownloadService extends IntentService {
             }
 
             try {
-                String json = Utils.readTextFile(new File(cameraData.getStorageDirectory(), FILE_NAME_DOWNLOAD_QUEUE));
+                String json = Utils.readTextFile(new File(cameraData.getCameraFilesDirectory(), FILE_NAME_DOWNLOAD_QUEUE));
                 JSONArray jsonArray = new JSONArray(json);
                 for (int c = 0; c < jsonArray.length(); c++) {
                     JSONObject jsonObject = jsonArray.getJSONObject(c);
@@ -877,7 +877,7 @@ public class DownloadService extends IntentService {
                 }
             }
             try {
-                Utils.saveTextFile(new File(cameraData.getStorageDirectory(), FILE_NAME_DOWNLOAD_QUEUE), jsonArray.toString());
+                Utils.saveTextFile(new File(cameraData.getCameraFilesDirectory(), FILE_NAME_DOWNLOAD_QUEUE), jsonArray.toString());
             } catch (IOException e) {
                 e.printStackTrace();
             }

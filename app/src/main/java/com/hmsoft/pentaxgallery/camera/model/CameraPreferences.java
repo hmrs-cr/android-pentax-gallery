@@ -32,7 +32,7 @@ public class CameraPreferences extends PreferenceDataStore {
     private final Context context;
 
     /*public*/ CameraPreferences(CameraData cameraData) {
-        settingsFile = cameraData != null ? new File(cameraData.getStorageDirectory(), "camera.settings") : null;
+        settingsFile = cameraData != null ? new File(cameraData.getCameraFilesDirectory(), "camera.settings") : null;
         properties = new Properties();
         context = MyApplication.ApplicationContext;
     }
