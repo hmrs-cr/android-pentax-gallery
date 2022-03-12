@@ -241,7 +241,7 @@ public class DownloadService extends IntentService {
                         output.write(data, 0, count);
 
                         int progress = (int) (total * 100 / fileLength);
-                        if (progress > lastProgress) {
+                        if (progress > lastProgress && (progress % 5) == 0) {
                             // publishing the progress....
                             resultData = new Bundle();
                             resultData.putInt(EXTRA_PROGRESS, progress);
