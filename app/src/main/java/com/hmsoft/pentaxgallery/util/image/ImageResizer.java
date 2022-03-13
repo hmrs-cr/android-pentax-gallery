@@ -23,6 +23,8 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
+import com.hmsoft.pentaxgallery.util.Logger;
+
 import java.io.FileDescriptor;
 
 /**
@@ -91,21 +93,26 @@ public abstract class ImageResizer extends UrlImageWorker {
     public static Bitmap decodeSampledBitmapFromDescriptor(
             FileDescriptor fileDescriptor, int reqWidth, int reqHeight, ImageCache cache) {
 
-        // First decode with inJustDecodeBounds=true to check dimensions
-        final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        BitmapFactory.decodeFileDescriptor(fileDescriptor, null, options);
+        try {
+            // First decode with inJustDecodeBounds=true to check dimensions
+            final BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            BitmapFactory.decodeFileDescriptor(fileDescriptor, null, options);
 
-        // Calculate inSampleSize
-        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+            // Calculate inSampleSize
+            options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
 
-        // Decode bitmap with inSampleSize set
-        options.inJustDecodeBounds = false;
+            // Decode bitmap with inSampleSize set
+            options.inJustDecodeBounds = false;
 
 
-        addInBitmapOptions(options, cache);
+            addInBitmapOptions(options, cache);
 
-        return BitmapFactory.decodeFileDescriptor(fileDescriptor, null, options);
+            return BitmapFactory.decodeFileDescriptor(fileDescriptor, null, options);
+        } catch (Exception e) {
+            Logger.warning(TAG, "Error decoding bitmap: " + e.getLocalizedMessage());
+            return null;
+        }
     }
 
     private static void addInBitmapOptions(BitmapFactory.Options options, ImageCache cache) {
