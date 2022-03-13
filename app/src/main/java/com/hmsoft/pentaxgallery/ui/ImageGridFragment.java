@@ -84,6 +84,7 @@ import com.hmsoft.pentaxgallery.camera.model.StorageData;
 import com.hmsoft.pentaxgallery.service.DownloadService;
 import com.hmsoft.pentaxgallery.service.StartLocationServiceReceiver;
 import com.hmsoft.pentaxgallery.ui.camera.CameraActivity;
+import com.hmsoft.pentaxgallery.ui.camera.CameraFragment;
 import com.hmsoft.pentaxgallery.ui.preferences.PreferencesActivity;
 import com.hmsoft.pentaxgallery.ui.widgets.ImageThumbWidget;
 import com.hmsoft.pentaxgallery.util.Logger;
@@ -750,7 +751,11 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         if (delay > 0 && camera.isConnected() && camera.getCameraData().powerOffTransfer) {
             TaskExecutor.executeOnUIThread(() -> {
                 if (DownloadService.isDownloading()) {
-                    camera.powerOff();
+                    if (!CameraFragment.isOpened()) {
+                        camera.powerOff();
+                    } else {
+                        powerOffCameraIfPowerOffTransferEnabled();
+                    }
                 }
             }, delay * 1000L);
         }

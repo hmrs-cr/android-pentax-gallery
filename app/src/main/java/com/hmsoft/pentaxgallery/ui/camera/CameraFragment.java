@@ -52,7 +52,9 @@ public class CameraFragment extends Fragment implements
 
     private CameraController cameraController = Camera.instance.getController();
 
+    private static CameraFragment sActiveInstance;
     private static boolean sInLiveView;
+
     private GestureDetector mDetector;
 
     @Override
@@ -244,6 +246,7 @@ public class CameraFragment extends Fragment implements
 
     @Override
     public void onStart() {
+        sActiveInstance = this;
         super.onStart();
         cameraController.startLiveView(mImageLiveView);
     }
@@ -256,6 +259,7 @@ public class CameraFragment extends Fragment implements
 
     @Override
     public void onStop() {
+        sActiveInstance = null;
         super.onStop();
         if(!(getActivity() != null && getActivity().isChangingConfigurations())) {
             cameraController.stopLiveView();
@@ -353,7 +357,13 @@ public class CameraFragment extends Fragment implements
     }
 
     public static boolean isInLiveView() {
-        return sInLiveView;
+        return sActiveInstance != null && sInLiveView;
+    }
+
+    public static boolean isOpened() {
+        boolean opened = sActiveInstance != null;
+        if (Logger.DEBUG) Logger.debug(TAG, "isOpened=" + opened);
+        return opened;
     }
 
     @Override
