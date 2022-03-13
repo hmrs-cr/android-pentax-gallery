@@ -45,8 +45,8 @@ public class LiveViewImageView extends ImageView implements CameraController.OnL
 
     private Bundle mSavedState;
 
-    private RectF mFocusArea;
-    private Rect mFocusAreaInPixels;
+    private RectF mRelativeFocusArea;
+    private Rect mFocusAreaRect;
 
     public LiveViewImageView(Context context) {
         super(context);
@@ -100,7 +100,7 @@ public class LiveViewImageView extends ImageView implements CameraController.OnL
             this.restoreState(mSavedState);
             mSavedState = null;
         }
-        setFocusAreaPoints();
+        setFocusAreaRect();
         super.setImageBitmap(bitmap);
     }
 
@@ -122,12 +122,12 @@ public class LiveViewImageView extends ImageView implements CameraController.OnL
     }
 
     private void drawFocusArea(Canvas canvas) {
-        if (mFocusAreaInPixels != null) {
+        if (mFocusAreaRect != null) {
             mFocusSquareStrokePaint.setStyle(Paint.Style.STROKE);
             mFocusSquareStrokePaint.setStrokeWidth(1);
             mFocusSquareStrokePaint.setColor(mFocusAreaColor);
 
-            canvas.drawRect(mFocusAreaInPixels, mFocusSquareStrokePaint);
+            canvas.drawRect(mFocusAreaRect, mFocusSquareStrokePaint);
         }
     }
 
@@ -162,22 +162,22 @@ public class LiveViewImageView extends ImageView implements CameraController.OnL
         mFocusSquareStrokeWidth = Math.round(mFocusSquareDimen * FOCUS_BOX_BORDER_SIZE_RELATION);
     }
 
-    private void setFocusAreaPoints() {
-        if (mFocusArea != null && mFocusAreaInPixels == null) {
+    private void setFocusAreaRect() {
+        if (mRelativeFocusArea != null && mFocusAreaRect == null) {
             float width = (float)getLiveViewWidth();
             float height = (float)getLiveViewHeight();
 
-            int l = Math.round(mFocusArea.left * width);
-            int t = Math.round(mFocusArea.top * height);
-            int r = Math.round(mFocusArea.right * width);
-            int b = Math.round(mFocusArea.bottom * height);
-            mFocusAreaInPixels = new Rect(l, t, r, b);
+            int left = Math.round(mRelativeFocusArea.left * width);
+            int top = Math.round(mRelativeFocusArea.top * height);
+            int right = Math.round(mRelativeFocusArea.right * width);
+            int bottom = Math.round(mRelativeFocusArea.bottom * height);
+            mFocusAreaRect = new Rect(left, top, right, bottom);
         }
     }
 
-    public void setFocusArea(RectF focusArea) {
-        mFocusArea = focusArea;
-        mFocusAreaInPixels = null;
+    public void setRelativeFocusArea(RectF focusArea) {
+        mRelativeFocusArea = focusArea;
+        mFocusAreaRect = null;
     }
 
     public void setFocusing(int fpX, int fpY) {
