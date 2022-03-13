@@ -303,6 +303,7 @@ public class CameraFragment extends Fragment implements
             public void run() {
                 updateXvUI(params.xv);
                 mExposureModeBtn.setText(params.exposureMode);
+                mImageLiveView.setFocusArea(params.focusEffectiveArea);
             }
         });
     }

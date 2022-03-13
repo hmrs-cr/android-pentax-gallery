@@ -7,6 +7,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.os.Bundle;
 import android.util.AttributeSet;
 import android.widget.ImageView;
@@ -39,7 +41,12 @@ public class LiveViewImageView extends ImageView implements CameraController.OnL
     private final int mFocusFocusingColor = Color.rgb(255,255,255);
     private final int mFocusNotFocusedColor = Color.rgb(237,72,63);
     private final int mFocusSquareBorderStrokeColor = Color.rgb(22,22,22);
+    private final int mFocusAreaColor = Color.rgb(255,255,255);
+
     private Bundle mSavedState;
+
+    private RectF mFocusArea;
+    private Rect mFocusAreaInPixels;
 
     public LiveViewImageView(Context context) {
         super(context);
@@ -93,6 +100,7 @@ public class LiveViewImageView extends ImageView implements CameraController.OnL
             this.restoreState(mSavedState);
             mSavedState = null;
         }
+        setFocusAreaPoints();
         super.setImageBitmap(bitmap);
     }
 
@@ -109,7 +117,18 @@ public class LiveViewImageView extends ImageView implements CameraController.OnL
     @Override
     public void onDrawForeground(Canvas canvas) {
         drawFocusSquare(canvas);
+        drawFocusArea(canvas);
         super.onDrawForeground(canvas);
+    }
+
+    private void drawFocusArea(Canvas canvas) {
+        if (mFocusAreaInPixels != null) {
+            mFocusSquareStrokePaint.setStyle(Paint.Style.STROKE);
+            mFocusSquareStrokePaint.setStrokeWidth(1);
+            mFocusSquareStrokePaint.setColor(mFocusAreaColor);
+
+            canvas.drawRect(mFocusAreaInPixels, mFocusSquareStrokePaint);
+        }
     }
 
 
@@ -134,8 +153,6 @@ public class LiveViewImageView extends ImageView implements CameraController.OnL
             canvas.drawRect(mFocusSquareX + mFocusSquareStrokeWidth, mFocusSquareY + mFocusSquareStrokeWidth,
                     right - mFocusSquareStrokeWidth, bottom - mFocusSquareStrokeWidth, mFocusSquareBorderStrokePaint);
         }
-
-        super.onDrawForeground(canvas);
     }
 
     private void setFocusSquareStartPoint(int fpX, int fpY) {
@@ -143,6 +160,24 @@ public class LiveViewImageView extends ImageView implements CameraController.OnL
         mFocusSquareX = fpX - (mFocusSquareDimen / 2);
         mFocusSquareY = fpY - (mFocusSquareDimen / 2);
         mFocusSquareStrokeWidth = Math.round(mFocusSquareDimen * FOCUS_BOX_BORDER_SIZE_RELATION);
+    }
+
+    private void setFocusAreaPoints() {
+        if (mFocusArea != null && mFocusAreaInPixels == null) {
+            float width = (float)getLiveViewWidth();
+            float height = (float)getLiveViewHeight();
+
+            int l = Math.round(mFocusArea.left * width);
+            int t = Math.round(mFocusArea.top * height);
+            int r = Math.round(mFocusArea.right * width);
+            int b = Math.round(mFocusArea.bottom * height);
+            mFocusAreaInPixels = new Rect(l, t, r, b);
+        }
+    }
+
+    public void setFocusArea(RectF focusArea) {
+        mFocusArea = focusArea;
+        mFocusAreaInPixels = null;
     }
 
     public void setFocusing(int fpX, int fpY) {
