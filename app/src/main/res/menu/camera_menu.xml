@@ -23,6 +23,13 @@
         android:checkable="true"
         android:checked="true"
         app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/drawFocusArea"
+        android:title="Draw Focus Area"
+        android:checkable="true"
+        android:checked="true"
+        app:showAsAction="never"/>
 </group>
 
 <group android:id="@+id/poGroup">

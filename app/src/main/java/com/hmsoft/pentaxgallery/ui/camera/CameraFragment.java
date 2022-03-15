@@ -9,6 +9,8 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -34,6 +36,8 @@ import com.hmsoft.pentaxgallery.camera.model.ShootResponse;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
 
+import org.json.JSONException;
+
 
 public class CameraFragment extends Fragment implements
         CameraController.OnCameraChangeListener,
@@ -56,10 +60,12 @@ public class CameraFragment extends Fragment implements
     private static boolean sInLiveView;
 
     private GestureDetector mDetector;
+    boolean mDrawFocusArea;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setDrawFocusArea(false);
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -221,8 +227,30 @@ public class CameraFragment extends Fragment implements
                 toggleLiveView();
                 item.setChecked(sInLiveView);
                 return true;
+            case R.id.drawFocusArea:
+                toggleDrawFocusArea();
+                item.setChecked(mDrawFocusArea);
+                return true;
         }
+
         return false;
+    }
+
+    private void setDrawFocusArea(boolean draw) {
+        mDrawFocusArea = !draw;
+        toggleDrawFocusArea();
+    }
+
+    private void toggleDrawFocusArea() {
+        if (mDrawFocusArea) {
+            mDrawFocusArea = false;
+            if (mImageLiveView != null) {
+                mImageLiveView.setRelativeFocusArea(null);
+            }
+        } else {
+            mDrawFocusArea = true;
+            updateCameraParams();
+        }
     }
 
     private void toggleLiveView() {
@@ -303,7 +331,7 @@ public class CameraFragment extends Fragment implements
             public void run() {
                 updateXvUI(params.xv);
                 mExposureModeBtn.setText(params.exposureMode);
-                mImageLiveView.setRelativeFocusArea(params.focusEffectiveArea);
+                mImageLiveView.setRelativeFocusArea(mDrawFocusArea ? params.focusEffectiveArea : null);
             }
         });
     }
@@ -329,7 +357,15 @@ public class CameraFragment extends Fragment implements
     }
 
     private void updateCameraParams() {
-        cameraController.getCameraParams(this);
+        if (Camera.instance.isConnected()) {
+            cameraController.getCameraParams(this);
+        } else if (BuildConfig.DEBUG) {
+            try {
+                updateCameraParams(new CameraParams("{}"));
+            } catch (JSONException e) {
+                // Ignore
+            }
+        }
     }
 
     @Override

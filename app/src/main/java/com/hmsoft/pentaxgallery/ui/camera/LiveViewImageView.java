@@ -41,7 +41,7 @@ public class LiveViewImageView extends ImageView implements CameraController.OnL
     private final int mFocusFocusingColor = Color.rgb(255,255,255);
     private final int mFocusNotFocusedColor = Color.rgb(237,72,63);
     private final int mFocusSquareBorderStrokeColor = Color.rgb(22,22,22);
-    private final int mFocusAreaColor = Color.rgb(255,255,255);
+    private final int mFocusAreaColor = Color.rgb(128,128,128);
 
     private Bundle mSavedState;
 
@@ -178,6 +178,8 @@ public class LiveViewImageView extends ImageView implements CameraController.OnL
     public void setRelativeFocusArea(RectF focusArea) {
         mRelativeFocusArea = focusArea;
         mFocusAreaRect = null;
+        setFocusAreaRect();
+        invalidate();
     }
 
     public void setFocusing(int fpX, int fpY) {
