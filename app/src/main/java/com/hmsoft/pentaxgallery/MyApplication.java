@@ -83,7 +83,9 @@ public class MyApplication extends Application {
         ApplicationContext = this;
         CrashCatcher.init();
         TaskExecutor.init();
-        createNotificationChannel();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            createNotificationChannel();
+        }
         super.onCreate();
     }   
 }

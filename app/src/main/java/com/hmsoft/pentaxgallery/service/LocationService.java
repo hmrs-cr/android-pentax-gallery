@@ -14,6 +14,7 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -106,7 +107,11 @@ public class LocationService extends Service {
         }
 
         if (hasLocationPermission()) {
-            context.startForegroundService(intent);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(intent);
+            } else {
+                context.startService(intent);
+            }
         }
     }
 
@@ -123,15 +128,17 @@ public class LocationService extends Service {
     };
 
     public static boolean hasLocationPermission() {
-        Context ctx = MyApplication.ApplicationContext;
-        for (String permission : sLocationPermissions) {
-            if (ctx.checkSelfPermission(permission) == PackageManager.PERMISSION_DENIED) {
-                if (Logger.DEBUG) Logger.debug(TAG, "Missing location permission.");
-                if (SystemClock.elapsedRealtime() - lastNoPermissionToast > 9000) {
-                    TaskExecutor.executeOnUIThread(() -> Toast.makeText(ctx, R.string.grand_location_permission_label, Toast.LENGTH_LONG).show());
-                    lastNoPermissionToast = SystemClock.elapsedRealtime();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Context ctx = MyApplication.ApplicationContext;
+            for (String permission : sLocationPermissions) {
+                if (ctx.checkSelfPermission(permission) == PackageManager.PERMISSION_DENIED) {
+                    if (Logger.DEBUG) Logger.debug(TAG, "Missing location permission.");
+                    if (SystemClock.elapsedRealtime() - lastNoPermissionToast > 9000) {
+                        TaskExecutor.executeOnUIThread(() -> Toast.makeText(ctx, R.string.grand_location_permission_label, Toast.LENGTH_LONG).show());
+                        lastNoPermissionToast = SystemClock.elapsedRealtime();
+                    }
+                    return false;
                 }
-                return false;
             }
         }
 
@@ -139,7 +146,9 @@ public class LocationService extends Service {
     }
 
     public static void requestLocationPermissions(Activity activity, int requestCode) {
-        activity.requestPermissions(sLocationPermissions, requestCode);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            activity.requestPermissions(sLocationPermissions, requestCode);
+        }
     }
 
     void updateConfig() {
@@ -280,8 +289,13 @@ public class LocationService extends Service {
             Toast.makeText(this, "Location alarm set to " + sLocationUpdateInterval + "s", Toast.LENGTH_LONG).show();
         }
 
-        mAlarm.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() +
-                sLocationUpdateInterval * 1000L, mAlarmLocationCallback);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            mAlarm.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() +
+                    sLocationUpdateInterval * 1000L, mAlarmLocationCallback);
+        } else {
+            mAlarm.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() +
+                    sLocationUpdateInterval * 1000L, mAlarmLocationCallback);
+        }
 
         if(Logger.DEBUG) Logger.debug(TAG, "Set alarm to %d seconds", sLocationUpdateInterval);
     }

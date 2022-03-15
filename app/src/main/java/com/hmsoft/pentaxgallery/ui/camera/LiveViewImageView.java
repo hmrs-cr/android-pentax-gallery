@@ -60,10 +60,6 @@ public class LiveViewImageView extends ImageView implements CameraController.OnL
         super(context, attrs, defStyleAttr);
     }
 
-    public LiveViewImageView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-    }
-
     public int getLiveViewWidth() {
         int iw = this.getWidth();
         int ih = this.getHeight();

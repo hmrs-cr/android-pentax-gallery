@@ -66,6 +66,8 @@ public class DownloadService extends IntentService {
 
     private static final String TAG = "DownloadService";
 
+    private final Camera camera = Camera.instance;
+
     private static int shouldCancelId = -1;
 
     public static final int ALLOWED_CONSECUTIVE_ERRORS = 3;
@@ -203,10 +205,9 @@ public class DownloadService extends IntentService {
             cancelDownload(-1);
 
             ImageData imageData = downloadEntry.getImageData();
-            Camera camera = Camera.instance;
 
             isNewMedia = imageData.getLocalStorageUri() == null;
-            mediaStoreUri = insertOrUpdateMediaStoreImage(cr, camera, imageData);
+            mediaStoreUri = insertOrUpdateMediaStoreImage(cr, imageData);
             if (mediaStoreUri == null) {
                 status = DOWNLOAD_STATUS_ERROR;
                 Logger.warning(TAG, "Failed to insert image in gallery " + imageData.fileName);
@@ -272,7 +273,7 @@ public class DownloadService extends IntentService {
                 }
 
                 if (camera.getPreferences().isUpdatePictureLocationEnabled()) {
-                    updateLocationInfo(cr, mediaStoreUri, camera.getImageInfo(imageData).getTime());
+                    updateLocationInfo(cr, mediaStoreUri, imageData);
                 }
             }
         } catch (Exception e) {
@@ -302,13 +303,17 @@ public class DownloadService extends IntentService {
     }
 
     private static final float[] ll = new float[2];
-    private void updateLocationInfo(ContentResolver cr, Uri mediaStoreUri, long time) {
+    private void updateLocationInfo(ContentResolver cr, Uri mediaStoreUri, ImageData imageData) {
+        long time = camera.getImageInfo(imageData).getTime();
         LocationTable.LatLong latLong = LocationService.getLocationAtTime(time);
         if (latLong != null) {
             if (Logger.DEBUG) Logger.debug(TAG, "Found location info for image: " + latLong.latitude + "," + latLong.longitude);
             try {
                 try (ParcelFileDescriptor fd = cr.openFileDescriptor(mediaStoreUri, "rw")) {
-                    ExifInterface ei = new ExifInterface(fd.getFileDescriptor());
+                    ExifInterface ei = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N
+                                         ? new ExifInterface(fd.getFileDescriptor())
+                                         : new ExifInterface(imageData.getLocalFilePath());
+
                     if (!ei.getLatLong(ll)) {
                         if (Logger.DEBUG) Logger.debug(TAG, "Updating exif location info");
                         ei.setAttribute(ExifInterface.TAG_GPS_LATITUDE, latLong.getLatGeoCoordinates());
@@ -328,7 +333,7 @@ public class DownloadService extends IntentService {
     }
 
     @Nullable
-    private Uri insertOrUpdateMediaStoreImage(ContentResolver cr, Camera camera, ImageData imageData) {
+    private Uri insertOrUpdateMediaStoreImage(ContentResolver cr, ImageData imageData) {
         StorageManager storageManager = (StorageManager) getSystemService(Context.STORAGE_SERVICE);
 
         ContentValues values = new ContentValues();
@@ -353,6 +358,7 @@ public class DownloadService extends IntentService {
                     camera.getImageLocalPath(imageData).getPath());
             values.put(MediaStore.MediaColumns.DATA, localPath.getAbsolutePath());
             localPath.getParentFile().mkdirs();
+            imageData.setLocalFilePath(localPath.getAbsolutePath());
         } else {
             CameraPreferences camPrefs = camera.getPreferences();
             String downloadVolume = camPrefs.getDownloadVolume();
@@ -368,7 +374,6 @@ public class DownloadService extends IntentService {
                     camPrefs.save();
                     Logger.warning(TAG, e.getLocalizedMessage());
                 }
-
             }
             values.put(MediaStore.MediaColumns.RELATIVE_PATH, camera.getImageRelativePath(imageData));
             values.put(MediaStore.Images.Media.IS_PENDING, 1);
@@ -393,27 +398,29 @@ public class DownloadService extends IntentService {
 
     private static long lastNoPermissionToast = 0;
     public static boolean hasWriteExternalStoragePermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q || Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             return true;
         }
 
         Context ctx = MyApplication.ApplicationContext;
         for (String permission : sWriteExternalStoragePermissions) {
-            if (ctx.checkSelfPermission(permission) == PackageManager.PERMISSION_DENIED) {
-                if (Logger.DEBUG) Logger.debug(TAG, "Missing write external storage permission permission.");
-                if (SystemClock.elapsedRealtime() - lastNoPermissionToast > 5000) {
-                    TaskExecutor.executeOnUIThread(() -> Toast.makeText(ctx, R.string.grand_external_storage_permission_label, Toast.LENGTH_LONG).show());
-                    lastNoPermissionToast = SystemClock.elapsedRealtime();
+                if (ctx.checkSelfPermission(permission) == PackageManager.PERMISSION_DENIED) {
+                    if (Logger.DEBUG) Logger.debug(TAG, "Missing write external storage permission permission.");
+                    if (SystemClock.elapsedRealtime() - lastNoPermissionToast > 5000) {
+                        TaskExecutor.executeOnUIThread(() -> Toast.makeText(ctx, R.string.grand_external_storage_permission_label, Toast.LENGTH_LONG).show());
+                        lastNoPermissionToast = SystemClock.elapsedRealtime();
+                    }
+                    return false;
                 }
-                return false;
-            }
         }
 
         return true;
     }
 
     public static void requestWriteExternalStoragePermissions(Activity activity, int requestCode) {
-        activity.requestPermissions(sWriteExternalStoragePermissions, requestCode);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            activity.requestPermissions(sWriteExternalStoragePermissions, requestCode);
+        }
     }
 
     public static void toggleShutCameraDownWhenDone() {
@@ -434,7 +441,11 @@ public class DownloadService extends IntentService {
         intent.putExtra(EXTRA_RECEIVER, Queue.DownloadResultReceiver);
         intent.putExtra(EXTRA_DOWNLOAD_ID, ++downloadId);
         downloadEntry.setDownloadId(downloadId);
-        context.startForegroundService(intent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent);
+        } else {
+            context.startService(intent);
+        }
         if(BuildConfig.DEBUG) Logger.debug(TAG, "Download added to service: " + downloadId);
         return downloadId;
     }

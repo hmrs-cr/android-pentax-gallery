@@ -58,6 +58,7 @@ public abstract class ImageData {
   
     private JSONObject mJSONObject;
     private Uri mLocalUri;
+    private String mLocalFilePath;
 
     public ImageData(String directory, String fileName) {
         this.directory = directory;
@@ -79,6 +80,14 @@ public abstract class ImageData {
     @Override
     public String toString() {
         return fullPath;
+    }
+
+    public void setLocalFilePath(String localFilePath) {
+        mLocalFilePath = localFilePath;
+    }
+
+    public String getLocalFilePath() {
+        return mLocalFilePath;
     }
 
     public void setThumbBitmap(Bitmap bitmap) {

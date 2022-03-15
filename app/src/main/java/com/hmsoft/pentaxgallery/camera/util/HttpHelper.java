@@ -20,7 +20,10 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
+import android.os.Build;
 import android.text.TextUtils;
+
+import androidx.annotation.RequiresApi;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
@@ -128,6 +131,7 @@ public final class HttpHelper {
         return null;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     public static boolean bindToWifi() {
         ConnectivityManager connectivityManager = (ConnectivityManager) MyApplication.ApplicationContext.getSystemService(Context.CONNECTIVITY_SERVICE);
         Network[] networks = connectivityManager.getAllNetworks();
@@ -146,6 +150,7 @@ public final class HttpHelper {
         return false;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     public static boolean unBindWifi() {
         ConnectivityManager connectivityManager = (ConnectivityManager) MyApplication.ApplicationContext.getSystemService(Context.CONNECTIVITY_SERVICE);
         connectivityManager.bindProcessToNetwork(null);

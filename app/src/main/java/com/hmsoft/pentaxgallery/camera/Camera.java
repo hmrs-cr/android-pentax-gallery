@@ -91,7 +91,9 @@ public class Camera implements CameraController.OnCameraDisconnectedListener {
 
     public boolean disconnect() {
         if (isConnected()) {
-            HttpHelper.unBindWifi();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                HttpHelper.unBindWifi();
+            }
             boolean result = WifiHelper.disconnect(MyApplication.ApplicationContext);
             if (result) {
                 mCameraConnected = false;

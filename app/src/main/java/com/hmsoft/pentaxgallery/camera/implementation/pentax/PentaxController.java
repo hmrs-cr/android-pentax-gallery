@@ -17,6 +17,7 @@
 package com.hmsoft.pentaxgallery.camera.implementation.pentax;
 
 import android.location.Location;
+import android.os.Build;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.camera.controller.CameraController;
@@ -213,7 +214,11 @@ public class PentaxController implements CameraController {
     };
 
     public boolean connectToCamera() {
-        return HttpHelper.bindToWifi();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            return HttpHelper.bindToWifi();
+        }
+
+        return true;
     }
 
     public BaseResponse ping() {

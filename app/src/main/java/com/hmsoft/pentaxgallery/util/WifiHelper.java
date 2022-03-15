@@ -149,6 +149,7 @@ public class WifiHelper {
         return true;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private static boolean disconnectQ(Context context) {
         if (networkCallback != null) {
             final ConnectivityManager connectivityManager = (ConnectivityManager)
