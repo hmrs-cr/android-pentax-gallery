@@ -29,6 +29,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
 import android.widget.Toast;
 
@@ -91,7 +92,7 @@ public class ImageDetailActivity extends AppCompatActivity implements OnClickLis
         mPager.addOnPageChangeListener(this);
 
         // Set up activity to go full screen
-        getWindow().addFlags(LayoutParams.FLAG_FULLSCREEN);
+        getWindow().addFlags(LayoutParams.FLAG_FULLSCREEN | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         // Enable some additional newer visibility and ActionBar features to create a more
         // immersive photo viewing experience

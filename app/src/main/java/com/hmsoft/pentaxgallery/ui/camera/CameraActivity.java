@@ -50,6 +50,7 @@ public class CameraActivity extends AppCompatActivity {
 
         Display display = ((WindowManager)getSystemService(WINDOW_SERVICE)).getDefaultDisplay();
         int rotation = display.getRotation();
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if(rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
             final ActionBar actionBar = getSupportActionBar();
