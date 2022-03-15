@@ -65,7 +65,7 @@ public class CameraActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.camera_menu, menu);
         MenuItem drawFocusAreMenuItem = menu.findItem(R.id.drawFocusArea);
         if (drawFocusAreMenuItem != null && fragment != null) {
-            drawFocusAreMenuItem.setChecked(fragment.sDrawFocusArea);
+            drawFocusAreMenuItem.setChecked(CameraFragment.sDrawFocusArea);
         }
         return true;
     }

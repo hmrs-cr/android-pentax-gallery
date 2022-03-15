@@ -19,6 +19,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.preference.EditTextPreference;
@@ -120,6 +121,7 @@ public class CameraPreferenceFragment extends PreferenceFragmentCompat implement
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     private String getVolumeDescription(String volumeName, StorageManager sm) {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
             Uri uri = MediaStore.Images.Media.getContentUri(volumeName);

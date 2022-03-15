@@ -23,6 +23,7 @@ import android.content.Context;
 import android.os.Build;
 import android.os.PowerManager;
 
+import androidx.annotation.RequiresApi;
 import androidx.preference.PreferenceManager;
 
 import com.hmsoft.pentaxgallery.service.DownloadService;
@@ -47,6 +48,7 @@ public class MyApplication extends Application {
         return wakeLock;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private static void createNotificationChannel() {
         Context context = MyApplication.ApplicationContext;
         String name = context.getString(R.string.download_notification_channel_name);

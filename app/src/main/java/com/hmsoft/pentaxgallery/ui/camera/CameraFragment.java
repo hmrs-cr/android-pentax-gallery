@@ -52,7 +52,7 @@ public class CameraFragment extends Fragment implements
     private TextView mExposureModeBtn;
     private boolean mNeedToUpdateXv = false;
 
-    private CameraController cameraController = Camera.instance.getController();
+    private final CameraController cameraController = Camera.instance.getController();
 
     private static CameraFragment sActiveInstance;
     private static boolean sInLiveView;
@@ -96,10 +96,7 @@ public class CameraFragment extends Fragment implements
                 return true;
             }
 
-            if (this.mDetector.onTouchEvent(motionEvent)) {
-                return true;
-            }
-            return false;
+            return this.mDetector.onTouchEvent(motionEvent);
         });
 
 

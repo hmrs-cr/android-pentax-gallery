@@ -93,18 +93,6 @@ public abstract class UrlImageWorker {
         }
     }
 
-    /**
-     * Load an image specified by the url parameter into an ImageView (override
-     * { UrlImageWorker#processBitmap(Object)} to define the processing logic). A memory and
-     * disk cache will be used if an {@link ImageCache} has been added using
-     * {@link UrlImageWorker#addImageCache(androidx.core.app.FragmentManager, ImageCache.ImageCacheParams)}. If the
-     * image is found in the memory cache, it is set immediately, otherwise an {@link AsyncTask}
-     * will be created to asynchronously load the bitmap.
-     *
-     * @param url The URL of the image to downloadDown.
-     * @param imageView The ImageView to bind the downloaded image to.
-     * @param listener A listener that will be called back once the image has been loaded.
-     */
     public void loadImage(String url, ImageData imageData, ImageView imageView, OnImageLoadedListener listener) {
         if (url == null) {
             return;
@@ -135,17 +123,6 @@ public abstract class UrlImageWorker {
     }
 
 
-    /**
-     * Load an image specified by the data parameter into an ImageView (override
-     * {  UrlImageWorker#processBitmap(Object)} to define the processing logic). A memory and
-     * disk cache will be used if an {@link ImageCache} has been added using
-     * {@link UrlImageWorker#addImageCache(androidx.core.app.FragmentManager, ImageCache.ImageCacheParams)}. If the
-     * image is found in the memory cache, it is set immediately, otherwise an {@link AsyncTask}
-     * will be created to asynchronously load the bitmap.
-     *
-     * @param url The URL of the image to downloadDown.
-     * @param imageView The ImageView to bind the downloaded image to.
-     */
     public void loadImage(String url, ImageData param, ImageView imageView) {
         loadImage(url, param, imageView, null);
     }

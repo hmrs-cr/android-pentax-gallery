@@ -74,7 +74,7 @@ public class ImageLocalFetcher extends ImageRotatorFetcher {
               bitmap = decodeSampledBitmapFromDescriptor(fileDescriptor.getFileDescriptor(), mImageWidth,
                       mImageHeight, getImageCache());
             
-              if(bitmap != null && imageData != null) {
+              if(bitmap != null) {
                   ImageMetaData metaData =  Camera.instance.getImageInfo(imageData);
                   if(metaData != null) {
                       bitmap = rotateBitmap(bitmap, metaData.orientationDegrees);

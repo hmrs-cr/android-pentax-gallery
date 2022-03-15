@@ -54,7 +54,7 @@ public class WifiHelper {
     private static List<ScanResult> sLatestScanResults = null;
     private static boolean sScanResultsAvailable = false;
 
-    private static BroadcastReceiver wifiScanReceiver = new BroadcastReceiver() {
+    private static final BroadcastReceiver wifiScanReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
           boolean success = intent.getBooleanExtra(

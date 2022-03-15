@@ -3,7 +3,8 @@ package com.hmsoft.pentaxgallery.camera;
 import android.os.Build;
 import android.os.Environment;
 import android.os.SystemClock;
-import android.util.Log;
+
+import androidx.annotation.WorkerThread;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
 import com.hmsoft.pentaxgallery.MyApplication;
@@ -31,8 +32,6 @@ import org.json.JSONException;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-
-import androidx.annotation.WorkerThread;
 
 public class Camera implements CameraController.OnCameraDisconnectedListener {
 

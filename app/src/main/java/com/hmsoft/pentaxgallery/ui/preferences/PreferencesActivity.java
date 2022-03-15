@@ -2,16 +2,8 @@ package com.hmsoft.pentaxgallery.ui.preferences;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.MenuItem;
-
-import com.hmsoft.pentaxgallery.R;
-import com.hmsoft.pentaxgallery.camera.Camera;
-import com.hmsoft.pentaxgallery.service.DownloadService;
-import com.hmsoft.pentaxgallery.service.LocationService;
-
-import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -21,6 +13,12 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
+
+import com.hmsoft.pentaxgallery.R;
+import com.hmsoft.pentaxgallery.camera.Camera;
+import com.hmsoft.pentaxgallery.service.DownloadService;
+
+import java.util.List;
 
 public class PreferencesActivity extends AppCompatActivity implements
         PreferenceFragmentCompat.OnPreferenceStartFragmentCallback,

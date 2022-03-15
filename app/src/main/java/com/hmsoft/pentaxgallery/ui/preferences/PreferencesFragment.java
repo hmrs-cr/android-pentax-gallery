@@ -9,17 +9,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Html;
 
-import com.hmsoft.pentaxgallery.R;
-import com.hmsoft.pentaxgallery.camera.Camera;
-import com.hmsoft.pentaxgallery.camera.model.CameraData;
-import com.hmsoft.pentaxgallery.service.LocationService;
-import com.hmsoft.pentaxgallery.service.StartLocationServiceReceiver;
-import com.hmsoft.pentaxgallery.util.Logger;
-import com.hmsoft.pentaxgallery.util.TaskExecutor;
-import com.hmsoft.pentaxgallery.util.Utils;
-
-import java.util.List;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.Preference;
@@ -27,17 +16,26 @@ import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreferenceCompat;
 
+import com.hmsoft.pentaxgallery.R;
+import com.hmsoft.pentaxgallery.camera.Camera;
+import com.hmsoft.pentaxgallery.camera.model.CameraData;
+import com.hmsoft.pentaxgallery.service.LocationService;
+import com.hmsoft.pentaxgallery.service.StartLocationServiceReceiver;
+import com.hmsoft.pentaxgallery.util.Utils;
+
+import java.util.List;
+
 public class PreferencesFragment extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 6;
-    private Camera camera = Camera.instance;
+    private final Camera camera = Camera.instance;
     private PreferenceCategory mPrefCategoryLocationService;
 
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mPrefCategoryLocationService = (PreferenceCategory)findPreference(getString(R.string.key_location_service_category));
+        mPrefCategoryLocationService = findPreference(getString(R.string.key_location_service_category));
     }
 
     @Override

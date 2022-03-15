@@ -53,13 +53,6 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 
-/**
- * This class handles disk and memory caching of bitmaps in conjunction with the
- * {@link UrlImageWorker} class and its subclasses. Use
- * {@link ImageCache#getInstance(androidx.core.app.FragmentManager, ImageCacheParams)} to get an instance of this
- * class, although usually a cache should be added directly to an {@link UrlImageWorker} by calling
- * {@link UrlImageWorker#addImageCache(androidx.core.app.FragmentManager, ImageCacheParams)}.
- */
 public class ImageCache {
     private static final String TAG = "ImageCache";
 
@@ -87,14 +80,6 @@ public class ImageCache {
 
     private Set<SoftReference<Bitmap>> mReusableBitmaps;
 
-    /**
-     * Create a new ImageCache object using the specified parameters. This should not be
-     * called directly by other classes, instead use
-     * {@link ImageCache#getInstance(androidx.core.app.FragmentManager, ImageCacheParams)} to fetch an ImageCache
-     * instance.
-     *
-     * @param cacheParams The cache parameters to use to initialize the cache
-     */
     private ImageCache(ImageCacheParams cacheParams) {
         init(cacheParams);
     }
@@ -475,15 +460,6 @@ public class ImageCache {
         public boolean diskCacheEnabled = DEFAULT_DISK_CACHE_ENABLED;
         public boolean initDiskCacheOnCreate = DEFAULT_INIT_DISK_CACHE_ON_CREATE;
 
-        /**
-         * Create a set of image cache parameters that can be provided to
-         * {@link ImageCache#getInstance(androidx.core.app.FragmentManager, ImageCacheParams)} or
-         * {@link UrlImageWorker#addImageCache(androidx.core.app.FragmentManager, ImageCacheParams)}.
-         * @param context A context to use.
-         * @param diskCacheDirectoryName A unique subdirectory name that will be appended to the
-         *                               application cache directory. Usually "cache" or "images"
-         *                               is sufficient.
-         */
         public ImageCacheParams(Context context, String diskCacheDirectoryName) {
             diskCacheDir = Utils.getDiskCacheDir(context, diskCacheDirectoryName);
         }

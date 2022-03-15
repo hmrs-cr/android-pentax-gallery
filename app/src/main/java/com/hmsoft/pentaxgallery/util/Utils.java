@@ -15,18 +15,10 @@
  */
 package com.hmsoft.pentaxgallery.util;
 
-import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Environment;
-import android.provider.Settings;
 
 import com.hmsoft.pentaxgallery.BuildConfig;
-import com.hmsoft.pentaxgallery.MyApplication;
 
 import java.io.BufferedReader;
 import java.io.File;
