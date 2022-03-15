@@ -46,9 +46,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
 import android.view.ViewTreeObserver;
-import android.view.Window;
 import android.view.WindowInsets;
-import android.view.WindowManager;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
@@ -65,7 +63,6 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.MenuCompat;
 import androidx.fragment.app.Fragment;
-import androidx.preference.SwitchPreferenceCompat;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -82,7 +79,6 @@ import com.hmsoft.pentaxgallery.camera.model.ImageData;
 import com.hmsoft.pentaxgallery.camera.model.ImageList;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
 import com.hmsoft.pentaxgallery.service.DownloadService;
-import com.hmsoft.pentaxgallery.service.StartLocationServiceReceiver;
 import com.hmsoft.pentaxgallery.ui.camera.CameraActivity;
 import com.hmsoft.pentaxgallery.ui.camera.CameraFragment;
 import com.hmsoft.pentaxgallery.ui.preferences.PreferencesActivity;
@@ -109,7 +105,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         AdapterView.OnItemLongClickListener,
         DownloadService.OnDownloadFinishedListener,
         SearchView.OnQueryTextListener,
-        ActionBar.OnNavigationListener,
         SwipeRefreshLayout.OnRefreshListener,
         CameraController.OnCameraChangeListener,
         SearchView.OnCloseListener, View.OnApplyWindowInsetsListener {
@@ -131,7 +126,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     private Menu mMenu;
     private SearchView mSearchView;
     private SwipeRefreshLayout mSwipeRefreshLayout;
-    private Camera mCamera = Camera.instance;
+    private final Camera mCamera = Camera.instance;
     private boolean mNeedUpdateImageList;
     private volatile boolean mDontShowProgressBar;
 
@@ -163,12 +158,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
         mProgressBar = v.findViewById(R.id.progressbarGrid);
         mEmptyViewLabel = v.findViewById(R.id.emptyViewLabel);
         mProgressLabel = v.findViewById(R.id.progressLabel);
-        mEmptyViewLabel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showView(false, -1);
-            }
-        });
+        mEmptyViewLabel.setOnClickListener(v1 -> showView(false, -1));
 
         v.setOnApplyWindowInsetsListener(this);
 
@@ -1070,11 +1060,6 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             });
             isSearching = false;
         }
-        return false;
-    }
-
-    @Override
-    public boolean onNavigationItemSelected(int itemPosition, long itemId) {
         return false;
     }
 
