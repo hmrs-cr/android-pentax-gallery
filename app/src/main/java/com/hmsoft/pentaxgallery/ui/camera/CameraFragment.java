@@ -9,8 +9,6 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -60,12 +58,11 @@ public class CameraFragment extends Fragment implements
     private static boolean sInLiveView;
 
     private GestureDetector mDetector;
-    boolean mDrawFocusArea;
+    static boolean sDrawFocusArea = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setDrawFocusArea(false);
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -229,7 +226,7 @@ public class CameraFragment extends Fragment implements
                 return true;
             case R.id.drawFocusArea:
                 toggleDrawFocusArea();
-                item.setChecked(mDrawFocusArea);
+                item.setChecked(sDrawFocusArea);
                 return true;
         }
 
@@ -237,18 +234,18 @@ public class CameraFragment extends Fragment implements
     }
 
     private void setDrawFocusArea(boolean draw) {
-        mDrawFocusArea = !draw;
+        sDrawFocusArea = !draw;
         toggleDrawFocusArea();
     }
 
     private void toggleDrawFocusArea() {
-        if (mDrawFocusArea) {
-            mDrawFocusArea = false;
+        if (sDrawFocusArea) {
+            sDrawFocusArea = false;
             if (mImageLiveView != null) {
                 mImageLiveView.setRelativeFocusArea(null);
             }
         } else {
-            mDrawFocusArea = true;
+            sDrawFocusArea = true;
             updateCameraParams();
         }
     }
@@ -331,7 +328,7 @@ public class CameraFragment extends Fragment implements
             public void run() {
                 updateXvUI(params.xv);
                 mExposureModeBtn.setText(params.exposureMode);
-                mImageLiveView.setRelativeFocusArea(mDrawFocusArea ? params.focusEffectiveArea : null);
+                mImageLiveView.setRelativeFocusArea(sDrawFocusArea ? params.focusEffectiveArea : null);
             }
         });
     }
