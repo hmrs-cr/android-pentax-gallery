@@ -123,6 +123,9 @@
     <string name="are_you_sure">Are you sure?</string>
     <string name="image_capture_failed">Image Capture Failed</string>
     <string name="error_capturing_image">Error capturing image. Is the storage full?</string>
+    <string name="number_selected">%d SELECTED</string>
+    <string name="download_queue_subtitle">DOWNLOAD QUEUE (%d)</string>
+    <string name="queue_downloaded_subtitle">%s (%d/%s) - Downloaded</string>
 
     <string-array name="auto_shutdown_poweroff_transfer_options">
         <item>Never</item>

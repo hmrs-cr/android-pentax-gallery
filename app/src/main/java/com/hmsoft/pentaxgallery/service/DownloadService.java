@@ -61,9 +61,13 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class DownloadService extends IntentService {
 
+    private static ExecutorService downloadExecutor;
+    private static final Object downloadSynchronizer = new Object();
     private static final String TAG = "DownloadService";
 
     private final Camera camera = Camera.instance;
@@ -92,6 +96,7 @@ public class DownloadService extends IntentService {
     private static boolean sShutCameraDownWhenDone;
 
     private static boolean displayNotification;
+    private int mNotifyDownloadId = -1;
 
     public static boolean isDisplayingNotification() {
         return displayNotification;
@@ -127,18 +132,25 @@ public class DownloadService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
             final String action = intent.getAction();
-            if (ACTION_DOWNLOAD.equals(action)) {                
+            if (ACTION_DOWNLOAD.equals(action)) {
+                final ResultReceiver receiver = intent.getParcelableExtra(EXTRA_RECEIVER);
                 final int downloadId = intent.getIntExtra(EXTRA_DOWNLOAD_ID, -1);
-                ResultReceiver receiver = (ResultReceiver) intent.getParcelableExtra(EXTRA_RECEIVER);
+                initNotifyDownloadId(downloadId);
 
-                if(BuildConfig.DEBUG) {
-                    Logger.debug(TAG, "Download start: " + downloadId);
-                }
+                downloadExecutor.execute(() -> {
+                    if(BuildConfig.DEBUG) {
+                        Logger.debug(TAG, "Download start: " + downloadId);
+                    }
 
-                handleActionDownload(downloadId, receiver);
+                    handleActionDownload(downloadId, receiver);
 
-                if(BuildConfig.DEBUG) {
-                    Logger.debug(TAG, "Download end: " + downloadId);
+                    if(BuildConfig.DEBUG) {
+                        Logger.debug(TAG, "Download end: " + downloadId);
+                    }
+                });
+
+                synchronized(downloadSynchronizer) {
+                    try { downloadSynchronizer.wait(); } catch (InterruptedException ignored) {}
                 }
             }
         }
@@ -147,6 +159,9 @@ public class DownloadService extends IntentService {
     @Override
     public void onCreate() {
         super.onCreate();
+        if (downloadExecutor == null) {
+            downloadExecutor = Executors.newFixedThreadPool(2);
+        }
         if(BuildConfig.DEBUG) Logger.debug(TAG,  "onCreate");
     }
 
@@ -176,6 +191,7 @@ public class DownloadService extends IntentService {
             resultData.putInt(EXTRA_DOWNLOAD_STATUS, DOWNLOAD_STATUS_TOO_MANY_ERRORS);
             receiver.send(DOWNLOAD_FINISHED, resultData);
             downloadErrorCount = 0;
+            notifyDownloadSynchronizer();
             return;
         }
 
@@ -184,6 +200,7 @@ public class DownloadService extends IntentService {
             if (BuildConfig.DEBUG) {
                 Logger.debug(TAG, "No download with id " + downloadId + " found");
             }
+            notifyDownloadSynchronizer();
             return;
         }
 
@@ -193,9 +210,12 @@ public class DownloadService extends IntentService {
         boolean isNewMedia = true;
         String statusMessage = "";
 
-        resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
-        resultData.putInt(EXTRA_PROGRESS, 0);
-        receiver.send(UPDATE_PROGRESS, resultData);
+        if (getNotifyDownloadId() == downloadId) {
+            resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
+            resultData.putInt(EXTRA_PROGRESS, 0);
+            receiver.send(UPDATE_PROGRESS, resultData);
+            Logger.debug(TAG, "0 download progress: " + downloadId + "," + getNotifyDownloadId());
+        }
 
         Uri mediaStoreUri = null;
 
@@ -211,6 +231,7 @@ public class DownloadService extends IntentService {
             if (mediaStoreUri == null) {
                 status = DOWNLOAD_STATUS_ERROR;
                 Logger.warning(TAG, "Failed to insert image in gallery " + imageData.fileName);
+                notifyDownloadSynchronizer();
             } else {
                 //create downloadUrl and connect
                 URL downloadUrl = new URL(imageData.getDownloadUrl());
@@ -242,13 +263,21 @@ public class DownloadService extends IntentService {
                         output.write(data, 0, count);
 
                         int progress = (int) (total * 100 / fileLength);
-                        if (progress > lastProgress && (progress % 5) == 0) {
-                            // publishing the progress....
-                            resultData = new Bundle();
-                            resultData.putInt(EXTRA_PROGRESS, progress);
-                            resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
-                            receiver.send(UPDATE_PROGRESS, resultData);
+                        if (progress > lastProgress) {
+                            initNotifyDownloadId(downloadId);
+
+                            if ((progress % 5) == 0 && getNotifyDownloadId() == downloadId) {
+                                // publishing the progress....
+                                resultData = new Bundle();
+                                resultData.putInt(EXTRA_PROGRESS, progress);
+                                resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
+                                receiver.send(UPDATE_PROGRESS, resultData);
+                            }
+
                             lastProgress = progress;
+                            if (progress >= 75) {
+                                notifyDownloadSynchronizer();
+                            }
                         }
                     }
 
@@ -281,6 +310,7 @@ public class DownloadService extends IntentService {
             status = DOWNLOAD_STATUS_ERROR;
             statusMessage = e.getLocalizedMessage();
             downloadErrorCount++;
+            notifyDownloadSynchronizer();
         }
 
         if (isNewMedia && status != DOWNLOAD_STATUS_SUCCESS && mediaStoreUri != null) {
@@ -300,6 +330,27 @@ public class DownloadService extends IntentService {
             resultData.putString(EXTRA_LOCAL_URI, mediaStoreUri.toString());
         }
         receiver.send(DOWNLOAD_FINISHED, resultData);
+        setNotifyDownloadId(-1);
+    }
+
+    private void notifyDownloadSynchronizer() {
+        synchronized (downloadSynchronizer) {
+            downloadSynchronizer.notifyAll();
+        }
+    }
+
+    private synchronized int getNotifyDownloadId() {
+        return mNotifyDownloadId;
+    }
+
+    private synchronized void setNotifyDownloadId(int notifyDownloadId) {
+        mNotifyDownloadId = notifyDownloadId;
+    }
+
+    private synchronized void initNotifyDownloadId(int notifyDownloadId) {
+        if (mNotifyDownloadId < 0) {
+            mNotifyDownloadId = notifyDownloadId;
+        }
     }
 
     private static final float[] ll = new float[2];
@@ -605,7 +656,6 @@ public class DownloadService extends IntentService {
                         return;
                     }
 
-                    downloadNotification(downloadEntry.getImageData(), 100);
                     Queue.remove(downloadEntry, false);
                     Queue.processDownloadQueue(false);
 

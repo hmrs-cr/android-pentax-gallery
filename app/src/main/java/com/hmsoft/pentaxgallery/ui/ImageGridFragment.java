@@ -987,8 +987,8 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             }
             mAdapter.notifyDataSetChanged();
         }
-        updateActionBarTitle();
         if(remainingDownloads == 0) {
+            updateActionBarTitle();
             if(mCamera.hasFilter(DownloadService.DownloadQueueFilter)) {
                 String viewText;
                 if(downloadCount > 0 && errorCount > 0) {
@@ -1009,12 +1009,12 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     @SuppressLint("DefaultLocale")
     @Override
     public void onDownloadProgress(ImageData imageData, long donloadId, int progress) {
-        if (mCamera.hasFilter(DownloadService.DownloadQueueFilter)) {
+        if (mCamera.hasFilter(DownloadService.DownloadQueueFilter) && progress < 100) {
             CameraData cameraData = mCamera.getCameraData();
             if (cameraData != null) {
                 Activity activity = getActivity();
                 if (activity != null) {
-                    ActionBar actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
+                    ActionBar actionBar = ((AppCompatActivity)activity).getSupportActionBar();
                     actionBar.setSubtitle(String.format("%s - %s (%d)",
                             imageData.fileName, progress + "%", mCamera.imageCount()));
                 }
@@ -1372,11 +1372,11 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
                 StorageData storageData = mCamera.getCurrentStorage();
                 if(storageData.getImageList() != null) {
                     if (mAdapter.isInSelectMode()) {
-                        actionBar.setSubtitle(String.format("%d SELECTED", mAdapter.getSelectedItems().size()));
+                        actionBar.setSubtitle(String.format(getString(R.string.number_selected), mAdapter.getSelectedItems().size()));
                     } else if (mCamera.hasFilter(DownloadService.DownloadQueueFilter)) {
-                        actionBar.setSubtitle(String.format("DOWNLOAD QUEUE (%d)", mCamera.imageCount()));
+                        actionBar.setSubtitle(String.format(getString(R.string.download_queue_subtitle), mCamera.imageCount()));
                     } else if (mCamera.hasFilter(FilteredImageList.DownloadedFilter)) {
-                        actionBar.setSubtitle(String.format("%s (%d/%s) - Downloaded", storageData.name, mCamera.imageCount(), storageData.format).toUpperCase());
+                        actionBar.setSubtitle(String.format(getString(R.string.queue_downloaded_subtitle), storageData.name, mCamera.imageCount(), storageData.format).toUpperCase());
                     } else {
                         actionBar.setSubtitle(String.format("%s (%d/%s)", storageData.name, mCamera.imageCount(), storageData.format).toUpperCase());
                     }
