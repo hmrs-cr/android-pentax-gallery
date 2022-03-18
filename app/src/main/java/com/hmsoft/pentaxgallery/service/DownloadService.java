@@ -214,7 +214,6 @@ public class DownloadService extends IntentService {
             resultData.putInt(EXTRA_DOWNLOAD_ID, downloadId);
             resultData.putInt(EXTRA_PROGRESS, 0);
             receiver.send(UPDATE_PROGRESS, resultData);
-            Logger.debug(TAG, "0 download progress: " + downloadId + "," + getNotifyDownloadId());
         }
 
         Uri mediaStoreUri = null;
