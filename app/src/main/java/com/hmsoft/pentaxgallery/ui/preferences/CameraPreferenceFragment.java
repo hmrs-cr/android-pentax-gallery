@@ -247,22 +247,28 @@ public class CameraPreferenceFragment extends PreferenceFragmentCompat implement
 
         private long getDeletableSize(boolean delete, CameraData... cameras) {
             long total = 0;
-            for(CameraData cameraData : cameras) {
-                for(StorageData storageData : cameraData.storages) {
-                    File imageDataDir = storageData.getImageDataDirectory();
-                    for (File file : imageDataDir.listFiles()) {
-                        String name = file.getName();
-                        ImageList imageList = storageData.getImageList();
-                        int i = imageList != null ? imageList.getDataKeyIndex(name) : -1;
-                        if(i < 0) {
-                            total += file.length();
-                            if(delete) {
-                                file.delete();
+            if (cameras != null) {
+                for (CameraData cameraData : cameras) {
+                    for (StorageData storageData : cameraData.storages) {
+                        File imageDataDir = storageData.getImageDataDirectory();
+                        File[] files = imageDataDir != null ? imageDataDir.listFiles() : null;
+                        if (files != null) {
+                            for (File file : files) {
+                                String name = file.getName();
+                                ImageList imageList = storageData.getImageList();
+                                int i = imageList != null ? imageList.getDataKeyIndex(name) : -1;
+                                if (i < 0) {
+                                    total += file.length();
+                                    if (delete) {
+                                        file.delete();
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
+
             return total;
         }
 
