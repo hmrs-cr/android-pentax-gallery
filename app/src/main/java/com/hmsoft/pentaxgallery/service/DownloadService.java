@@ -274,7 +274,7 @@ public class DownloadService extends IntentService {
                             }
 
                             lastProgress = progress;
-                            if (progress >= 75) {
+                            if (progress >= 85) {
                                 notifyDownloadSynchronizer();
                             }
                         }
