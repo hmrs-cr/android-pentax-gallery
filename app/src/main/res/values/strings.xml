@@ -1,4 +1,6 @@
 <resources>
+    <string name="app_name">Pentax Gallery</string>
+    <string name="intro_message">"         <![CDATA[                                   An image gallery for Pentax cameras with WiFi capability.                               ]]>     "</string>
     <string name="imageview_description">Image Thumbnail</string>
     <string name="sync_images">Sync Images</string>
     <string name="pictures_loaded">%d pictures loaded from %s.</string>
@@ -52,7 +54,6 @@
     <string name="loading_picture_list">Loading picture list…</string>
     <string name="connecting_to">Trying to connect to %s…</string>
     <string name="loading_local_data">Loading local data…</string>
-    <string name="load_cache">Load cache</string>
     <string name="connection_error">Connection error</string>
     <string name="camera_not_connected"><![CDATA[<center><br/><p><b>Camera not connected.</b></p></center>]]></string>
     <string name="wifi_settings">WiFi Settings</string>
@@ -86,14 +87,13 @@
     <string name="default_main_action">CAMERA</string>
     <string name="download_canceled">\"Download canceled: \"</string>
     <string name="too_many_errors">Too many errors.</string>
-    <string translatable="false" name="location_service_notification_content">(%1$d) ~ %2$dM(%3$s)</string>
+    <string name="location_service_notification_content">(%1$d) ~ %2$dM(%3$s)</string>
     <string name="enable_location_service_label">Enable Location Service</string>
     <string name="enable_location_service_summary">Enable location service to store the location where the pictures were taken.</string>
     <string name="location_service_label">Location Service</string>
     <string name="store_location_in_camera_label">Store Location in Camera</string>
     <string name="store_location_in_camera_summary">If the camera supports it and it is connected store the obtained location in the camera itself.</string>
     <string name="location_update_interval_label">Location Update Interval</string>
-    <string name="default_location_update_interval">180</string>
     <string name="update_picture_location_information_label">Update Picture Location Information</string>
     <string name="update_picture_location_information_summary">When downloading pictures from the camera, update the location information if available.</string>
     <string name="downloaded_images_location_label">Downloaded Images Location</string>
@@ -197,4 +197,5 @@
         <item>3600</item>
         <item>0</item>
     </string-array>
+    <string name="load_cache">Disconnected mode</string>
 </resources>

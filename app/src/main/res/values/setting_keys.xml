@@ -1,47 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="key_album_name">album_name</string>
-    <string name="key_raw_album_name">raw_album_name</string>
-    <string name="key_auto_download_jpg">auto_download_jpg</string>
-    <string name="key_basic_category">basic_category</string>
-    <string name="key_advanced_category">advanced_category</string>
-    <string name="key_about">about</string>
-    <string name="key_auto_download_raw">auto_download_raw</string>
-    <string name="key_shutdown_camera_after_transfer">shutdown_camera_after_transfer</string>
-    <string name="key_camera_thread_number">camera_thread_number</string>
-    <string name="key_connect_timeout">connect_timeout</string>
-    <string name="key_read_timeout">read_timeout</string>
-    <string name="key_remove_camera">remove_camera</string>
-    <string name="key_load_local_image_data">load_local_image_data</string>
-    <string name="key_cameras_category">cameras_category</string>
-    <string name="key_help_category">help_category</string>
-    <string name="key_remove_old_images">remove_old_images</string>
-    <string name="key_location_service_category">locationservice_category</string>
-
-    <string name="default_album_name">Pentax Gallery</string>
-    <string name="default_raw_album_name">Pentax Gallery (RAW)</string>
-    <string name="default_auto_download_jpg">true</string>
-    <string name="default_auto_download_raw">false</string>
-    <string name="default_enable_location_service">false</string>
-    <string name="default_store_location_in_camera">false</string>
-    <string name="default_shutdown_camera_after_transfer">true</string>
-    <string name="default_camera_thread_number">3</string>
-    <string name="default_connect_timeout">1000</string>
-    <string name="default_read_timeout">35000</string>
-    <string name="default_load_local_image_data">false</string>
-    <string name="key_main_action">main_action</string>
-    <string name="key_enable_location_service">enable_location_service</string>
-    <string name="key_store_location_in_camera">store_location_in_camera</string>
-    <string name="key_location_update_interval">location_update_interval</string>
-    <string name="key_update_picture_location_information">update_picture_location_information</string>
-    <string name="default_update_picture_location_information">true</string>
-    <string name="key_downloaded_images_location">downloaded_images_location</string>
-    <string name="key_sync_camera_time">sync_camera_time</string>
-    <string name="key_camera_date">camera_date</string>
-    <string name="key_auto_sync_camera_time">auto_sync_camera_time</string>
-    <string name="default_auto_sync_camera_time">true</string>
-    <string name="key_auto_shutdown_poweroff_transfer">auto_shutdown_poweroff_transfer</string>
-    <string name="default_auto_shutdown_poweroff_transfer">120</string>
-    <string name="key_enable_location_service_at_boot">enable_location_service_at_boot</string>
+    <string name="key_album_name" translatable="false">album_name</string>
+    <string name="key_raw_album_name" translatable="false">raw_album_name</string>
+    <string name="key_auto_download_jpg" translatable="false">auto_download_jpg</string>
+    <string name="key_basic_category" translatable="false">basic_category</string>
+    <string name="key_advanced_category" translatable="false">advanced_category</string>
+    <string name="key_about" translatable="false">about</string>
+    <string name="key_auto_download_raw" translatable="false">auto_download_raw</string>
+    <string name="key_shutdown_camera_after_transfer" translatable="false">shutdown_camera_after_transfer</string>
+    <string name="key_camera_thread_number" translatable="false">camera_thread_number</string>
+    <string name="key_connect_timeout" translatable="false">connect_timeout</string>
+    <string name="key_read_timeout" translatable="false">read_timeout</string>
+    <string name="key_remove_camera" translatable="false">remove_camera</string>
+    <string name="key_load_local_image_data" translatable="false">load_local_image_data</string>
+    <string name="key_cameras_category" translatable="false">cameras_category</string>
+    <string name="key_help_category" translatable="false">help_category</string>
+    <string name="key_remove_old_images" translatable="false">remove_old_images</string>
+    <string name="key_location_service_category" translatable="false">locationservice_category</string>
+    <string name="default_location_update_interval" translatable="false">180</string>
+    <string name="default_album_name" translatable="false">Pentax Gallery</string>
+    <string name="default_raw_album_name" translatable="false">Pentax Gallery (RAW)</string>
+    <string name="default_auto_download_jpg" translatable="false">true</string>
+    <string name="default_auto_download_raw" translatable="false">false</string>
+    <string name="default_enable_location_service" translatable="false">false</string>
+    <string name="default_store_location_in_camera" translatable="false">false</string>
+    <string name="default_shutdown_camera_after_transfer" translatable="false">true</string>
+    <string name="default_camera_thread_number" translatable="false">3</string>
+    <string name="default_connect_timeout" translatable="false">1000</string>
+    <string name="default_read_timeout" translatable="false">35000</string>
+    <string name="default_load_local_image_data" translatable="false">false</string>
+    <string name="key_main_action" translatable="false">main_action</string>
+    <string name="key_enable_location_service" translatable="false">enable_location_service</string>
+    <string name="key_store_location_in_camera" translatable="false">store_location_in_camera</string>
+    <string name="key_location_update_interval" translatable="false">location_update_interval</string>
+    <string name="key_update_picture_location_information" translatable="false">update_picture_location_information</string>
+    <string name="default_update_picture_location_information" translatable="false">true</string>
+    <string name="key_downloaded_images_location" translatable="false">downloaded_images_location</string>
+    <string name="key_sync_camera_time" translatable="false">sync_camera_time</string>
+    <string name="key_camera_date" translatable="false">camera_date</string>
+    <string name="key_auto_sync_camera_time" translatable="false">auto_sync_camera_time</string>
+    <string name="default_auto_sync_camera_time" translatable="false">true</string>
+    <string name="key_auto_shutdown_poweroff_transfer" translatable="false">auto_shutdown_poweroff_transfer</string>
+    <string name="default_auto_shutdown_poweroff_transfer" translatable="false">120</string>
+    <string name="key_enable_location_service_at_boot" translatable="false">enable_location_service_at_boot</string>
 
 </resources>
