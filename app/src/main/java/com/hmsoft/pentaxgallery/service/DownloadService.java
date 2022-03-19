@@ -404,8 +404,7 @@ public class DownloadService extends IntentService {
 
         Uri contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            File localPath = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-                    camera.getImageLocalPath(imageData).getPath());
+            File localPath = camera.getImageLocalPath(imageData);
             values.put(MediaStore.MediaColumns.DATA, localPath.getAbsolutePath());
             localPath.getParentFile().mkdirs();
             imageData.setLocalFilePath(localPath.getAbsolutePath());

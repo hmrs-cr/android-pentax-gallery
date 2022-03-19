@@ -13,6 +13,7 @@ import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
 import android.provider.MediaStore;
 import android.text.InputType;
+import android.text.TextUtils;
 import android.text.format.Formatter;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -35,6 +36,7 @@ import com.hmsoft.pentaxgallery.camera.model.ImageList;
 import com.hmsoft.pentaxgallery.camera.model.StorageData;
 import com.hmsoft.pentaxgallery.util.Logger;
 import com.hmsoft.pentaxgallery.util.TaskExecutor;
+import com.hmsoft.pentaxgallery.util.Utils;
 
 import java.io.File;
 import java.util.Date;
@@ -48,11 +50,25 @@ public class CameraPreferenceFragment extends PreferenceFragmentCompat implement
 
     private CameraData cameraData;
 
-    EditTextPreference.OnBindEditTextListener numberEditTextListener =  new EditTextPreference.OnBindEditTextListener() {
-        @Override
-        public void onBindEditText(@NonNull EditText editText) {
-            editText.setInputType(InputType.TYPE_CLASS_NUMBER);
+    private final EditTextPreference.OnBindEditTextListener numberEditTextListener = editText -> editText.setInputType(InputType.TYPE_CLASS_NUMBER);
+
+    private final Preference.OnPreferenceChangeListener validateFolder = (preference, newValue) -> {
+        if (newValue == null || TextUtils.isEmpty(newValue.toString())) {
+            return false;
         }
+
+        String folderName = newValue.toString();
+        if (folderName.startsWith(".") || folderName.startsWith("/")) {
+            return false;
+        }
+
+        for (int c = 0; c < folderName.length(); c++) {
+            if (!Utils.isValidFilePathChar(folderName.charAt(c))) {
+                return false;
+            }
+        }
+
+        return true;
     };
 
     @Override
@@ -75,6 +91,10 @@ public class CameraPreferenceFragment extends PreferenceFragmentCompat implement
         ((EditTextPreference)findPreference(getString(R.string.key_connect_timeout))).setOnBindEditTextListener(numberEditTextListener);
         ((EditTextPreference)findPreference(getString(R.string.key_read_timeout))).setOnBindEditTextListener(numberEditTextListener);
         ((EditTextPreference)findPreference(getString(R.string.key_camera_thread_number))).setOnBindEditTextListener(numberEditTextListener);
+
+        ((EditTextPreference)findPreference(getString(R.string.key_raw_album_name))).setOnPreferenceChangeListener(validateFolder);
+        ((EditTextPreference)findPreference(getString(R.string.key_album_name))).setOnPreferenceChangeListener(validateFolder);
+
 
         Preference removeOldImageDataPreference = findPreference(getString(R.string.key_remove_old_images));
         removeOldImageDataPreference.setOnPreferenceClickListener(this);

@@ -36,6 +36,7 @@ import java.util.List;
 public class Camera implements CameraController.OnCameraDisconnectedListener {
 
     public static final Camera instance = new Camera(new PentaxController(CameraPreferences.Default));
+    private static final String DCIM_FOLDER = "DCIM/";
 
     private static final String TAG = "Camera";
   
@@ -49,20 +50,36 @@ public class Camera implements CameraController.OnCameraDisconnectedListener {
     private volatile List<CameraData> mCameras;
 
     public File getImageLocalPath(ImageData imageData) {
+        File imagesDirectory;
+        String albumName = getAlbumName(imageData);
 
-        CameraData cameraData = getCameraData();
-        String base = null;
-        if (cameraData != null) {
-            if(imageData.isRaw) {
-                base = cameraData.preferences.getRawAlbumName();
-            } else {
-                base = cameraData.preferences.getAlbumName();
-            }
+        if (albumName.startsWith(DCIM_FOLDER)) {
+            imagesDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
+            albumName = albumName.substring(DCIM_FOLDER.length());
+        } else {
+            imagesDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
         }
-        return new File(base, imageData.uniqueFileName);
+
+        File path = new File(albumName, imageData.uniqueFileName);
+        return new File(imagesDirectory, path.getPath());
     }
 
     public String getImageRelativePath(ImageData imageData) {
+        String imagesDirectory;
+        String albumName = getAlbumName(imageData);
+
+        if (albumName.startsWith(DCIM_FOLDER)) {
+            imagesDirectory = Environment.DIRECTORY_DCIM;
+            albumName = albumName.substring(DCIM_FOLDER.length());
+        } else {
+            imagesDirectory = Environment.DIRECTORY_PICTURES;
+        }
+
+        return imagesDirectory + File.separator + albumName;
+    }
+
+    public String getAlbumName(ImageData imageData) {
+
         CameraData cameraData = getCameraData();
         String base = null;
         if (cameraData != null) {
@@ -72,8 +89,10 @@ public class Camera implements CameraController.OnCameraDisconnectedListener {
                 base = cameraData.preferences.getAlbumName();
             }
         }
-        return Environment.DIRECTORY_PICTURES + File.separator + base;
+
+        return base;
     }
+
 
     @Override
     public void onCameraDisconnected() {

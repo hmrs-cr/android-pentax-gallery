@@ -40,6 +40,26 @@ public class Utils {
     private Utils() {
     }
 
+    public static boolean isValidFilePathChar(char c) {
+        if (c <= 0x1f) {
+            return false;
+        }
+        switch (c) {
+            case '"':
+            case '*':
+            case ':':
+            case '<':
+            case '>':
+            case '?':
+            case '\\':
+            case '|':
+            case 0x7F:
+                return false;
+            default:
+                return true;
+        }
+    }
+
     public static final String VERSION_STRING = "v" + BuildConfig.VERSION_NAME + " (" + BuildConfig.BUILD_TYPE + ")";
 
     public static void saveTextFile(File file, String text) throws IOException {
