@@ -74,12 +74,12 @@
     <string name="remove_camera_label">Eliminar cámara</string>
     <string name="auto_download_raw_summary">Descargar automáticamente imágenes RAW desde la camara. (No recomendado)</string>
     <string name="auto_download_jpgs_summary">"Descargar automáticamente imágenes JPG desde la camara. "</string>
-    <string name="shutdown_camera_after_transfer_label">Apagar la cámara después de descargar</string>
-    <string name="shutdown_camera_after_transfer_summary">Apaga la cámara al terminar las todas las descargas</string>
+    <string name="shutdown_camera_after_transfer_label">Apagar después de descargar</string>
+    <string name="shutdown_camera_after_transfer_summary">Apaga la cámara al terminar todas las descargas</string>
     <string name="remove_camera_confirmation">Realmente quiere eliminar %s?</string>
     <string name="remove_old_image_data_confirmation">Realmente quiere eliminar imágenes viejas de %s?</string>
     <string name="cameras">Cámaras</string>
-    <string name="loading_camera_list">Cargarndo lista de cámaras…</string>
+    <string name="loading_camera_list">Cargando lista de cámaras…</string>
     <string name="about_label">Acerca de…</string>
     <string name="remove_old_images_label">Eliminar imágenes viejas</string>
     <string name="power_off">Apagar</string>
@@ -87,20 +87,19 @@
     <string name="default_main_action">CAMERA</string>
     <string name="download_canceled">\"Descarga cancelada: \"</string>
     <string name="too_many_errors">Demasiados errores.</string>
-    <string translatable="false" name="location_service_notification_content">(%1$d) ~ %2$dM(%3$s)</string>
-    <string name="enable_location_service_label">Enable Location Service</string>
-    <string name="enable_location_service_summary">Enable location service to store the location where the pictures were taken.</string>
-    <string name="location_service_label">Location Service</string>
-    <string name="store_location_in_camera_label">Store Location in Camera</string>
-    <string name="store_location_in_camera_summary">If the camera supports it and it is connected store the obtained location in the camera itself.</string>
-    <string name="location_update_interval_label">Location Update Interval</string>
+    <string name="location_service_notification_content">(%1$d) ~ %2$dM(%3$s)</string>
+    <string name="enable_location_service_label">Habilitar Servicio de Ubicación</string>
+    <string name="enable_location_service_summary">Habilita el servicio de ubicación para guardar la ubicación donde fueron tomadas las imágenes.</string>
+    <string name="location_service_label">Servicio de Ubicación</string>
+    <string name="store_location_in_camera_label">Guardar Ubicación en la Cámara</string>
+    <string name="store_location_in_camera_summary">Si la cámara lo soporta y está conectada guarda la ubicación obtenida en la propia cámara.</string>
+    <string name="location_update_interval_label">Intervalo de Actializació de Ubicación</string>
     <string name="default_location_update_interval">180</string>
-    <string name="update_picture_location_information_label">Update Picture Location Information</string>
-    <string name="update_picture_location_information_summary">When downloading pictures from the camera, update the location information if available.</string>
-    <string name="downloaded_images_location_label">Downloaded Images Location</string>
-    <string name="sync_camera_time_label">Synchronize</string>
-    <string name="sync_camera_time_summary">Set camera time to the same time in the phone</string>
-    <string name="camera_not_in_capture_dialog_title">Camera not in capture mode</string>
+    <string name="update_picture_location_information_label">Actualizar información de ubicación de la imágen</string>
+    <string name="update_picture_location_information_summary">Al descargar imágenes desde la cámara, actualiza la información de ubicación si está disponible.</string>
+    <string name="sync_camera_time_label">Sincronizar</string>
+    <string name="sync_camera_time_summary">Actualiza la hora de la cámara a la misma del teléfono</string>
+    <string name="camera_not_in_capture_dialog_title">Cámara no está en modo de captura</string>
     <string name="camera_not_in_capture_dialog_message">To sync the camera date time it must be in capture mode. Please set the camera to capture mode and try again.</string>
     <string name="set_to_capture_mode">Set to capture mode</string>
     <string name="sync_camera_time_success_message">Camera time updated.</string>
@@ -199,4 +198,5 @@
         <item>0</item>
     </string-array>
     <string name="cancel_all_transfers">Cancelar todas las descargas</string>
+    <string name="downloaded_images_location_label">Guardar Imágenes En</string>
 </resources>

@@ -96,7 +96,7 @@
     <string name="location_update_interval_label">Location Update Interval</string>
     <string name="update_picture_location_information_label">Update Picture Location Information</string>
     <string name="update_picture_location_information_summary">When downloading pictures from the camera, update the location information if available.</string>
-    <string name="downloaded_images_location_label">Downloaded Images Location</string>
+    <string name="downloaded_images_location_label">Store Images In</string>
     <string name="sync_camera_time_label">Synchronize</string>
     <string name="sync_camera_time_summary">Set camera time to the same time in the phone</string>
     <string name="camera_not_in_capture_dialog_title">Camera not in capture mode</string>
