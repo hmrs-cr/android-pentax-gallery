@@ -101,31 +101,29 @@
     <string name="sync_camera_time_summary">Actualiza la hora de la cámara a la misma del teléfono</string>
     <string name="camera_not_in_capture_dialog_title">Cámara no está en modo de captura</string>
     <string name="camera_not_in_capture_dialog_message">To sync the camera date time it must be in capture mode. Please set the camera to capture mode and try again.</string>
-    <string name="set_to_capture_mode">Set to capture mode</string>
-    <string name="sync_camera_time_success_message">Camera time updated.</string>
-    <string name="sync_camera_time_fail_message">Failed to set camera time</string>
-    <string name="camera_date_label">Camera Time</string>
-    <string name="auto_sync_camera_time_label">Automatically synchronize</string>
+    <string name="set_to_capture_mode">Cambiar a modo de captura</string>
+    <string name="sync_camera_time_success_message">Hora de la cámara actualizada.</string>
+    <string name="camera_date_label">Hora de la Cámara</string>
+    <string name="auto_sync_camera_time_label">Sincronizar automáticamente</string>
     <string name="auto_sync_camera_time_sumarry">Set camera time to the same time in the phone automatically every time the phone connects to the camera</string>
-    <string name="camera_not_connected_label">Camera not connected.</string>
+    <string name="camera_not_connected_label">Cámara no conectada.</string>
     <string name="auto_shutdown_poweroff_transfer_label">Shutdown when power-off transfer enabled</string>
-    <string name="stop_label">Stop</string>
-    <string name="updating_location_label">Waiting for location fix</string>
-    <string name="updating_location_manual_label">Waiting for manual update</string>
+    <string name="stop_label">Detener</string>
+    <string name="updating_location_label">Esperando ubicación</string>
+    <string name="updating_location_manual_label">Esperando actualización manual</string>
     <string name="grand_location_permission_label">Please grant location permission to Pentax Gallery</string>
     <string name="grand_external_storage_permission_label">Please grant write external storage permission to Pentax Gallery</string>
-    <string name="update_now_label">Update now</string>
+    <string name="update_now_label">Actualizar ahora</string>
     <string name="enable_location_service_at_boot_label">Start location service at boot</string>
     <string name="default_enable_location_service_at_boot">true</string>
     <string name="enable_location_service_at_boot_summary">Start location service (if enabled) at boot time</string>
     <string name="live_view">Live View</string>
-    <string name="power_of_camera">Power Of Camera</string>
-    <string name="are_you_sure">Are you sure?</string>
-    <string name="image_capture_failed">Image Capture Failed</string>
-    <string name="error_capturing_image">Error capturing image. Is the storage full?</string>
-    <string name="number_selected">%d SELECTED</string>
-    <string name="download_queue_subtitle">DOWNLOAD QUEUE (%d)</string>
-    <string name="queue_downloaded_subtitle">%s (%d/%s) - Downloaded</string>
+    <string name="power_of_camera">Apagar Cámara</string>
+    <string name="are_you_sure">Está seguro?</string>
+    <string name="error_capturing_image">Error capturando imágen. Tarjeta llena?</string>
+    <string name="number_selected">%d SELECCIONADAS</string>
+    <string name="download_queue_subtitle">COLA DE DESCARGA (%d)</string>
+    <string name="queue_downloaded_subtitle">%s (%d/%s) - Descargado</string>
 
     <string-array name="auto_shutdown_poweroff_transfer_options">
         <item>Never</item>
@@ -199,4 +197,6 @@
     </string-array>
     <string name="cancel_all_transfers">Cancelar todas las descargas</string>
     <string name="downloaded_images_location_label">Guardar Imágenes En</string>
+    <string name="image_capture_failed">Falló la Captura de Imágen</string>
+    <string name="sync_camera_time_fail_message">Error estableciendo hora de la cámara</string>
 </resources>
