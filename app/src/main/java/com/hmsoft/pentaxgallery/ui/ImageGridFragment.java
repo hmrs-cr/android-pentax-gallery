@@ -523,7 +523,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
 
             int currentStorageIndex = mCamera.getCurrentStorageIndex();
-            String syncText = getString(R.string.sync_images);
+            String syncText =  mCamera.isConnected() ? getString(R.string.sync_images) : getString(R.string.connect);
             MenuItem syncItem = mMenu.findItem(R.id.sync_images_1);
             syncItem.setTitle(multyStorage ? cameraData.storages.get(0).displayName :  syncText);
             syncItem.setVisible(!mCamera.hasFilter(DownloadService.DownloadQueueFilter));
