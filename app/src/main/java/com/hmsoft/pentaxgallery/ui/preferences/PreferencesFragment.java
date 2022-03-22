@@ -88,12 +88,12 @@ public class PreferencesFragment extends PreferenceFragmentCompat implements Sha
     private void showAboutDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), android.R.style.Theme_Material_Dialog_Alert);
 
-        String message = String.format("<center><br/><p><b>%s</b> by hmrs.cr.</p><p>%s</p><p><i>%s</i></p></center>",
+        String message = String.format(getString(R.string.about_line),
                 getString(R.string.app_name), getString(R.string.intro_message), Utils.VERSION_STRING);
 
         if(Camera.instance.isConnected()) {
             CameraData cameraData = Camera.instance.getCameraData();
-            message += String.format("<p><b>Connected to %s (%s).</b> Battery: %d%s.</p>",
+            message += String.format(getString(R.string.about_connected_to),
                     cameraData.model, cameraData.serialNo, cameraData.battery, "%");
         }
 

@@ -798,7 +798,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     private void addToDownloadQueue(List<ImageData> enqueue) {
         if (enqueue != null && enqueue.size() > 0) {
-            Toast.makeText(this.getActivity(), "Transferring " + enqueue.size() + " pictures", Toast.LENGTH_LONG).show();
+            Toast.makeText(this.getActivity(), getString(R.string.transfering_n_pictures, enqueue.size()), Toast.LENGTH_LONG).show();
             DownloadService.setInBatchDownload(false);
             for (ImageData imageData : enqueue) {
                 DownloadService.addDownloadQueue(imageData, true);
@@ -980,7 +980,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
     @Override
     public void onDownloadFinished(ImageData imageData, long donloadId, int remainingDownloads,
                                    int downloadCount, int errorCount, boolean wasCanceled) {
-        Logger.debug(TAG, "onDownloadFinished: " + donloadId + " Remaining: " + remainingDownloads);
+        if (Logger.DEBUG) Logger.debug(TAG, "onDownloadFinished: " + donloadId + " Remaining: " + remainingDownloads);
         if(mCamera.isFiltered()) {
             if(mCamera.hasFilter(FilteredImageList.DownloadedFilter) && mCamera.getImageList() instanceof FilteredImageList) {
                     ((FilteredImageList)mCamera.getImageList()).rebuildFilter();

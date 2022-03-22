@@ -84,7 +84,6 @@
     <string name="remove_old_images_label">Eliminar imágenes viejas</string>
     <string name="power_off">Apagar</string>
     <string name="main_action_label">Acción del botón principal</string>
-    <string name="default_main_action">CAMERA</string>
     <string name="download_canceled">\"Descarga cancelada: \"</string>
     <string name="too_many_errors">Demasiados errores.</string>
     <string name="location_service_notification_content">(%1$d) ~ %2$dM(%3$s)</string>
@@ -94,29 +93,27 @@
     <string name="store_location_in_camera_label">Guardar Ubicación en la Cámara</string>
     <string name="store_location_in_camera_summary">Si la cámara lo soporta y está conectada guarda la ubicación obtenida en la propia cámara.</string>
     <string name="location_update_interval_label">Intervalo de Actializació de Ubicación</string>
-    <string name="default_location_update_interval">180</string>
     <string name="update_picture_location_information_label">Actualizar información de ubicación de la imágen</string>
     <string name="update_picture_location_information_summary">Al descargar imágenes desde la cámara, actualiza la información de ubicación si está disponible.</string>
     <string name="sync_camera_time_label">Sincronizar</string>
     <string name="sync_camera_time_summary">Actualiza la hora de la cámara a la misma del teléfono</string>
     <string name="camera_not_in_capture_dialog_title">Cámara no está en modo de captura</string>
-    <string name="camera_not_in_capture_dialog_message">To sync the camera date time it must be in capture mode. Please set the camera to capture mode and try again.</string>
+    <string name="camera_not_in_capture_dialog_message">Para sincronizar la fecha y hora de la cámara, debe estar en modo de captura. Configure la cámara en modo de captura y vuelva a intentarlo.</string>
     <string name="set_to_capture_mode">Cambiar a modo de captura</string>
     <string name="sync_camera_time_success_message">Hora de la cámara actualizada.</string>
     <string name="camera_date_label">Hora de la Cámara</string>
     <string name="auto_sync_camera_time_label">Sincronizar automáticamente</string>
-    <string name="auto_sync_camera_time_sumarry">Set camera time to the same time in the phone automatically every time the phone connects to the camera</string>
+    <string name="auto_sync_camera_time_sumarry">Establecer la hora de la cámara a la misma hora en el teléfono automáticamente cada vez que el teléfono se conecta a la cámara</string>
     <string name="camera_not_connected_label">Cámara no conectada.</string>
-    <string name="auto_shutdown_poweroff_transfer_label">Shutdown when power-off transfer enabled</string>
+    <string name="auto_shutdown_poweroff_transfer_label">Apagado cuando la ¨Trans. Imág. en Off¨ está habilitada</string>
     <string name="stop_label">Detener</string>
     <string name="updating_location_label">Esperando ubicación</string>
     <string name="updating_location_manual_label">Esperando actualización manual</string>
-    <string name="grand_location_permission_label">Please grant location permission to Pentax Gallery</string>
-    <string name="grand_external_storage_permission_label">Please grant write external storage permission to Pentax Gallery</string>
+    <string name="grand_location_permission_label">Otorgue permiso de ubicación a Pentax Gallery</string>
+    <string name="grand_external_storage_permission_label">Otorgue permiso escrita al almacenamiento externo a Pentax Gallery</string>
     <string name="update_now_label">Actualizar ahora</string>
-    <string name="enable_location_service_at_boot_label">Start location service at boot</string>
-    <string name="default_enable_location_service_at_boot">true</string>
-    <string name="enable_location_service_at_boot_summary">Start location service (if enabled) at boot time</string>
+    <string name="enable_location_service_at_boot_label">Iniciar el servicio de ubicación en el arranque</string>
+    <string name="enable_location_service_at_boot_summary">Iniciar el servicio de ubicación (si está habilitado) en el momento del arranque</string>
     <string name="live_view">Live View</string>
     <string name="power_of_camera">Apagar Cámara</string>
     <string name="are_you_sure">Está seguro?</string>
@@ -126,15 +123,15 @@
     <string name="queue_downloaded_subtitle">%s (%d/%s) - Descargado</string>
 
     <string-array name="auto_shutdown_poweroff_transfer_options">
-        <item>Never</item>
-        <item>After 1 second</item>
-        <item>After 3 seconds</item>
-        <item>After 10 seconds</item>
-        <item>After 30 seconds</item>
-        <item>After 1 minute</item>
-        <item>After 2 minutes</item>
-        <item>After 3 minutes</item>
-        <item>After 5 minutes</item>
+        <item>Nunca</item>
+        <item>Después de 1 segundo</item>
+        <item>Después de 3 segundos</item>
+        <item>Después de 10 Después</item>
+        <item>Después de 30 Después</item>
+        <item>Después de 1 minutos</item>
+        <item>Después de 2 minutos</item>
+        <item>Después de 3 minutos</item>
+        <item>Después de 5 minutos</item>
     </string-array>
 
     <string-array name="auto_shutdown_poweroff_transfer_values">
@@ -150,9 +147,9 @@
     </string-array>
 
     <string-array name="main_action_options">
-        <item>None</item>
-        <item>Download JPGs</item>
-        <item>Camera</item>
+        <item>Ninguno</item>
+        <item>Descargar JPGs</item>
+        <item>Cámara</item>
     </string-array>
 
     <string-array name="main_action_options_values">
@@ -163,20 +160,20 @@
 
 
     <string-array name="update_location_interval_options">
-        <item>30 seconds</item>
-        <item>1 minute</item>
-        <item>2 minutes</item>
-        <item>3 minutes</item>
-        <item>4 minutes</item>
-        <item>5 minutes</item>
-        <item>10 minutes</item>
-        <item>15 minutes</item>
-        <item>20 minutes</item>
-        <item>25 minutes</item>
-        <item>30 minutes</item>
-        <item>45 minutes</item>
-        <item>1 hour</item>
-        <item>I will do it manually</item>
+        <item>30 segundos</item>
+        <item>1 minuto</item>
+        <item>2 minutos</item>
+        <item>3 minutos</item>
+        <item>4 minutos</item>
+        <item>5 minutos</item>
+        <item>10 minutos</item>
+        <item>15 minutos</item>
+        <item>20 minutos</item>
+        <item>25 minutos</item>
+        <item>30 minutos</item>
+        <item>45 minutos</item>
+        <item>1 hora</item>
+        <item>Lo haré manualment</item>
     </string-array>
 
     <string-array name="update_location_interval_options_values">
@@ -195,8 +192,13 @@
         <item>3600</item>
         <item>0</item>
     </string-array>
+
     <string name="cancel_all_transfers">Cancelar todas las descargas</string>
     <string name="downloaded_images_location_label">Guardar Imágenes En</string>
     <string name="image_capture_failed">Falló la Captura de Imágen</string>
     <string name="sync_camera_time_fail_message">Error estableciendo hora de la cámara</string>
+    <string name="transfering_n_pictures">Transfiriendo %d imágenes</string>
+    <string name="about_line"><![CDATA[<center><br/><p><b>%s</b> por hmrs.cr.</p><p>%s</p><p><i>%s</i></p></center>]]></string>
+    <string name="about_connected_to"><![CDATA[<p><b>Conectado a %s (%s).</b> Batería: %d%s.</p>]]></string>
+    <string name="can_be_removed">%s pueden eliminarse.</string>
 </resources>

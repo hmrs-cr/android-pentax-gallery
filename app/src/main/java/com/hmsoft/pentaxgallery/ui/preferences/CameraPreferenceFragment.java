@@ -310,7 +310,7 @@ public class CameraPreferenceFragment extends PreferenceFragmentCompat implement
                 case TASK_GET_SIZE:
                 case TASK_DELETE_OLD:
                     Preference removeOldImageDataPreference = findPreference(getString(R.string.key_remove_old_images));
-                    removeOldImageDataPreference.setSummary(Formatter.formatFileSize(getContext(), result) + " can be removed");
+                    removeOldImageDataPreference.setSummary( getString(R.string.can_be_removed, Formatter.formatFileSize(getContext(), result)));
                     break;
             }
         }

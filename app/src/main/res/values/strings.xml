@@ -84,7 +84,6 @@
     <string name="remove_old_images_label">Remove old image data</string>
     <string name="power_off">Power Off</string>
     <string name="main_action_label">Main button action</string>
-    <string name="default_main_action">CAMERA</string>
     <string name="download_canceled">\"Download canceled: \"</string>
     <string name="too_many_errors">Too many errors.</string>
     <string name="location_service_notification_content">(%1$d) ~ %2$dM(%3$s)</string>
@@ -108,7 +107,7 @@
     <string name="auto_sync_camera_time_label">Automatically synchronize</string>
     <string name="auto_sync_camera_time_sumarry">Set camera time to the same time in the phone automatically every time the phone connects to the camera</string>
     <string name="camera_not_connected_label">Camera not connected.</string>
-    <string name="auto_shutdown_poweroff_transfer_label">Shutdown when power-off transfer enabled</string>
+    <string name="auto_shutdown_poweroff_transfer_label">Shutdown when Ïmage Transfer while Off\" is enabled</string>
     <string name="stop_label">Stop</string>
     <string name="updating_location_label">Waiting for location fix</string>
     <string name="updating_location_manual_label">Waiting for manual update</string>
@@ -116,7 +115,6 @@
     <string name="grand_external_storage_permission_label">Please grant write external storage permission to Pentax Gallery</string>
     <string name="update_now_label">Update now</string>
     <string name="enable_location_service_at_boot_label">Start location service at boot</string>
-    <string name="default_enable_location_service_at_boot">true</string>
     <string name="enable_location_service_at_boot_summary">Start location service (if enabled) at boot time</string>
     <string name="live_view">Live View</string>
     <string name="power_of_camera">Power Of Camera</string>
@@ -198,4 +196,8 @@
         <item>0</item>
     </string-array>
     <string name="load_cache">Disconnected mode</string>
+    <string name="transfering_n_pictures">Transferring %d pictures</string>
+    <string name="about_line"><![CDATA[<center><br/><p><b>%s</b> by hmrs.cr.</p><p>%s</p><p><i>%s</i></p></center>]]></string>
+    <string name="about_connected_to"><![CDATA[<p><b>Connected to %s (%s).</b> Battery: %d%s.</p>]]></string>
+    <string name="can_be_removed">%s can be removed</string>
 </resources>

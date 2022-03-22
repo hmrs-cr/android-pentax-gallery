@@ -43,5 +43,7 @@
     <string name="key_auto_shutdown_poweroff_transfer" translatable="false">auto_shutdown_poweroff_transfer</string>
     <string name="default_auto_shutdown_poweroff_transfer" translatable="false">120</string>
     <string name="key_enable_location_service_at_boot" translatable="false">enable_location_service_at_boot</string>
+    <string name="default_enable_location_service_at_boot" translatable="false">true</string>
+    <string name="default_main_action" translatable="false">CAMERA</string>
 
 </resources>
