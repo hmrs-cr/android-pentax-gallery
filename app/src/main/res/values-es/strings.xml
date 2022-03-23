@@ -202,4 +202,5 @@
     <string name="about_connected_to"><![CDATA[<p><b>Conectado a %s (%s).</b> Batería: %d%s.</p>]]></string>
     <string name="can_be_removed">%s pueden eliminarse.</string>
     <string name="connect">Conectar</string>
+    <string name="serial">Serie #</string>
 </resources>

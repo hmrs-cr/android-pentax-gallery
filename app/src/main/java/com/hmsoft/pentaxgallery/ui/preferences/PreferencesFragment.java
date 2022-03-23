@@ -113,7 +113,7 @@ public class PreferencesFragment extends PreferenceFragmentCompat implements Sha
             Preference preference = new Preference(context);
             preference.setTitle(camera.getDisplayName());
             preference.setKey(camera.key);
-            preference.setSummary("Serial #" + camera.serialNo);
+            preference.setSummary(getString(R.string.serial) + camera.serialNo);
             preference.setFragment(CameraPreferenceFragment.class.getName());
             preferenceCategory.addPreference(preference);
         }
