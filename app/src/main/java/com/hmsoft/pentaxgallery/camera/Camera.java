@@ -260,6 +260,11 @@ public class Camera implements CameraController.OnCameraDisconnectedListener {
         
         setCurrentStorageIndex(storageIndex);
         if(cameraData != null && mCameraConnected) {
+            List<CameraData> cameras = CameraData.getRegisteredCameras();
+            if (cameras.size() > 0) {
+                cameraData.preferences.setDefaultsFrom(cameras.get(0).preferences);
+            }
+
             cameraData.saveData();
             loadCameraList();
         }

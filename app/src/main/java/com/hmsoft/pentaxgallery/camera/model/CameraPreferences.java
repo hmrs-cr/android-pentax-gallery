@@ -38,10 +38,10 @@ public class CameraPreferences extends PreferenceDataStore {
     }
 
     @WorkerThread
-    public void save() {
-        if (settingsFile != null) {
+    public void save(File file) {
+        if (file != null) {
             try {
-                FileOutputStream outputStream = new FileOutputStream(settingsFile);
+                FileOutputStream outputStream = new FileOutputStream(file);
                 properties.store(outputStream, "");
                 outputStream.close();
             } catch (IOException e) {
@@ -50,6 +50,20 @@ public class CameraPreferences extends PreferenceDataStore {
         }
     }
 
+    @WorkerThread
+    public void save() {
+        save(settingsFile);
+    }
+
+    @WorkerThread
+    public void setDefaultsFrom(CameraPreferences preferences) {
+        if (settingsFile != null && !settingsFile.exists()) {
+            preferences.save(settingsFile);
+            load();
+        }
+    }
+
+    @WorkerThread
     public void load() {
         if (settingsFile != null && settingsFile.exists()) {
             try {
