@@ -75,17 +75,21 @@ public class CameraPreferenceFragment extends PreferenceFragmentCompat implement
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         Bundle args = getArguments();
         String cameraKey = args.getString("key");
-        List<CameraData> cameras =  Camera.instance.getRegisteredCameras();
-        CameraPreferences cameraPreferences = null;
 
-        for (CameraData camera : cameras) {
-            if(camera.key.equals(cameraKey)) {
-                cameraData = camera;
-                cameraPreferences = camera.preferences;
-                getPreferenceManager().setPreferenceDataStore(cameraPreferences);
-                break;
+        cameraData = Camera.instance.getCameraData();
+        CameraPreferences cameraPreferences = cameraData.preferences;
+        if (!cameraData.key.equals(cameraKey)) {
+            List<CameraData> cameras = Camera.instance.getRegisteredCameras();
+            for (CameraData camera : cameras) {
+                if (camera.key.equals(cameraKey)) {
+                    cameraData = camera;
+                    cameraPreferences = camera.preferences;
+                    break;
+                }
             }
         }
+
+        getPreferenceManager().setPreferenceDataStore(cameraPreferences);
         setPreferencesFromResource(R.xml.camera_preferences, rootKey);
 
         ((EditTextPreference)findPreference(getString(R.string.key_connect_timeout))).setOnBindEditTextListener(numberEditTextListener);
