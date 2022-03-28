@@ -198,9 +198,6 @@
 
     <string-array name="start_parallel_download_percentage_values">
         <item>0</item>
-        <item>50</item>
-        <item>60</item>
-        <item>70</item>
         <item>75</item>
         <item>80</item>
         <item>85</item>
@@ -211,9 +208,6 @@
 
     <string-array name="start_parallel_download_percentage_options">
         <item>No Parallel Downloads</item>
-        <item>50%</item>
-        <item>60%</item>
-        <item>70%</item>
         <item>75%</item>
         <item>80%</item>
         <item>85%</item>
