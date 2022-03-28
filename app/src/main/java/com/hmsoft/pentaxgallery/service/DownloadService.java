@@ -196,6 +196,7 @@ public class DownloadService extends IntentService {
 
     @Override
     public void onDestroy() {
+        destroyDownloadExecutor();
         this.stopForeground(true);
         super.onDestroy();
         if(BuildConfig.DEBUG) Logger.debug(TAG,  "onDestroy");
@@ -205,9 +206,17 @@ public class DownloadService extends IntentService {
         int parallelDownloadPercentage = camera.getPreferences().getParallelDownloadPercentage();
         if (downloadExecutor == null && parallelDownloadPercentage > 0) {
             downloadExecutor = Executors.newFixedThreadPool(2);
+            if (Logger.DEBUG) Logger.debug(TAG, "DownloadExecutor created");
         } else if (downloadExecutor != null && parallelDownloadPercentage <= 0) {
+            destroyDownloadExecutor();
+        }
+    }
+
+    private synchronized void destroyDownloadExecutor() {
+        if (downloadExecutor != null) {
             downloadExecutor.shutdownNow();
             downloadExecutor = null;
+            if (Logger.DEBUG) Logger.debug(TAG, "DownloadExecutor destroyed");
         }
     }
 
