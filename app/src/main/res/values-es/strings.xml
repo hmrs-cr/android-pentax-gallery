@@ -67,7 +67,7 @@
 
     <string name="auto_download_raw_label">Descargar RAWs automáticamente</string>
     <string name="basic_camera_settings">Configuración básica de la cámara</string>
-    <string name="advanced_camera_settings">Configuración avanzada de la cámara</string>
+    <string name="advanced_camera_settings">Configuración avanzada y experimental de la cámara</string>
     <string name="thread_number">Thread number</string>
     <string name="read_timeout">Read timeout</string>
     <string name="connect_timeout">Connect timeout</string>

@@ -24,6 +24,7 @@ import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
 import android.provider.MediaStore;
 import android.text.TextUtils;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -133,11 +134,19 @@ public class DownloadService extends IntentService {
         if (intent != null) {
             final String action = intent.getAction();
             if (ACTION_DOWNLOAD.equals(action)) {
+
+                if (!camera.isConnected()) {
+                    Logger.warning(TAG, "Camera disconnected. Canceling all downloads.");
+                    cancelAllDownloads();
+                    return;
+                }
+
+
                 final ResultReceiver receiver = intent.getParcelableExtra(EXTRA_RECEIVER);
                 final int downloadId = intent.getIntExtra(EXTRA_DOWNLOAD_ID, -1);
                 initNotifyDownloadId(downloadId);
 
-                downloadExecutor.execute(() -> {
+                Runnable downloadAction = () -> {
                     if(BuildConfig.DEBUG) {
                         Logger.debug(TAG, "Download start: " + downloadId);
                     }
@@ -147,10 +156,23 @@ public class DownloadService extends IntentService {
                     if(BuildConfig.DEBUG) {
                         Logger.debug(TAG, "Download end: " + downloadId);
                     }
-                });
+                };
 
-                synchronized(downloadSynchronizer) {
-                    try { downloadSynchronizer.wait(); } catch (InterruptedException ignored) {}
+                createDownloadExecutor();
+
+                if (downloadExecutor != null) {
+
+                    if (Logger.DEBUG) Logger.debug(TAG, "Executing parallel download: " + downloadId);
+
+                    downloadExecutor.execute(downloadAction);
+                    synchronized(downloadSynchronizer) {
+                        if (Logger.DEBUG) Logger.debug(TAG, "Waiting for next parallel download");
+                        try { downloadSynchronizer.wait(); } catch (InterruptedException ignored) {}
+                        if (Logger.DEBUG) Logger.debug(TAG, "Done waiting for next parallel download");
+                    }
+                } else {
+                    if (Logger.DEBUG) Logger.debug(TAG, "Executing serial download: " + downloadId);
+                    downloadAction.run();
                 }
             }
         }
@@ -159,9 +181,6 @@ public class DownloadService extends IntentService {
     @Override
     public void onCreate() {
         super.onCreate();
-        if (downloadExecutor == null) {
-            downloadExecutor = Executors.newFixedThreadPool(2);
-        }
         if(BuildConfig.DEBUG) Logger.debug(TAG,  "onCreate");
     }
 
@@ -181,7 +200,17 @@ public class DownloadService extends IntentService {
         super.onDestroy();
         if(BuildConfig.DEBUG) Logger.debug(TAG,  "onDestroy");
     }
-  
+
+    private synchronized void createDownloadExecutor() {
+        int parallelDownloadPercentage = camera.getPreferences().getParallelDownloadPercentage();
+        if (downloadExecutor == null && parallelDownloadPercentage > 0) {
+            downloadExecutor = Executors.newFixedThreadPool(2);
+        } else if (downloadExecutor != null && parallelDownloadPercentage <= 0) {
+            downloadExecutor.shutdownNow();
+            downloadExecutor = null;
+        }
+    }
+
     private void handleActionDownload(int downloadId, ResultReceiver receiver) {
 
         Bundle resultData = new Bundle();
@@ -251,10 +280,12 @@ public class DownloadService extends IntentService {
                 int lastProgress = 0;
                 int count;
                 try {
+                    int parallelDownloadPercentage = camera.getPreferences().getParallelDownloadPercentage();
                     while ((count = input.read(data)) != -1) {
 
                         if (shouldCancelId == downloadId) {
                             canceled = true;
+                            notifyDownloadSynchronizer();
                             break;
                         }
 
@@ -274,7 +305,7 @@ public class DownloadService extends IntentService {
                             }
 
                             lastProgress = progress;
-                            if (progress >= 85) {
+                            if (parallelDownloadPercentage > 0 && progress >= parallelDownloadPercentage) {
                                 notifyDownloadSynchronizer();
                             }
                         }
@@ -333,8 +364,10 @@ public class DownloadService extends IntentService {
     }
 
     private void notifyDownloadSynchronizer() {
-        synchronized (downloadSynchronizer) {
-            downloadSynchronizer.notifyAll();
+        if (downloadExecutor != null) {
+            synchronized (downloadSynchronizer) {
+                downloadSynchronizer.notifyAll();
+            }
         }
     }
 
@@ -726,7 +759,7 @@ public class DownloadService extends IntentService {
             }
         }
 
-        private static void cancelAll() {
+        private static synchronized void cancelAll() {
             cancelCurrentDownload();
 
             DownloadEntry downloadEntry = null;
@@ -739,7 +772,8 @@ public class DownloadService extends IntentService {
                 sDownloadQueueDict.clear();
             }
 
-            doDownloadFinished(null, downloadEntry, true);
+            final DownloadEntry de = downloadEntry;
+            TaskExecutor.executeOnUIThread(() -> doDownloadFinished(null, de, true));
         }
 
         /*private*/ static void remove(DownloadEntry downloadEntry, boolean canceled) {

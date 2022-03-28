@@ -67,7 +67,7 @@
 
     <string name="auto_download_raw_label">Auto Download RAWs</string>
     <string name="basic_camera_settings">Basic camera settings</string>
-    <string name="advanced_camera_settings">Advanced camera settings</string>
+    <string name="advanced_camera_settings">Advanced and experimental camera settings</string>
     <string name="thread_number">Thread number</string>
     <string name="read_timeout">Read timeout</string>
     <string name="connect_timeout">Connect timeout</string>
@@ -195,6 +195,34 @@
         <item>3600</item>
         <item>0</item>
     </string-array>
+
+    <string-array name="start_parallel_download_percentage_values">
+        <item>0</item>
+        <item>50</item>
+        <item>60</item>
+        <item>70</item>
+        <item>75</item>
+        <item>80</item>
+        <item>85</item>
+        <item>90</item>
+        <item>95</item>
+        <item>99</item>
+    </string-array>
+
+    <string-array name="start_parallel_download_percentage_options">
+        <item>No Parallel Downloads</item>
+        <item>50%</item>
+        <item>60%</item>
+        <item>70%</item>
+        <item>75%</item>
+        <item>80%</item>
+        <item>85%</item>
+        <item>90%</item>
+        <item>95%</item>
+        <item>99%</item>
+    </string-array>
+
+
     <string name="load_cache">Disconnected mode</string>
     <string name="transfering_n_pictures">Transferring %d pictures</string>
     <string name="about_line"><![CDATA[<center><br/><p><b>%s</b> by hmrs.cr.</p><p>%s</p><p><i>%s</i></p></center>]]></string>

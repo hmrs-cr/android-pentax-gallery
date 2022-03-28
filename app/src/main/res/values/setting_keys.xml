@@ -11,12 +11,14 @@
     <string name="key_camera_thread_number" translatable="false">camera_thread_number</string>
     <string name="key_connect_timeout" translatable="false">connect_timeout</string>
     <string name="key_read_timeout" translatable="false">read_timeout</string>
+    <string name="key_start_parallel_download_percentage" translatable="false">start_parallel_download_percentage</string>
     <string name="key_remove_camera" translatable="false">remove_camera</string>
     <string name="key_load_local_image_data" translatable="false">load_local_image_data</string>
     <string name="key_cameras_category" translatable="false">cameras_category</string>
     <string name="key_help_category" translatable="false">help_category</string>
     <string name="key_remove_old_images" translatable="false">remove_old_images</string>
     <string name="key_location_service_category" translatable="false">locationservice_category</string>
+    <string name="default_start_parallel_download_percentage" translatable="false">0</string>
     <string name="default_location_update_interval" translatable="false">180</string>
     <string name="default_album_name" translatable="false">Pentax Gallery</string>
     <string name="default_raw_album_name" translatable="false">Pentax Gallery (RAW)</string>

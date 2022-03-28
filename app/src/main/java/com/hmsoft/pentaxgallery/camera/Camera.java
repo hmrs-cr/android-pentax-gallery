@@ -314,7 +314,7 @@ public class Camera implements CameraController.OnCameraDisconnectedListener {
         }
     }
   
-    public boolean isConnected() {
+    public synchronized boolean isConnected() {
       return mCameraConnected;
     }
     
@@ -330,7 +330,10 @@ public class Camera implements CameraController.OnCameraDisconnectedListener {
         return mCameraData != null ? mCameraData.preferences : CameraPreferences.Default;
     }
 
-    public void setCameraData(CameraData cameraData) {
+    public synchronized  void setCameraData(CameraData cameraData) {
+        if (cameraData == null) {
+            mCameraConnected = false;
+        }
         mCameraData = cameraData;
     }
   

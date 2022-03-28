@@ -131,6 +131,11 @@ public class CameraPreferences extends PreferenceDataStore {
         return getInt(context.getString(key), Integer.parseInt(context.getString(defValueKey)));
     }
 
+    public int getParallelDownloadPercentage() {
+        return getInt(R.string.key_start_parallel_download_percentage, R.string.default_start_parallel_download_percentage);
+    }
+
+
     public String getAlbumName() {
         return getString(R.string.key_album_name, R.string.default_album_name);
     }

@@ -121,6 +121,14 @@
             app:defaultValue="@string/default_read_timeout"
             app:useSimpleSummaryProvider="true" />
 
+        <ListPreference
+            app:key="@string/key_start_parallel_download_percentage"
+            app:title="Start Parallel Download Percentage"
+            app:defaultValue="@string/default_start_parallel_download_percentage"
+            app:entryValues="@array/start_parallel_download_percentage_values"
+            app:entries="@array/start_parallel_download_percentage_options"
+            app:useSimpleSummaryProvider="true"/>
+
     </PreferenceCategory>
 
     <PreferenceCategory>
