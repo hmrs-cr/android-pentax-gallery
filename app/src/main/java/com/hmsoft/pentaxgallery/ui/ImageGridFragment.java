@@ -521,7 +521,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             CameraData cameraData = mCamera.getCameraData();
             boolean multyStorage =  cameraData != null && cameraData.storages.size() > 1;
 
-
+            boolean isDownloading = DownloadService.isDownloading();
             int currentStorageIndex = mCamera.getCurrentStorageIndex();
             String syncText =  mCamera.isConnected() ? getString(R.string.sync_images) : getString(R.string.connect);
             MenuItem syncItem = mMenu.findItem(R.id.sync_images_1);
@@ -529,6 +529,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             syncItem.setVisible(!mCamera.hasFilter(DownloadService.DownloadQueueFilter));
             syncItem.setCheckable(multyStorage);
             syncItem.setChecked(multyStorage && currentStorageIndex == 0);
+            syncItem.setEnabled(!isDownloading);
             if(multyStorage) {
                 syncItem.setIcon(null);
             }
@@ -538,6 +539,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
             syncItem.setTitle(multyStorage ? cameraData.storages.get(1).displayName :  syncText);
             syncItem.setCheckable(multyStorage);
             syncItem.setChecked(multyStorage && currentStorageIndex == 1);
+            syncItem.setEnabled(!isDownloading);
             if(multyStorage) {
                 syncItem.setIcon(null);
             }
