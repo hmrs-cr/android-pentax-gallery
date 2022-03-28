@@ -949,7 +949,7 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     private void syncPictureList(int storageIndex, boolean loadImageListOnly, boolean showProgressBar,
                                 boolean connectionNeeded, OnRefreshDoneListener refreshDoneListener) {
-        if (mImageListTask == null) {
+        if (mImageListTask == null && !DownloadService.isDownloading()) {
             if (showProgressBar) {
                 mDontShowProgressBar = false;
                 TaskExecutor.executeOnUIThread(new Runnable() {
@@ -1065,8 +1065,12 @@ public class ImageGridFragment extends Fragment implements AdapterView.OnItemCli
 
     @Override
     public void onRefresh() {
-        mCamera.setCameraData(null);
-        syncPictureList(mCamera.getCurrentStorageIndex(), false, false, true, null);
+        if (DownloadService.isDownloading()) {
+            mSwipeRefreshLayout.setRefreshing(false);
+        } else {
+            mCamera.setCameraData(null);
+            syncPictureList(mCamera.getCurrentStorageIndex(), false, false, true, null);
+        }
     }
 
     @Override
