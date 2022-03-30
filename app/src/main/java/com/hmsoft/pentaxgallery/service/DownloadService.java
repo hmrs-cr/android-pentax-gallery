@@ -131,6 +131,7 @@ public class DownloadService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
+        if(BuildConfig.DEBUG) Logger.debug(TAG,  "onHandleIntent");
         if (intent != null) {
             final String action = intent.getAction();
             if (ACTION_DOWNLOAD.equals(action)) {
@@ -214,7 +215,7 @@ public class DownloadService extends IntentService {
 
     private synchronized void destroyDownloadExecutor() {
         if (downloadExecutor != null) {
-            downloadExecutor.shutdownNow();
+            downloadExecutor.shutdown();
             downloadExecutor = null;
             if (Logger.DEBUG) Logger.debug(TAG, "DownloadExecutor destroyed");
         }
@@ -305,7 +306,7 @@ public class DownloadService extends IntentService {
                         if (progress > lastProgress) {
                             initNotifyDownloadId(downloadId);
 
-                            if ((progress % 5) == 0 && getNotifyDownloadId() == downloadId) {
+                            if (getNotifyDownloadId() == downloadId) {
                                 // publishing the progress....
                                 resultData = new Bundle();
                                 resultData.putInt(EXTRA_PROGRESS, progress);
@@ -314,7 +315,7 @@ public class DownloadService extends IntentService {
                             }
 
                             lastProgress = progress;
-                            if (parallelDownloadPercentage > 0 && progress >= parallelDownloadPercentage) {
+                            if (parallelDownloadPercentage > 0 && progress == parallelDownloadPercentage) {
                                 notifyDownloadSynchronizer();
                             }
                         }
