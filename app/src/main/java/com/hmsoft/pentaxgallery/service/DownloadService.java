@@ -206,7 +206,7 @@ public class DownloadService extends IntentService {
     private synchronized void createDownloadExecutor() {
         int parallelDownloadPercentage = camera.getPreferences().getParallelDownloadPercentage();
         if (downloadExecutor == null && parallelDownloadPercentage > 0) {
-            downloadExecutor = Executors.newFixedThreadPool(2);
+            downloadExecutor = Executors.newFixedThreadPool(parallelDownloadPercentage <= 10 ? 4 : 2);
             if (Logger.DEBUG) Logger.debug(TAG, "DownloadExecutor created");
         } else if (downloadExecutor != null && parallelDownloadPercentage <= 0) {
             destroyDownloadExecutor();
