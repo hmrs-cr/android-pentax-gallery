@@ -18,7 +18,7 @@
     <string name="key_help_category" translatable="false">help_category</string>
     <string name="key_remove_old_images" translatable="false">remove_old_images</string>
     <string name="key_location_service_category" translatable="false">locationservice_category</string>
-    <string name="default_start_parallel_download_percentage" translatable="false">50</string>
+    <string name="default_start_parallel_download_percentage" translatable="false">75</string>
     <string name="default_location_update_interval" translatable="false">180</string>
     <string name="default_album_name" translatable="false">Pentax Gallery</string>
     <string name="default_raw_album_name" translatable="false">Pentax Gallery (RAW)</string>
