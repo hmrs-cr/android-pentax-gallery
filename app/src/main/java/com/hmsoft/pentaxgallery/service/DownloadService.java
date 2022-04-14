@@ -628,6 +628,7 @@ public class DownloadService extends IntentService {
         private static long sStarDownloadTime = -1;
         private static long sLastEtaUpdate = -1;
         private static String sLastEtatext;
+        private static int sLastRemainingSeconds;
 
         private static class DownloadReceiver extends ResultReceiver {
 
@@ -917,20 +918,22 @@ public class DownloadService extends IntentService {
         private static String getETAString(float remainingDownloads) {
             String etaText = null;
             long elapsedRealTime = SystemClock.elapsedRealtime();
-            if (sStarDownloadTime > 0 && elapsedRealTime - sLastEtaUpdate > 40000) {
+            if (sStarDownloadTime > 0 && elapsedRealTime - sLastEtaUpdate > (sLastRemainingSeconds <= 30 ? 1000 : 27500)) {
                 int downloaded = Queue.downloadCount;
                 long elapsedDownloadTime = (elapsedRealTime - sStarDownloadTime) / 1000;
                 float downloadsPerSecond = (float)downloaded / (float)elapsedDownloadTime;
                 if (downloadsPerSecond > 0) {
                     sLastEtaUpdate = elapsedRealTime;
-                    int remainingMinutes = Math.round((remainingDownloads / (float)downloadsPerSecond) / 60);
+                    int remainingSeconds = Math.round(remainingDownloads / downloadsPerSecond);
+                    if (remainingSeconds < sLastRemainingSeconds) {
+                        sLastRemainingSeconds = remainingSeconds;
+                    }
+                    int remainingMinutes = Math.round(sLastRemainingSeconds / 60F);
                     etaText =  "ETA: ";
-                    switch (remainingMinutes) {
-                        case 0:
-                            etaText += " < 1m";
-                            break;
-                        default:
-                            etaText += remainingMinutes + "m";
+                    if (remainingMinutes == 0 || sLastRemainingSeconds <= 30) {
+                        etaText += sLastRemainingSeconds <= 30 ? sLastRemainingSeconds + "s" : " < 1m";
+                    } else {
+                        etaText += remainingMinutes + "m";
                     }
 
                     sLastEtatext = etaText;
@@ -1101,6 +1104,7 @@ public class DownloadService extends IntentService {
                 sStarDownloadTime = SystemClock.elapsedRealtime();
                 sLastEtatext = "";
                 sLastEtaUpdate = sStarDownloadTime;
+                sLastRemainingSeconds = Integer.MAX_VALUE;
                 while((downloadEntry = getNextDownload()) != null) {
                     download(downloadEntry);
                     count++;
